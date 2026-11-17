@@ -72,5 +72,7 @@ the first folder in the object path to be the uploader's user id.
 
 ## Not in this migration yet
 
-- Seed data (ports, edges, tariff rows, exchange rates): added by the routing and customs specs, each with its source noted.
+- Seed data:
+  - Ports and lanes: generated into `supabase/seed/routing_seed.sql` (run it in the SQL editor after the migration). **Not yet run.** The data is illustrative; formulas are in `scripts/routing-seed/definition.mjs`.
+  - Tariff rows and exchange rates: still to come from the customs spec, each with its source noted.
 - Indexes beyond foreign keys and obvious filters: add only when a real query is slow.
