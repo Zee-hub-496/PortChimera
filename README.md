@@ -12,12 +12,12 @@ The "chimera" is three technologies stitched into one system:
 
 This project is under active development. Nothing below should be read as a finished feature.
 
-| Area                                                                  | Status                                                                         |
-| --------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| Monorepo, config, error handling, secret scanner                      | Written. Core tests and scanner verified. API tests need `npm install` to run. |
-| Haversine distance (A* heuristic building block)                      | Built and tested                                                               |
-| Database migration                                                    | Written, **not yet run** against Postgres                                      |
-| Auth, documents, customs, cross-check, routing, simulation, dashboard | Specified in `.kiro/specs/`, **not built yet**                                 |
+| Area                                                                  | Status                                                                             |
+| --------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Monorepo, config, error handling, secret scanner                      | Built. 17 of 17 tests pass on Windows with Node 24; API and web dev servers start. |
+| Haversine distance (A* heuristic building block)                      | Built and tested                                                                   |
+| Database migration                                                    | Written, **not yet run** against Postgres                                          |
+| Auth, documents, customs, cross-check, routing, simulation, dashboard | Specified in `.kiro/specs/`, **not built yet**                                     |
 
 Progress is tracked in the task lists under `.kiro/specs/*/tasks.md`.
 
