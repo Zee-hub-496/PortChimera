@@ -1,0 +1,56 @@
+{
+  "_note": "SYNTHETIC demo data. Identical to demo-consistent.json except that the packing list states a gross weight of 650 kg against 500 kg on the invoice (the planted mismatch for the demo). A test fails if the two files drift apart in any other way.",
+  "commercial_invoice": {
+    "exporter": "Example Export Co., Ltd.",
+    "importer": "Sample Imports (Pvt.) Ltd.",
+    "invoiceNumber": "INV-2026-0042",
+    "currency": "USD",
+    "totalValue": "6,000.00",
+    "originCountry": "China",
+    "grossWeight": "500 kg",
+    "netWeight": "450 kg",
+    "lines": [
+      {
+        "description": "Men's cotton t-shirts",
+        "quantity": 1000,
+        "unit": "pcs",
+        "lineTotal": "3,000.00",
+        "originCountry": "China"
+      },
+      {
+        "description": "Denim jeans, adult",
+        "quantity": 500,
+        "unit": "pcs",
+        "lineTotal": "3,000.00",
+        "originCountry": "China"
+      }
+    ]
+  },
+  "packing_list": {
+    "exporter": "EXAMPLE EXPORT COMPANY LIMITED",
+    "importer": "Sample Imports Private Limited",
+    "invoiceNumber": "INV 2026 0042",
+    "grossWeight": { "value": "650.00", "unit": "KGS" },
+    "netWeight": { "value": "0.45", "unit": "tonnes" },
+    "lines": [
+      {
+        "description": "Mens cotton T-shirt",
+        "quantity": 1000,
+        "unit": "Pieces",
+        "netWeight": "200 kg"
+      },
+      {
+        "description": "Adult denim jeans",
+        "quantity": 500,
+        "unit": "Pieces",
+        "netWeight": "250 kg"
+      }
+    ]
+  },
+  "certificate_of_origin": {
+    "exporter": "Example Export Co Ltd",
+    "invoiceNumber": "inv-2026-0042",
+    "originCountry": "CN",
+    "lines": [{ "description": "Cotton t-shirts and denim jeans" }]
+  }
+}

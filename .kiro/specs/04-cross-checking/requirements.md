@@ -19,7 +19,7 @@ deterministic rules. AI may explain an ambiguous case but never decides whether 
 
 ### R3. Severity
 1. THE system SHALL assign `critical`, `high`, `medium` or `low` using documented thresholds in `design.md`.
-2. THE examples SHALL hold: 500 kg vs 650 kg is a high weight discrepancy of 150 kg (30%); 100 vs 90 units is a quantity discrepancy of 10; invoice origin China vs certificate Pakistan is an origin inconsistency requiring review.
+2. THE examples SHALL hold: 500 kg vs 650 kg is a high weight discrepancy of 150 kg (23.1% of the larger value, the formula in `design.md`); 100 vs 90 units is a quantity discrepancy of 10; invoice origin China vs certificate Pakistan is an origin inconsistency requiring review.
 
 ### R4. Wording
 1. THE report SHALL use "possible inconsistency", "risk indicator" and "requires manual verification". It SHALL NOT use "fraud".

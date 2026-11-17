@@ -51,3 +51,19 @@ Each was fixed after a run exposed it.
 Git had converted the generated seed SQL to CRLF line endings, which a byte-for-byte comparison treated as a content change. The authoring
 sandbox runs Linux, so it could not see this. Fix: the test now ignores line-ending style, and `.gitattributes` forces LF everywhere.
 The fix was verified by converting the file to CRLF on purpose, and by checking that a real content change still fails the test.
+
+## 2026-11-17: Cross-document checker
+
+**Spec corrected before building.** Writing the percent formula exposed a contradiction in the spec Kiro had written earlier: the requirement said
+500 kg vs 650 kg is "30%", the design's formula gives 23.1%. The requirement was fixed and the definition (difference divided by the larger value)
+was made order-independent, with a test that swapping the documents gives the same number.
+
+**A domain problem found by running the fixtures.** The first version paired a certificate of origin's single summary line ("Cotton t-shirts and
+denim jeans") with the first invoice line and reported a false "wording differs" finding. Certificates summarize goods, so they are now checked by
+word coverage against all invoice lines. The fix was driven by a fixture whose correct answer is "no findings".
+
+**Honest edge cases chosen on purpose:** the unit "tons" is refused (metric, short and long tons differ by up to 10%); unrecognized countries give
+a medium finding instead of high; and "nothing compared" reports `not_enough_data`, never `consistent`.
+
+**Mutation checks:** removing the tolerance, the company-suffix rules, the larger-value percent, the critical rule, or the tonne conversion each
+made between 1 and 12 tests fail.

@@ -11,12 +11,31 @@ Everything except the optional explanation lives in `packages/core/src/crosschec
 
 ## Input shape (already reviewed and approved by a human)
 
+Keys match the database document types, so the API can pass rows straight through:
+
 ```js
-{ invoice: { exporter, importer, invoiceNumber, currency, totalValue, originCountry, lines: [...] },
-  packingList: { ... }, certificate: { ... } }
+{ commercial_invoice: { exporter, importer, invoiceNumber, currency, totalValue, originCountry,
+                        grossWeight, netWeight, lines: [{ description, quantity, unit, lineTotal,
+                        grossWeight, netWeight, originCountry }] },
+  packing_list: { ... }, certificate_of_origin: { ... } }
 ```
 
-Any field can be `null` (not provided).
+Any field can be missing. Weights may be `"500 kg"` or `{ value, unit }`. Numbers may be text such as `"1,200.50"`.
+
+## Decisions made during the build
+
+These refine the proposal below. Each is covered by a test.
+
+- **Percent** is the difference divided by the larger value (500 vs 650 is 23.1%). Requirement R3.2 originally said 30%, which used a different base; it was corrected.
+- **Exactly 10%** is medium (the boundary is "up to 10%").
+- **Weights are compared once, at document level.** A document's weight is its stated total, or the sum of its line weights when every line has one. Comparing both would report one mismatch twice.
+- **Unrecognized weight units are excluded, not guessed.** "ton" and "tons" are ambiguous (metric, short and long tons differ by up to 10%), so they produce a medium finding "excluded from comparison".
+- **Certificates of origin are checked by coverage, not line by line.** A certificate summarizes the goods, so its description words are checked against all reference lines. Pairing its one line with the first invoice line would create a false finding.
+- **Reference document** for line matching is the first one present in this order: invoice, packing list, certificate. Other documents are compared to it, not to each other.
+- **Unrecognized country names** (not in our list of about 40) give a medium finding, not high, and say so.
+- **`critical` appears only in the report summary**, never on an individual finding (see the severity table).
+- **Nothing compared** gives the overall result `not_enough_data`, never `consistent`.
+- **Not done yet:** per-line origin and weight checks, quantity checks for the certificate, AI explanations (R7), persistence.
 
 ## Initial severity rules (proposal; the author can adjust)
 
