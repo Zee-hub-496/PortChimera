@@ -1,48 +1,65 @@
 #!/usr/bin/env node
-// Prints the demo routes from the seed data so you can see the engine's answers without a UI.
+// Prints the demo routes and crisis scenarios from the seed data, without a UI.
 //   npm run demo:routes
 // All numbers are ILLUSTRATIVE demo values, not real quotes.
 import { readFileSync } from 'node:fs';
-import { buildGraph, findRoute } from '../packages/core/src/index.js';
+import { buildGraph, findRoute, simulateDisruption } from '../packages/core/src/index.js';
 
 const read = (name) =>
   JSON.parse(readFileSync(new URL(`../supabase/seed/${name}`, import.meta.url)));
-const ports = read('ports.json');
-const edges = read('edges.json');
-const graph = buildGraph(ports, edges, { dataLabel: 'illustrative' });
-
-// Stand-in for the disruption overlay (spec 06): drop a port and every lane touching it.
-const withoutPort = (code) =>
-  buildGraph(
-    ports.filter((p) => p.code !== code),
-    edges.filter((e) => e.from !== code && e.to !== code),
-  );
-
-const describe = (label, r) => {
-  const line =
-    r.status === 'found'
-      ? `${r.path.join(' > ')} | ${r.totals.transitDays} days | $${r.totals.freightCostUsd} | risk ${r.totals.riskSum.toFixed(2)}`
-      : `${r.status}: ${r.reason}`;
-  console.log(`${label.padEnd(34)} ${line}`);
-};
+const graph = buildGraph(read('ports.json'), read('edges.json'), { dataLabel: 'illustrative' });
 
 console.log('ILLUSTRATIVE demo data, not real quotes\n');
-for (const objective of ['fastest', 'cheapest', 'lowest_risk']) {
-  describe(`Shanghai -> Karachi, ${objective}`, findRoute(graph, 'CNSHA', 'PKKHI', objective));
-}
 
-console.log('\nPort strike at Singapore (same cost scale as the baseline):');
-const noSingapore = withoutPort('SGSIN');
+console.log('Normal routes, Shanghai -> Karachi:');
 for (const objective of ['fastest', 'cheapest', 'lowest_risk']) {
-  describe(
-    `  ${objective}`,
-    findRoute(noSingapore, 'CNSHA', 'PKKHI', objective, { scale: graph.maxima }),
+  const r = findRoute(graph, 'CNSHA', 'PKKHI', objective);
+  const names = r.path.map((c) => graph.ports.get(c).name).join(' > ');
+  console.log(
+    `  ${objective.padEnd(12)} ${names} | ${r.totals.transitDays} days | $${r.totals.freightCostUsd} | risk ${r.totals.riskSum.toFixed(2)}`,
   );
 }
 
-console.log('\nSuez corridor closed (Port Said):');
-describe('  Rotterdam -> Karachi, before', findRoute(graph, 'NLRTM', 'PKKHI', 'fastest'));
-describe(
-  '  Rotterdam -> Karachi, after',
-  findRoute(withoutPort('EGPSD'), 'NLRTM', 'PKKHI', 'fastest', { scale: graph.maxima }),
-);
+const scenarios = [
+  [
+    'Port strike at Singapore',
+    [{ type: 'port_strike', portCode: 'SGSIN' }],
+    'CNSHA',
+    'PKKHI',
+    'fastest',
+  ],
+  [
+    'Lane Shanghai -> Singapore fails',
+    [{ type: 'connection_failure', from: 'CNSHA', to: 'SGSIN' }],
+    'CNSHA',
+    'PKKHI',
+    'fastest',
+  ],
+  [
+    'Congestion at Colombo (cheapest)',
+    [{ type: 'port_congestion', portCode: 'LKCMB' }],
+    'CNSHA',
+    'PKKHI',
+    'cheapest',
+  ],
+  [
+    'Suez corridor closed (Port Said)',
+    [{ type: 'port_strike', portCode: 'EGPSD' }],
+    'NLRTM',
+    'PKKHI',
+    'fastest',
+  ],
+  [
+    'Destination port closed',
+    [{ type: 'severe_weather', portCode: 'PKKHI' }],
+    'CNSHA',
+    'PKKHI',
+    'fastest',
+  ],
+];
+
+for (const [title, effects, from, to, objective] of scenarios) {
+  const r = simulateDisruption(graph, effects, from, to, objective);
+  console.log(`\n${title}  [${r.status}]`);
+  console.log(`  ${r.explanation}`);
+}

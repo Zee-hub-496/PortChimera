@@ -30,3 +30,19 @@ database, security, AI integration, testing. Some load always; others only when 
 ## Hooks, agents, MCP
 
 To be recorded here when added.
+
+## 2026-11-17: Routing engine and disruption overlay
+
+**Spec-driven build.** The A\* and crisis specs (`.kiro/specs/05`, `06`) were written first. The code follows their design
+documents, and the task lists record what was verified.
+
+**Tests that can fail.** Passing tests are not evidence unless they can fail. Each engine was broken on purpose to confirm tests notice:
+a heuristic that overestimates (5 tests failed), a seed edit without regenerating files (sync test failed), an overlay that leaves a closed
+port's lanes in the graph (tests failed), and a simulation that costs routes with the wrong scale (the scale test failed).
+
+**Bugs found by running things, not by reading.** Two test setups were wrong the first time (a tie-break test whose costs were not
+actually tied, and an "opposite direction" test that silently emptied its input). One explanation sentence began in lowercase.
+Each was fixed after a run exposed it.
+
+**A process mistake, recorded honestly.** A stacked pull request was merged into its parent branch after the parent had already merged into
+`main`, so the seed data missed `main` and needed a second pull request. Later PRs target `main` directly.
