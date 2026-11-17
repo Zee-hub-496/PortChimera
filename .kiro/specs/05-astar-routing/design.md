@@ -15,7 +15,10 @@ Let `d(a,b)` be the haversine (straight-line over the globe) distance.
 3. **`minCostPerKm`** is `min over edges of (edgeCost / distance_km)`. So every edge costs at least `distance_km * minCostPerKm`.
 4. Therefore any real path from n costs at least `d(n, goal) * minCostPerKm = h(n)`. The heuristic never overestimates: it is **admissible**.
 5. It is also **consistent** (`h(n) <= cost(n,m) + h(m)`), because `d(n,goal) <= d(n,m) + d(m,goal)` and `d(n,m) * minCostPerKm <= cost(n,m)`.
-   Consistency means each port is finalized once, so a simple closed set is correct.
+   Consistency means each port is finalized the first time it comes off the queue.
+   The implementation does not depend on that: it keeps the best known cost per port and skips
+   stale queue entries, so it stays correct with admissibility alone, even if floating-point
+   rounding makes consistency fail by a tiny amount.
 
 Edge case: if `minCostPerKm` is 0 (for example a risk-only objective with a zero-risk lane), `h = 0` and A* behaves like Dijkstra. That is valid, just not faster.
 `minCostPerKm` is computed on the **active** graph after disruptions are removed, which can only make it larger (tighter) and still safe.
