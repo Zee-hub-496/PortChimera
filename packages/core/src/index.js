@@ -5,3 +5,5 @@ export { RoutingInputError } from './routing/errors.js';
 export { buildGraph } from './routing/graph.js';
 export { OBJECTIVES, makeCostFunction, resolveObjective, validateWeights } from './routing/cost.js';
 export { findRoute, makeHeuristic, minCostPerKm } from './routing/astar.js';
+export { DISRUPTION_TYPES, applyDisruptions, validateEffects } from './routing/disruptions.js';
+export { simulateDisruption } from './routing/simulate.js';
