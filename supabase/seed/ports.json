@@ -1,0 +1,162 @@
+[
+  {
+    "code": "CNSHA",
+    "name": "Shanghai",
+    "country": "CN",
+    "lat": 31.23,
+    "lon": 121.47,
+    "dataLabel": "illustrative"
+  },
+  {
+    "code": "CNSZX",
+    "name": "Shenzhen",
+    "country": "CN",
+    "lat": 22.54,
+    "lon": 114.05,
+    "dataLabel": "illustrative"
+  },
+  {
+    "code": "HKHKG",
+    "name": "Hong Kong",
+    "country": "HK",
+    "lat": 22.3,
+    "lon": 114.17,
+    "dataLabel": "illustrative"
+  },
+  {
+    "code": "KRPUS",
+    "name": "Busan",
+    "country": "KR",
+    "lat": 35.1,
+    "lon": 129.04,
+    "dataLabel": "illustrative"
+  },
+  {
+    "code": "JPYOK",
+    "name": "Yokohama",
+    "country": "JP",
+    "lat": 35.44,
+    "lon": 139.64,
+    "dataLabel": "illustrative"
+  },
+  {
+    "code": "SGSIN",
+    "name": "Singapore",
+    "country": "SG",
+    "lat": 1.26,
+    "lon": 103.82,
+    "dataLabel": "illustrative"
+  },
+  {
+    "code": "MYPKG",
+    "name": "Port Klang",
+    "country": "MY",
+    "lat": 3,
+    "lon": 101.39,
+    "dataLabel": "illustrative"
+  },
+  {
+    "code": "LKCMB",
+    "name": "Colombo",
+    "country": "LK",
+    "lat": 6.94,
+    "lon": 79.85,
+    "dataLabel": "illustrative"
+  },
+  {
+    "code": "PKKHI",
+    "name": "Karachi",
+    "country": "PK",
+    "lat": 24.84,
+    "lon": 66.98,
+    "dataLabel": "illustrative"
+  },
+  {
+    "code": "INNSA",
+    "name": "Nhava Sheva (Mumbai)",
+    "country": "IN",
+    "lat": 18.95,
+    "lon": 72.95,
+    "dataLabel": "illustrative"
+  },
+  {
+    "code": "AEJEA",
+    "name": "Jebel Ali",
+    "country": "AE",
+    "lat": 25.01,
+    "lon": 55.06,
+    "dataLabel": "illustrative"
+  },
+  {
+    "code": "OMSLL",
+    "name": "Salalah",
+    "country": "OM",
+    "lat": 16.94,
+    "lon": 54,
+    "dataLabel": "illustrative"
+  },
+  {
+    "code": "DJJIB",
+    "name": "Djibouti",
+    "country": "DJ",
+    "lat": 11.59,
+    "lon": 43.15,
+    "dataLabel": "illustrative"
+  },
+  {
+    "code": "SAJED",
+    "name": "Jeddah",
+    "country": "SA",
+    "lat": 21.48,
+    "lon": 39.17,
+    "dataLabel": "illustrative"
+  },
+  {
+    "code": "EGPSD",
+    "name": "Port Said",
+    "country": "EG",
+    "lat": 31.26,
+    "lon": 32.3,
+    "dataLabel": "illustrative"
+  },
+  {
+    "code": "GRPIR",
+    "name": "Piraeus",
+    "country": "GR",
+    "lat": 37.94,
+    "lon": 23.64,
+    "dataLabel": "illustrative"
+  },
+  {
+    "code": "ESVLC",
+    "name": "Valencia",
+    "country": "ES",
+    "lat": 39.45,
+    "lon": -0.32,
+    "dataLabel": "illustrative"
+  },
+  {
+    "code": "NLRTM",
+    "name": "Rotterdam",
+    "country": "NL",
+    "lat": 51.95,
+    "lon": 4.14,
+    "dataLabel": "illustrative"
+  },
+  {
+    "code": "ZACPT",
+    "name": "Cape Town",
+    "country": "ZA",
+    "lat": -33.92,
+    "lon": 18.43,
+    "dataLabel": "illustrative"
+  },
+  {
+    "code": "USLAX",
+    "name": "Los Angeles",
+    "country": "US",
+    "lat": 33.73,
+    "lon": -118.26,
+    "dataLabel": "illustrative"
+  }
+]

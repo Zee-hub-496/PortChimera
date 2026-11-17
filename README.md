@@ -15,7 +15,7 @@ This project is under active development. Nothing below should be read as a fini
 | Area                                                         | Status                                                                             |
 | ------------------------------------------------------------ | ---------------------------------------------------------------------------------- |
 | Monorepo, config, error handling, secret scanner             | Built. 17 of 17 tests pass on Windows with Node 24; API and web dev servers start. |
-| A* routing engine (`packages/core`)                          | Built, 54 core tests pass in the sandbox. No seed data, API or UI yet.             |
+| A* routing engine (`packages/core`)                          | Built with 20-port demo seed data; 71 tests pass in the sandbox. No API or UI yet. |
 | Database migration                                           | Written, **not yet run** against Postgres                                          |
 | Auth, documents, customs, cross-check, simulation, dashboard | Specified in `.kiro/specs/`, **not built yet**                                     |
 
