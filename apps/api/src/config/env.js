@@ -25,5 +25,18 @@ export function loadEnv(source = process.env) {
     const problems = result.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`);
     throw new Error(`Invalid environment configuration:\n  ${problems.join('\n  ')}`);
   }
+  // In production these have no safe default: a missing CORS_ORIGIN would fall back to
+  // localhost, and missing Supabase settings would leave the API unable to check sign-ins.
+  if (result.data.NODE_ENV === 'production') {
+    const missing = ['SUPABASE_URL', 'SUPABASE_ANON_KEY', 'CORS_ORIGIN'].filter(
+      (name) => !source[name],
+    );
+    if (missing.length > 0) {
+      throw new Error(
+        `Invalid environment configuration:\n  required in production: ${missing.join(', ')}`,
+      );
+    }
+  }
+
   return Object.freeze(result.data);
 }

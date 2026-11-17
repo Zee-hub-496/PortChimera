@@ -12,13 +12,14 @@ The "chimera" is three technologies stitched into one system:
 
 This project is under active development. Nothing below should be read as a finished feature.
 
-| Area                                                                        | Status                                                                                                                                   |
-| --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| Monorepo, config, error handling, secret scanner                            | Built. 120 of 120 tests passed on Windows with Node 24 (before the cross-checker was added); API and web dev servers start.              |
-| A* routing, disruption overlay and comparison (`packages/core`)             | Built with 20-port demo seed data; 194 non-network tests pass in the sandbox (all core, seed and error-handler tests). No API or UI yet. |
-| Cross-document checker (`packages/core`)                                    | Built: compares invoice, packing list and certificate of origin. Tested on synthetic fixtures. No API, extraction or UI yet.             |
-| Database migration                                                          | Written, **not yet run** against Postgres                                                                                                |
-| Auth, document extraction, customs and duty, scenario API and UI, dashboard | Specified in `.kiro/specs/`, **not built yet**                                                                                           |
+| Area                                                                             | Status                                                                                                                                                                                                     |
+| -------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Monorepo, config, error handling, secret scanner                                 | Built. 120 of 120 tests passed on Windows with Node 24 (before the cross-checker was added); API and web dev servers start.                                                                                |
+| A* routing, disruption overlay and comparison (`packages/core`)                  | Built with 20-port demo seed data; 194 non-network tests pass in the sandbox (all core, seed and error-handler tests). No API or UI yet.                                                                   |
+| Cross-document checker (`packages/core`)                                         | Built: compares invoice, packing list and certificate of origin. Tested on synthetic fixtures. No API, extraction or UI yet.                                                                               |
+| Database migration                                                               | Written, **not yet run** against Postgres                                                                                                                                                                  |
+| API login protection (`apps/api`)                                                | Token middleware, `/api/auth/me` handler and audit helper tested with fakes. Route wiring and env rules written, **not yet run**. Not tried against a real Supabase project. See `docs/SETUP_SUPABASE.md`. |
+| Document extraction, customs and duty, scenario API and UI, dashboard, web login | Specified in `.kiro/specs/`, **not built yet**                                                                                                                                                             |
 
 Progress is tracked in the task lists under `.kiro/specs/*/tasks.md`.
 
