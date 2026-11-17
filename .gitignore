@@ -1,0 +1,25 @@
+# dependencies and build output
+node_modules/
+dist/
+coverage/
+
+# secrets: never commit these
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+service-account*.json
+
+# logs and OS files
+*.log
+.DS_Store
+
+# local Supabase and editor state
+supabase/.temp/
+supabase/.branches/
+.vscode/
+.idea/
+
+# real customer documents must never be committed; only synthetic ones go in fixtures/
+uploads/

@@ -1,0 +1,30 @@
+{
+  "name": "portchimera",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Customs intelligence and crisis-aware logistics: AI reads documents, deterministic code validates them, A* optimizes routes.",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:api": "npm run dev -w @portchimera/api",
+    "dev:web": "npm run dev -w @portchimera/web",
+    "test": "node --test \"packages/*/test/**/*.test.js\" \"apps/api/test/**/*.test.js\"",
+    "test:core": "node --test \"packages/core/test/**/*.test.js\"",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "scan:secrets": "node scripts/scan-secrets.mjs"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "eslint": "^9.0.0",
+    "globals": "^15.0.0",
+    "prettier": "^3.0.0"
+  }
+}

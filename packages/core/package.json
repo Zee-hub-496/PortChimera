@@ -1,0 +1,11 @@
+{
+  "name": "@portchimera/core",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Framework-independent business logic: routing (A*), cross-checking, customs math. No Express, React or Supabase imports allowed here.",
+  "type": "module",
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js"
+  }
+}
