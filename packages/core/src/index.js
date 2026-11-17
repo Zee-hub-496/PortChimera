@@ -7,3 +7,8 @@ export { OBJECTIVES, makeCostFunction, resolveObjective, validateWeights } from 
 export { findRoute, makeHeuristic, minCostPerKm } from './routing/astar.js';
 export { DISRUPTION_TYPES, applyDisruptions, validateEffects } from './routing/disruptions.js';
 export { simulateDisruption } from './routing/simulate.js';
+
+export { crossCheck } from './crosscheck/crossCheck.js';
+export { CrossCheckInputError } from './crosscheck/errors.js';
+export { DOCUMENT_TYPES } from './crosscheck/compare.js';
+export { THRESHOLDS as CROSSCHECK_THRESHOLDS } from './crosscheck/severity.js';
