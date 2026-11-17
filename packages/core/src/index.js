@@ -1,2 +1,7 @@
 // Public surface of the core package. Add exports here as each engine is built and tested.
 export { haversineKm } from './routing/haversine.js';
+export { MinHeap } from './routing/heap.js';
+export { RoutingInputError } from './routing/errors.js';
+export { buildGraph } from './routing/graph.js';
+export { OBJECTIVES, makeCostFunction, resolveObjective, validateWeights } from './routing/cost.js';
+export { findRoute, makeHeuristic, minCostPerKm } from './routing/astar.js';
