@@ -46,3 +46,8 @@ Each was fixed after a run exposed it.
 
 **A process mistake, recorded honestly.** A stacked pull request was merged into its parent branch after the parent had already merged into
 `main`, so the seed data missed `main` and needed a second pull request. Later PRs target `main` directly.
+
+**A bug only the author's machine could find.** After the overlay merged, the author ran `npm test` on Windows and one test failed:
+Git had converted the generated seed SQL to CRLF line endings, which a byte-for-byte comparison treated as a content change. The authoring
+sandbox runs Linux, so it could not see this. Fix: the test now ignores line-ending style, and `.gitattributes` forces LF everywhere.
+The fix was verified by converting the file to CRLF on purpose, and by checking that a real content change still fails the test.

@@ -4,8 +4,13 @@ import { readFileSync } from 'node:fs';
 import { buildGraph, findRoute } from '../../packages/core/src/index.js';
 import { buildSeed, buildSql } from '../routing-seed/definition.mjs';
 
+// Line-ending style (LF on Linux and macOS, CRLF on some Windows checkouts) is not part of the
+// content, so it is normalized before comparing.
 const readSeedFile = (name) =>
-  readFileSync(new URL(`../../supabase/seed/${name}`, import.meta.url), 'utf8');
+  readFileSync(new URL(`../../supabase/seed/${name}`, import.meta.url), 'utf8').replaceAll(
+    '\r\n',
+    '\n',
+  );
 
 const seed = buildSeed();
 const graph = buildGraph(seed.ports, seed.edges, { dataLabel: 'illustrative' });

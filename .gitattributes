@@ -1,0 +1,4 @@
+# Keep line endings identical on every operating system.
+# Without this, Git on Windows rewrites files to CRLF, which breaks byte-for-byte checks
+# (for example the generated seed SQL) and makes Prettier report false formatting errors.
+* text=auto eol=lf
