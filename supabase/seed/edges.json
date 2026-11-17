@@ -1,0 +1,542 @@
+[
+  {
+    "from": "CNSHA",
+    "to": "KRPUS",
+    "distanceKm": 1073,
+    "transitDays": 2.4,
+    "freightCostUsd": 522,
+    "riskScore": 0.08,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "KRPUS",
+    "to": "CNSHA",
+    "distanceKm": 1073,
+    "transitDays": 2.4,
+    "freightCostUsd": 522,
+    "riskScore": 0.08,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "KRPUS",
+    "to": "JPYOK",
+    "distanceKm": 1252,
+    "transitDays": 2.6,
+    "freightCostUsd": 576,
+    "riskScore": 0.09,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "JPYOK",
+    "to": "KRPUS",
+    "distanceKm": 1252,
+    "transitDays": 2.6,
+    "freightCostUsd": 576,
+    "riskScore": 0.09,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "CNSHA",
+    "to": "HKHKG",
+    "distanceKm": 1598,
+    "transitDays": 3,
+    "freightCostUsd": 679,
+    "riskScore": 0.09,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "HKHKG",
+    "to": "CNSHA",
+    "distanceKm": 1598,
+    "transitDays": 3,
+    "freightCostUsd": 679,
+    "riskScore": 0.09,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "HKHKG",
+    "to": "CNSZX",
+    "distanceKm": 39,
+    "transitDays": 1.1,
+    "freightCostUsd": 212,
+    "riskScore": 0.06,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "CNSZX",
+    "to": "HKHKG",
+    "distanceKm": 39,
+    "transitDays": 1.1,
+    "freightCostUsd": 212,
+    "riskScore": 0.06,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "CNSHA",
+    "to": "USLAX",
+    "distanceKm": 12027,
+    "transitDays": 16.4,
+    "freightCostUsd": 3808,
+    "riskScore": 0.3,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "USLAX",
+    "to": "CNSHA",
+    "distanceKm": 12027,
+    "transitDays": 16.4,
+    "freightCostUsd": 3808,
+    "riskScore": 0.3,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "JPYOK",
+    "to": "USLAX",
+    "distanceKm": 10184,
+    "transitDays": 14.1,
+    "freightCostUsd": 3255,
+    "riskScore": 0.26,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "USLAX",
+    "to": "JPYOK",
+    "distanceKm": 10184,
+    "transitDays": 14.1,
+    "freightCostUsd": 3255,
+    "riskScore": 0.26,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "CNSHA",
+    "to": "SGSIN",
+    "distanceKm": 4769,
+    "transitDays": 7.1,
+    "freightCostUsd": 1631,
+    "riskScore": 0.16,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "SGSIN",
+    "to": "CNSHA",
+    "distanceKm": 4769,
+    "transitDays": 7.1,
+    "freightCostUsd": 1631,
+    "riskScore": 0.16,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "CNSHA",
+    "to": "MYPKG",
+    "distanceKm": 5670,
+    "transitDays": 8.3,
+    "freightCostUsd": 2241,
+    "riskScore": 0.22,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "MYPKG",
+    "to": "CNSHA",
+    "distanceKm": 5670,
+    "transitDays": 8.3,
+    "freightCostUsd": 2241,
+    "riskScore": 0.22,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "HKHKG",
+    "to": "SGSIN",
+    "distanceKm": 3372,
+    "transitDays": 5.3,
+    "freightCostUsd": 1212,
+    "riskScore": 0.13,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "SGSIN",
+    "to": "HKHKG",
+    "distanceKm": 3372,
+    "transitDays": 5.3,
+    "freightCostUsd": 1212,
+    "riskScore": 0.13,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "SGSIN",
+    "to": "MYPKG",
+    "distanceKm": 532,
+    "transitDays": 1.7,
+    "freightCostUsd": 360,
+    "riskScore": 0.07,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "MYPKG",
+    "to": "SGSIN",
+    "distanceKm": 532,
+    "transitDays": 1.7,
+    "freightCostUsd": 360,
+    "riskScore": 0.07,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "SGSIN",
+    "to": "PKKHI",
+    "distanceKm": 5931,
+    "transitDays": 8.6,
+    "freightCostUsd": 2691,
+    "riskScore": 0.4,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "PKKHI",
+    "to": "SGSIN",
+    "distanceKm": 5931,
+    "transitDays": 8.6,
+    "freightCostUsd": 2691,
+    "riskScore": 0.4,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "SGSIN",
+    "to": "LKCMB",
+    "distanceKm": 3551,
+    "transitDays": 5.6,
+    "freightCostUsd": 1265,
+    "riskScore": 0.13,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "LKCMB",
+    "to": "SGSIN",
+    "distanceKm": 3551,
+    "transitDays": 5.6,
+    "freightCostUsd": 1265,
+    "riskScore": 0.13,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "MYPKG",
+    "to": "LKCMB",
+    "distanceKm": 3154,
+    "transitDays": 5,
+    "freightCostUsd": 1146,
+    "riskScore": 0.12,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "LKCMB",
+    "to": "MYPKG",
+    "distanceKm": 3154,
+    "transitDays": 5,
+    "freightCostUsd": 1146,
+    "riskScore": 0.12,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "LKCMB",
+    "to": "PKKHI",
+    "distanceKm": 3141,
+    "transitDays": 5,
+    "freightCostUsd": 1142,
+    "riskScore": 0.12,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "PKKHI",
+    "to": "LKCMB",
+    "distanceKm": 3141,
+    "transitDays": 5,
+    "freightCostUsd": 1142,
+    "riskScore": 0.12,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "LKCMB",
+    "to": "INNSA",
+    "distanceKm": 1989,
+    "transitDays": 3.6,
+    "freightCostUsd": 797,
+    "riskScore": 0.1,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "INNSA",
+    "to": "LKCMB",
+    "distanceKm": 1989,
+    "transitDays": 3.6,
+    "freightCostUsd": 797,
+    "riskScore": 0.1,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "INNSA",
+    "to": "PKKHI",
+    "distanceKm": 1169,
+    "transitDays": 2.5,
+    "freightCostUsd": 551,
+    "riskScore": 0.08,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "PKKHI",
+    "to": "INNSA",
+    "distanceKm": 1169,
+    "transitDays": 2.5,
+    "freightCostUsd": 551,
+    "riskScore": 0.08,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "PKKHI",
+    "to": "AEJEA",
+    "distanceKm": 1563,
+    "transitDays": 3,
+    "freightCostUsd": 669,
+    "riskScore": 0.09,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "AEJEA",
+    "to": "PKKHI",
+    "distanceKm": 1563,
+    "transitDays": 3,
+    "freightCostUsd": 669,
+    "riskScore": 0.09,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "INNSA",
+    "to": "AEJEA",
+    "distanceKm": 2551,
+    "transitDays": 4.3,
+    "freightCostUsd": 965,
+    "riskScore": 0.11,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "AEJEA",
+    "to": "INNSA",
+    "distanceKm": 2551,
+    "transitDays": 4.3,
+    "freightCostUsd": 965,
+    "riskScore": 0.11,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "PKKHI",
+    "to": "OMSLL",
+    "distanceKm": 2091,
+    "transitDays": 3.7,
+    "freightCostUsd": 827,
+    "riskScore": 0.1,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "OMSLL",
+    "to": "PKKHI",
+    "distanceKm": 2091,
+    "transitDays": 3.7,
+    "freightCostUsd": 827,
+    "riskScore": 0.1,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "LKCMB",
+    "to": "OMSLL",
+    "distanceKm": 3926,
+    "transitDays": 6,
+    "freightCostUsd": 1378,
+    "riskScore": 0.14,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "OMSLL",
+    "to": "LKCMB",
+    "distanceKm": 3926,
+    "transitDays": 6,
+    "freightCostUsd": 1378,
+    "riskScore": 0.14,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "OMSLL",
+    "to": "AEJEA",
+    "distanceKm": 1176,
+    "transitDays": 2.5,
+    "freightCostUsd": 553,
+    "riskScore": 0.08,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "AEJEA",
+    "to": "OMSLL",
+    "distanceKm": 1176,
+    "transitDays": 2.5,
+    "freightCostUsd": 553,
+    "riskScore": 0.08,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "SGSIN",
+    "to": "AEJEA",
+    "distanceKm": 7320,
+    "transitDays": 10.4,
+    "freightCostUsd": 2396,
+    "riskScore": 0.21,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "AEJEA",
+    "to": "SGSIN",
+    "distanceKm": 7320,
+    "transitDays": 10.4,
+    "freightCostUsd": 2396,
+    "riskScore": 0.21,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "OMSLL",
+    "to": "DJJIB",
+    "distanceKm": 1705,
+    "transitDays": 3.2,
+    "freightCostUsd": 712,
+    "riskScore": 0.09,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "DJJIB",
+    "to": "OMSLL",
+    "distanceKm": 1705,
+    "transitDays": 3.2,
+    "freightCostUsd": 712,
+    "riskScore": 0.09,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "DJJIB",
+    "to": "SAJED",
+    "distanceKm": 1533,
+    "transitDays": 3,
+    "freightCostUsd": 660,
+    "riskScore": 0.09,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "SAJED",
+    "to": "DJJIB",
+    "distanceKm": 1533,
+    "transitDays": 3,
+    "freightCostUsd": 660,
+    "riskScore": 0.09,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "SAJED",
+    "to": "EGPSD",
+    "distanceKm": 1670,
+    "transitDays": 3.1,
+    "freightCostUsd": 701,
+    "riskScore": 0.09,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "EGPSD",
+    "to": "SAJED",
+    "distanceKm": 1670,
+    "transitDays": 3.1,
+    "freightCostUsd": 701,
+    "riskScore": 0.09,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "EGPSD",
+    "to": "GRPIR",
+    "distanceKm": 1411,
+    "transitDays": 2.8,
+    "freightCostUsd": 623,
+    "riskScore": 0.09,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "GRPIR",
+    "to": "EGPSD",
+    "distanceKm": 1411,
+    "transitDays": 2.8,
+    "freightCostUsd": 623,
+    "riskScore": 0.09,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "GRPIR",
+    "to": "ESVLC",
+    "distanceKm": 2705,
+    "transitDays": 4.5,
+    "freightCostUsd": 1012,
+    "riskScore": 0.11,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "ESVLC",
+    "to": "GRPIR",
+    "distanceKm": 2705,
+    "transitDays": 4.5,
+    "freightCostUsd": 1012,
+    "riskScore": 0.11,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "ESVLC",
+    "to": "NLRTM",
+    "distanceKm": 1862,
+    "transitDays": 3.4,
+    "freightCostUsd": 759,
+    "riskScore": 0.1,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "NLRTM",
+    "to": "ESVLC",
+    "distanceKm": 1862,
+    "transitDays": 3.4,
+    "freightCostUsd": 759,
+    "riskScore": 0.1,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "LKCMB",
+    "to": "ZACPT",
+    "distanceKm": 9466,
+    "transitDays": 13.1,
+    "freightCostUsd": 3040,
+    "riskScore": 0.25,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "ZACPT",
+    "to": "LKCMB",
+    "distanceKm": 9466,
+    "transitDays": 13.1,
+    "freightCostUsd": 3040,
+    "riskScore": 0.25,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "ZACPT",
+    "to": "NLRTM",
+    "distanceKm": 11580,
+    "transitDays": 15.8,
+    "freightCostUsd": 3674,
+    "riskScore": 0.29,
+    "dataLabel": "illustrative"
+  },
+  {
+    "from": "NLRTM",
+    "to": "ZACPT",
+    "distanceKm": 11580,
+    "transitDays": 15.8,
+    "freightCostUsd": 3674,
+    "riskScore": 0.29,
+    "dataLabel": "illustrative"
+  }
+]

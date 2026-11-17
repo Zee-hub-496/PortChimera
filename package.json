@@ -14,12 +14,14 @@
   "scripts": {
     "dev:api": "npm run dev -w @portchimera/api",
     "dev:web": "npm run dev -w @portchimera/web",
-    "test": "node --test \"packages/*/test/**/*.test.js\" \"apps/api/test/**/*.test.js\"",
+    "test": "node --test \"packages/*/test/**/*.test.js\" \"apps/api/test/**/*.test.js\" \"scripts/test/**/*.test.js\"",
     "test:core": "node --test \"packages/core/test/**/*.test.js\"",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "scan:secrets": "node scripts/scan-secrets.mjs"
+    "scan:secrets": "node scripts/scan-secrets.mjs",
+    "seed:generate": "node scripts/generate-routing-seed.mjs",
+    "demo:routes": "node scripts/demo-routes.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
