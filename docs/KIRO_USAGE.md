@@ -67,3 +67,11 @@ a medium finding instead of high; and "nothing compared" reports `not_enough_dat
 
 **Mutation checks:** removing the tolerance, the company-suffix rules, the larger-value percent, the critical rule, or the tonne conversion each
 made between 1 and 12 tests fail.
+
+## 2026-11-18: API login protection (spec 01)
+
+**What Kiro produced:** a `requireAuth` middleware, a Supabase token verifier, `GET /api/auth/me`, an audit helper and `docs/SETUP_SUPABASE.md`, with tests that use fake Supabase clients.
+
+**Verified:** 26 new tests pass in the authoring sandbox. Five deliberate breakages of the code were each caught by a failing test, then restored.
+
+**Not verified:** the Express route tests and the production environment test have not been run (dependencies cannot be installed in the sandbox). Nothing has been tried against a real Supabase project, and the migration has not been run. The setup guide lists the manual checks.
