@@ -8,7 +8,7 @@ The "chimera" is three technologies stitched into one system:
 2. **Deterministic code** validates, compares and calculates. It makes the decisions.
 3. **A\* search** chooses shipping routes and re-plans them when a port is disrupted.
 
-## Current status (honest)
+## Current status
 
 This project is under active development. Nothing below should be read as a finished feature.
 
