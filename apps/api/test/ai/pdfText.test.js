@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { deflateSync } from 'node:zlib';
-import { extractPdfText } from '../../src/ai/pdfText.js';
+import { extractPdfText, looksReadable } from '../../src/ai/pdfText.js';
 import {
   buildFixtures,
   buildPdf,
@@ -55,5 +55,20 @@ test('returns empty string for unusable input', () => {
   assert.equal(
     extractPdfText(Buffer.concat([Buffer.from('%PDF-1.4\nstream\n'), deflateSync('x')])),
     '',
+  );
+});
+
+test('looksReadable accepts real invoice text and rejects short or garbled text', () => {
+  assert.equal(looksReadable(extractPdfText(fx['commercial-invoice.pdf'])), true);
+  assert.equal(looksReadable('Invoice No: INV-1\nTotal: 4,500.00 EUR'), true);
+  assert.equal(looksReadable('tiny'), false);
+  assert.equal(looksReadable(''), false);
+  assert.equal(looksReadable(null), false);
+  assert.equal(looksReadable('#@$%^&*{}|~`<>!!!???=== ### $$$ %%% ^^^ &&&'), false);
+  assert.equal(
+    looksReadable(
+      '\u0001\u0002\u0003\u0004\u0005\u0006 abc \u0007\u0008\u0009\u000b\u000c\u000e\u000f\u0010',
+    ),
+    false,
   );
 });

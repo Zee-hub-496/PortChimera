@@ -10,7 +10,11 @@ import {
   uploadDocument,
 } from './service.js';
 
-/** Removes fields the server computes, so a review body can be checked by the strict schema. */
+/**
+ * Removes fields the server computes, so a review body can be checked by the strict schema.
+ * A client-sent evidence_verified is dropped here and never stored: the evidence result of an
+ * approved field is read from the original AI payload (document_extractions.payload).
+ */
 export function stripComputed(body) {
   if (!body || typeof body !== 'object' || Array.isArray(body)) return body;
   const { schema_version: _v, document_type: _t, ...rest } = body;

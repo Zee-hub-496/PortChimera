@@ -61,7 +61,7 @@ test('success returns parsed JSON and model, key only in header', async () => {
   assert.equal(init.method, 'POST');
 });
 
-test('request has JSON mime type, no tools, text only and no inline data when text exists', () => {
+test('request has JSON mime type, no tools, and sends text hint plus the file inline', () => {
   const { body } = buildRequest({
     model: MODEL,
     documentType: 'commercial_invoice',
@@ -70,11 +70,13 @@ test('request has JSON mime type, no tools, text only and no inline data when te
   });
   assert.equal(body.generationConfig.responseMimeType, 'application/json');
   assert.equal(body.tools, undefined);
-  assert.equal(body.contents[0].parts.length, 1);
-  assert.ok(!JSON.stringify(body).includes('inline_data'));
+  assert.equal(body.contents[0].parts.length, 2);
+  assert.match(body.contents[0].parts[0].text, /Some invoice text here/);
+  assert.match(body.contents[0].parts[0].text, /hint only/);
+  assert.equal(body.contents[0].parts[1].inline_data.mime_type, 'application/pdf');
 });
 
-test('request sends the file inline as base64 only when there is no text', () => {
+test('request sends the file inline as base64 when there is no text', () => {
   const { body } = buildRequest({
     model: MODEL,
     documentType: 'packing_list',

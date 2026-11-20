@@ -13,6 +13,7 @@ import {
   lineTable,
   precheckFile,
   shouldPoll,
+  shownPayload,
 } from '../src/lib/documentView.js';
 import { buildUploadHeaders } from '../src/lib/apiCore.js';
 
@@ -201,5 +202,58 @@ describe('buildUploadHeaders', () => {
     assert.equal(h['X-Filename'], 'faktura_.png');
     assert.equal('Authorization' in h, false);
     assert.equal('X-Filename' in buildUploadHeaders('t', 'image/png', ''), false);
+  });
+});
+
+describe('shownPayload after approval', () => {
+  const original = {
+    schema_version: 1,
+    fields: {
+      invoice_number: { ...payload.fields.invoice_number },
+      total_value: { ...payload.fields.total_value, evidence_verified: false },
+      currency: {
+        value: 'EUR',
+        confidence: 0.8,
+        status: 'extracted',
+        evidence: 'EUR',
+        evidence_verified: null,
+      },
+    },
+  };
+  const approve = (edits) => {
+    const body = buildReviewPayload(original, edits);
+    return { extraction: { payload: original, reviewedPayload: body } };
+  };
+
+  it('shows the real original evidence for unchanged fields', () => {
+    const shown = shownPayload(approve({}));
+    assert.equal(evidenceLabel(shown.fields.invoice_number), 'Found in the document');
+    assert.match(evidenceLabel(shown.fields.total_value), /Evidence not found/);
+    assert.match(evidenceLabel(shown.fields.currency), /Not verifiable/);
+  });
+
+  it('labels edited fields as edited by you, even when emptied', () => {
+    const shown = shownPayload(approve({ invoice_number: 'INV-9', currency: '' }));
+    assert.equal(evidenceLabel(shown.fields.invoice_number), 'Edited by you');
+    assert.equal(evidenceLabel(shown.fields.currency), 'Edited by you');
+    assert.equal(fieldRows(shown).find((r) => r.key === 'invoice_number').needsAttention, false);
+  });
+
+  it('ignores evidence_verified forged inside the reviewed payload', () => {
+    const detail = approve({});
+    detail.extraction.reviewedPayload.fields.total_value.evidence_verified = true;
+    assert.match(evidenceLabel(shownPayload(detail).fields.total_value), /Evidence not found/);
+  });
+
+  it('does not send the display-only edited marker back to the server', () => {
+    const shown = shownPayload(approve({ invoice_number: 'INV-9' }));
+    const body = buildReviewPayload(shown, {});
+    assert.equal('edited' in body.fields.invoice_number, false);
+    assert.equal('evidence_verified' in body.fields.total_value, false);
+  });
+
+  it('shows the AI payload before any review', () => {
+    assert.equal(shownPayload({ extraction: { payload: original } }), original);
+    assert.equal(shownPayload(null), null);
   });
 });

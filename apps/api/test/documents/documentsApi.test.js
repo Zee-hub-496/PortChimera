@@ -41,7 +41,10 @@ function setup({ provider = createFakeProvider(), runJobImpl = runJob, configure
     audit_logs: [],
   };
   const factory = fakeDbFactory(tables, {
-    unique: { documents: ['shipment_id', 'document_type'] },
+    unique: {
+      documents: ['shipment_id', 'document_type'],
+      line_items: ['shipment_id', 'source_document_id', 'line_no'],
+    },
   });
   const jobs = [];
   const h = documentHandlers({
@@ -644,14 +647,14 @@ describe('review', () => {
     it('keeps the ids of lines that still exist, so dependent rows survive a re-review', async () => {
       const { ctx, lines, before, review, doc } = await reviewed();
       const edited = goodInvoice();
-      edited.lines[0].name = field('Cotton shirts XL');
+      edited.lines[0].quantity = field(77);
       await review(ctx.alice, edited);
       const after = await lines();
       assert.deepEqual(
-        after.map((r) => [r.id, r.line_no, r.description]),
+        after.map((r) => [r.id, r.line_no, r.description, r.quantity]),
         [
-          [before[0].id, 1, 'Cotton shirts XL'],
-          [before[1].id, 2, 'Denim jeans'],
+          [before[0].id, 1, 'Cotton shirts', 77],
+          [before[1].id, 2, 'Denim jeans', 40],
         ],
       );
       assert.equal(ctx.factory.deletes.filter((d) => d.table === 'line_items').length, 0);
@@ -712,16 +715,99 @@ describe('review', () => {
       assert.equal(ex.data[0].reviewed_payload.fields.invoice_number.value, 'INV-2025-0042');
     });
 
+    it('removing the first line keeps the second row for the second line', async () => {
+      const { ctx, lines, before, review } = await reviewed();
+      const edited = goodInvoice();
+      edited.lines = [edited.lines[1]];
+      await review(ctx.alice, edited);
+      const after = await lines();
+      assert.deepEqual(
+        after.map((r) => [r.id, r.line_no, r.description]),
+        [[before[1].id, 1, 'Denim jeans']],
+      );
+      assert.ok(!after.some((r) => r.id === before[0].id));
+    });
+
+    it('reordering lines moves line_no but never reuses a row for different goods', async () => {
+      const { ctx, lines, before, review } = await reviewed();
+      const edited = goodInvoice();
+      edited.lines.reverse();
+      await review(ctx.alice, edited);
+      const byId = Object.fromEntries((await lines()).map((r) => [r.id, r]));
+      assert.equal(byId[before[0].id].description, 'Cotton shirts');
+      assert.equal(byId[before[0].id].line_no, 2);
+      assert.equal(byId[before[1].id].description, 'Denim jeans');
+      assert.equal(byId[before[1].id].line_no, 1);
+      assert.equal(Object.keys(byId).length, 2);
+      assert.equal(ctx.factory.deletes.filter((d) => d.table === 'line_items').length, 0);
+    });
+
+    it('a renamed line is different goods: old row deleted, new row inserted', async () => {
+      const { ctx, lines, before, review } = await reviewed();
+      const edited = goodInvoice();
+      edited.lines[0].name = field('Silk scarves');
+      await review(ctx.alice, edited);
+      const after = await lines();
+      assert.equal(after.length, 2);
+      assert.ok(!after.some((r) => r.id === before[0].id));
+      assert.ok(after.some((r) => r.id === before[1].id && r.line_no === 2));
+      assert.ok(after.some((r) => r.line_no === 1 && r.description === 'Silk scarves'));
+    });
+
+    it('restores removed first line and reordered rows when the payload save fails', async () => {
+      const { ctx, lines, before, review } = await reviewed();
+      const edited = goodInvoice();
+      edited.lines = [edited.lines[1]];
+      await rejects(
+        review(failing(ctx.alice, 'document_extractions', 'update'), edited),
+        500,
+        'REVIEW_SAVE_FAILED',
+      );
+      const after = (await lines()).sort((a, b) => a.line_no - b.line_no);
+      assert.deepEqual(
+        after.map((r) => [r.line_no, r.description]),
+        before.map((r) => [r.line_no, r.description]),
+      );
+    });
+
+    it('logs line_items_restore_failed with step reinsert when putting a deleted row back fails', async () => {
+      const { ctx, reviewLogged, logs } = await reviewed();
+      const edited = goodInvoice();
+      edited.lines = [edited.lines[0]];
+      const db = failing(
+        failing(ctx.alice, 'document_extractions', 'update'),
+        'line_items',
+        'insert',
+      );
+      await rejects(reviewLogged(db, edited), 500, 'REVIEW_SAVE_FAILED');
+      assert.ok(logs.some((l) => l[0] === 'line_items_restore_failed' && l[1].step === 'reinsert'));
+    });
+
+    it('logs line_items_restore_failed with step remove_inserted when removing a new row fails', async () => {
+      const { ctx, reviewLogged, logs } = await reviewed();
+      const edited = goodInvoice();
+      edited.lines.push({ ...edited.lines[0], name: field('Socks') });
+      const db = failing(
+        failing(ctx.alice, 'document_extractions', 'update'),
+        'line_items',
+        'delete',
+      );
+      await rejects(reviewLogged(db, edited), 500, 'REVIEW_SAVE_FAILED');
+      assert.ok(
+        logs.some((l) => l[0] === 'line_items_restore_failed' && l[1].step === 'remove_inserted'),
+      );
+    });
+
     it('logs line_items_restore_failed when the undo itself returns an error', async () => {
       const { ctx, reviewLogged, logs } = await reviewed();
       const edited = goodInvoice();
-      edited.lines[0].name = field('Changed');
-      // First update (the change) works, the revert update fails, and the payload save fails.
+      edited.lines[0].quantity = field(77);
+      // The change works, the revert update (back to quantity 100) fails, and the payload save fails.
       const db = failing(
         failing(ctx.alice, 'document_extractions', 'update'),
         'line_items',
         'update',
-        { when: (v) => v.description === 'Cotton shirts', times: 1 },
+        { when: (v) => v.quantity === 100, times: 1 },
       );
       await rejects(reviewLogged(db, edited), 500, 'REVIEW_SAVE_FAILED');
       assert.ok(logs.some((l) => l[0] === 'line_items_restore_failed'));

@@ -35,12 +35,15 @@ test('fake provider satisfies the provider interface', () => {
   assert.throws(() => assertProvider({}));
 });
 
-test('valid output with text: only text sent, evidence checked', async () => {
+test('valid output with readable text: file and text sent, evidence checked', async () => {
   const provider = createFakeProvider({ response: invoiceResponse() });
   const out = await runExtraction(base(provider));
   assert.equal(out.evidenceCheck, 'checked');
   assert.equal(out.model, 'fake-model');
-  assert.equal(provider.calls[0].file, undefined);
+  assert.deepEqual(provider.calls[0].file, {
+    bytes: fx['commercial-invoice.pdf'],
+    mimeType: 'application/pdf',
+  });
   assert.equal(provider.calls[0].text, invoiceText);
   assert.equal(out.payload.schema_version, 1);
   assert.equal(out.payload.fields.invoice_number.evidence_verified, true);
@@ -65,6 +68,17 @@ test('too little text counts as no text', async () => {
   const out = await runExtraction(base(provider, { text: 'tiny' }));
   assert.equal(out.evidenceCheck, 'not_verifiable');
   assert.ok(provider.calls[0].file);
+});
+
+test('gibberish text: file still sent, text withheld, evidence not verifiable', async () => {
+  const provider = createFakeProvider({ response: invoiceResponse() });
+  const gibberish = '\u0001\u0002#@$%^&*{}|~`<>\u0003\u0004 \u00ff\u00fe!!!???=== ###';
+  const out = await runExtraction(base(provider, { text: gibberish }));
+  assert.equal(out.evidenceCheck, 'not_verifiable');
+  assert.equal(provider.calls[0].text, null);
+  assert.ok(provider.calls[0].file.bytes);
+  assert.equal(out.payload.fields.invoice_number.evidence_verified, null);
+  assert.equal(out.payload.fields.invoice_number.status, 'extracted');
 });
 
 test('malformed output is rejected, not repaired', async () => {

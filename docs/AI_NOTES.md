@@ -25,9 +25,14 @@ Invoices and packing lists also have `lines` (one entry per product). The server
 
 ## Evidence verification
 
-When the PDF has readable text, only that text is sent to the model, and the server checks that each `evidence` quote appears in it (ignoring case and extra spaces). A quote that is not found marks the field `evidence_verified: false`, changes `extracted` to `uncertain` and lowers the confidence. The screen shows "Evidence not found: AI suggestion".
+The file itself (PDF, JPEG or PNG) is always sent to the model. The server also reads the PDF's text layer with a small built-in reader and checks whether it `looksReadable` (at least 20 characters, most of them letters, digits, spaces or common punctuation, and a fair share letters or digits).
 
-When there is no readable text (scans, images, PDFs the small built-in reader cannot decode), the file is sent to the model directly and nothing can be checked. The screen shows "Not verifiable". Treat those values with extra care.
+- **Readable text:** the text is also put in the prompt, inside the delimited data block, as a hint about the same file. Decision: this makes the model copy evidence quotes exactly as they appear in the text, which is what the check below compares against. The prompt says the file is the source and the text may be incomplete. The text is untrusted data, like the file. The server checks that each `evidence` quote appears in the text (ignoring case and extra spaces). A quote that is not found marks the field `evidence_verified: false`, changes `extracted` to `uncertain` and lowers the confidence. The screen shows "Evidence not found: AI suggestion".
+- **No readable text** (scans, images, garbled text layers, PDFs the small reader cannot decode): no text is sent, only the file. Nothing can be checked and `evidence_verified` is `null`. The screen shows "Not verifiable". Treat those values with extra care.
+
+Sending the file every time means a bad text layer can no longer hide the real page from the model. The cost is a larger request for text PDFs.
+
+After approval, the screen still shows each field's real original evidence result. The server never stores `evidence_verified` from a review body (it strips it). The page compares each approved value with the original AI output: an unchanged field shows its original label, and a field you edited shows "Edited by you".
 
 ## Prompt injection
 
@@ -51,7 +56,8 @@ On the free tier, Google may use prompts to improve its products. Upload only th
 
 - The PDF text reader is small and best effort. Many real PDFs will fall back to "not verifiable".
 - The extraction job runs inside the API process. If the API restarts while a document is `processing`, press the read button again. Recovery of a stuck `processing` document relies on a per process guard, so it is only safe with one API instance. With several instances a started-at timestamp would be needed.
-- A re-review updates line items in place by line number, so HS suggestions and duty estimates on lines that still exist are kept. Only lines that were removed from the invoice are deleted, together with what hangs off them.
+- A re-review pairs each line with its existing row by description (ignoring case and spacing), not by position. Paired rows keep their id, so HS suggestions and duty estimates (which cascade from `line_items.id`) are kept when a line above is removed or lines are reordered. A line whose description was edited counts as different goods: the old row is deleted, with anything that hangs off it, and a new row is inserted. Nothing writes HS suggestions or duty estimates yet, so this is only protection for later milestones.
+- If a review save fails after line items changed, the server tries to undo the line item changes. The undo is best effort: a failed undo step is logged as `line_items_restore_failed` and is not retried. A deleted row that is put back gets its old id but not the dependent rows that were deleted with it.
 - One document per type per shipment.
 - Line items are shown but not editable on the review screen.
 - Nothing here has been run against the real Gemini API yet.

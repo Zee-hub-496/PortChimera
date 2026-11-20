@@ -7,12 +7,12 @@ const defaultSleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 /**
  * Builds the Gemini generateContent request. Pure: no network, no key in the URL or body.
  * The key goes in the x-goog-api-key header, added by the caller. No tools are declared.
- * The file is sent inline only when there is no text.
+ * The file is ALWAYS sent inline when given; readable text, if any, is added to the prompt as a hint.
  */
 export function buildRequest({ model, documentType, text, file }) {
-  const parts = [{ text: buildUserPrompt({ documentType, text }) }];
-  const hasText = typeof text === 'string' && text.trim() !== '';
-  if (!hasText && file?.bytes) {
+  const withFile = Boolean(file?.bytes);
+  const parts = [{ text: buildUserPrompt({ documentType, text, withFile }) }];
+  if (withFile) {
     parts.push({
       inline_data: { mime_type: file.mimeType, data: Buffer.from(file.bytes).toString('base64') },
     });
