@@ -13,7 +13,7 @@ export const CAPABILITIES = Object.freeze([
     id: 'document-ai',
     icon: 'FileSearch',
     title: 'Document AI extraction',
-    body: 'Upload an invoice, packing list or bill of lading. AI reads the fields and shows where each value was found, so you can review it before it is used.',
+    body: 'Upload an invoice, packing list or certificate of origin. AI reads the fields and shows where each value was found, so you can review it before it is used.',
     status: 'available',
   },
   {

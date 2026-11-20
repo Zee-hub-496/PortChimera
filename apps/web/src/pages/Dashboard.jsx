@@ -92,11 +92,7 @@ export default function Dashboard() {
             <Kpi label="Total shipments" value={stats.total} />
             <Kpi label="Requires review" value={stats.needsReview} hint="Waiting for a person" />
             <Kpi label="Ports used" value={stats.portCount} hint="Origins and destinations" />
-            <Kpi
-              label="Cleared"
-              value={stats.byStatus.cleared + stats.byStatus.ai_pre_cleared}
-              hint="Includes AI pre-cleared"
-            />
+            <Kpi label="Cleared" value={stats.byStatus.cleared} hint="Cleared by a person" />
           </section>
 
           <section aria-label="Shipments by status" className="mt-4 flex flex-wrap gap-2">

@@ -383,7 +383,9 @@ export default function MaritimeMap({
     });
 
     // An error before the first style load means tiles or style could not be fetched.
-    map.on('error', () => {
+    // Errors for a single source or tile (sprites, glyphs, one tile) leave a usable map, so skip them.
+    map.on('error', (event) => {
+      if (event?.sourceId || event?.tile) return;
       if (!readyRef.current) setFailed(true);
     });
 
@@ -456,7 +458,7 @@ export default function MaritimeMap({
       >
         <div
           ref={containerRef}
-          role="img"
+          role="region"
           aria-label={ariaLabel}
           className="absolute inset-0"
           hidden={failed}

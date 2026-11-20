@@ -65,9 +65,9 @@ function Hero({ signedIn }) {
             Cross-check trade documents. Plan the sea route.
           </h1>
           <p className="mt-4 max-w-xl text-lg text-muted">
-            PortChimera reads invoices, packing lists and bills of lading with AI, then compares
-            them with fixed rules so possible inconsistencies show up before cargo ships. It also
-            compares sea routes between ports with A* pathfinding.
+            PortChimera reads invoices, packing lists and certificates of origin with AI, then
+            compares them with fixed rules so possible inconsistencies show up before cargo ships.
+            It also compares sea routes between ports with A* pathfinding.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             {signedIn ? (
@@ -169,7 +169,7 @@ function DocumentAiBand() {
             decide what to do.
           </p>
           <ul className="mt-5 space-y-2 text-sm text-fg">
-            <li>Invoices, packing lists and bills of lading</li>
+            <li>Invoices, packing lists and certificates of origin</li>
             <li>Review each field before it is used</li>
             <li>Same file, same result: extractions are cached</li>
           </ul>

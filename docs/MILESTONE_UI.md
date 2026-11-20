@@ -74,6 +74,7 @@ Tick each one. Note what looks wrong.
 - [ ] Open the shipment. The header and the tabs Overview, Documents, Cross-check and Route work.
 - [ ] Route tab: the map shows CARTO tiles, a curved line drawing from Shanghai to Karachi, port pins and a legend. Click a pin to see its name and code. Try Fastest, Cheapest and Lowest risk. Switch the theme and check the map tiles change.
 - [ ] Global Map (`/map`): all ports show. Click a pin and the list highlights; click a list item and the map moves to it.
+- [ ] Map manual checks (the `MaritimeMap` component has no automated test, only the pure helpers in `mapData` do): zoom buttons and popups work with the keyboard and a screen reader; the arc draws once and does not replay when you select a port; switching theme swaps tiles and keeps pins and routes; with the network blocked the text fallback appears; a missing glyph or sprite does not hide a working map.
 - [ ] Documents and Cross-check tabs still upload, review and compare as before.
 - [ ] Collapse and expand the sidebar.
 - [ ] Narrow the browser window to phone width and check the menu and pages.

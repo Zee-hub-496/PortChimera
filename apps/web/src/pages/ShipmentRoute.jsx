@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useOutletContext, useParams } from 'react-router-dom';
 import { Clock, DollarSign, ShieldAlert } from 'lucide-react';
 import { apiGet, apiPost } from '../lib/api.js';
 import { formatRoute, ILLUSTRATIVE_NOTICE, OBJECTIVE_LABELS } from '../lib/routeView.js';
@@ -26,22 +26,18 @@ function stopsWithCoordinates(path, ports) {
 
 export default function ShipmentRoute() {
   const { id } = useParams();
-  const [shipment, setShipment] = useState(null);
+  const { shipment } = useOutletContext(); // loaded once by ShipmentLayout
   const [ports, setPorts] = useState([]);
   const [objective, setObjective] = useState('fastest');
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
-  const [notFound, setNotFound] = useState(false);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    Promise.all([apiGet(`/api/shipments/${id}`), apiGet('/api/ports')])
-      .then(([s, p]) => {
-        setShipment(s);
-        setPorts(p);
-      })
-      .catch((err) => (err.status === 404 ? setNotFound(true) : setError(err.message)));
-  }, [id]);
+    apiGet('/api/ports')
+      .then(setPorts)
+      .catch((err) => setError(err.message));
+  }, []);
 
   useEffect(() => {
     if (!shipment) return;
@@ -59,9 +55,6 @@ export default function ShipmentRoute() {
 
   const stops = useMemo(() => stopsWithCoordinates(result?.path ?? [], ports), [result, ports]);
   const view = result ? formatRoute(result) : null;
-
-  // The shipment layout already shows the not-found state.
-  if (notFound) return null;
 
   return (
     <div className="flex max-w-4xl flex-col gap-6">

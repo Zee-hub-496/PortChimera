@@ -1,4 +1,12 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Command } from 'cmdk';
 import { Anchor, FileText, Search, Ship } from 'lucide-react';
@@ -28,6 +36,8 @@ export function CommandPaletteProvider({ children }) {
   const [query, setQuery] = useState('');
   const [remote, setRemote] = useState({ shipments: [], ports: [], loaded: false, error: false });
 
+  const returnFocus = useRef(null);
+
   const openPalette = useCallback(() => setOpen(true), []);
 
   useEffect(() => {
@@ -52,7 +62,7 @@ export function CommandPaletteProvider({ children }) {
         if (!cancelled) setRemote({ shipments, ports, loaded: true, error: false });
       })
       .catch(() => {
-        if (!cancelled) setRemote({ shipments: [], ports: [], loaded: true, error: true });
+        if (!cancelled) setRemote({ shipments: [], ports: [], loaded: false, error: true });
       });
     return () => {
       cancelled = true;
@@ -83,6 +93,16 @@ export function CommandPaletteProvider({ children }) {
     setOpen(false);
     setQuery('');
   }
+
+  // Remember what had focus when the dialog opened and give it back on close.
+  useEffect(() => {
+    if (open) {
+      returnFocus.current = document.activeElement;
+    } else if (returnFocus.current) {
+      returnFocus.current.focus?.();
+      returnFocus.current = null;
+    }
+  }, [open]);
 
   const value = useMemo(() => ({ openPalette }), [openPalette]);
 
@@ -151,7 +171,7 @@ export function CommandPaletteProvider({ children }) {
                   </Command.Group>
                 );
               })}
-              {signedIn && !remote.loaded && (
+              {signedIn && !remote.loaded && !remote.error && (
                 <p role="status" className="px-3 py-2 text-xs text-muted">
                   Loading shipments and ports...
                 </p>
