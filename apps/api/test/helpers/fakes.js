@@ -55,8 +55,11 @@ export function fakeVerifier({ down = false } = {}) {
  */
 export function fakeDbFactory(tables = {}, { shared = [], unique = {}, rls = true } = {}) {
   const inserts = [];
+  const updates = [];
+  const deletes = [];
   const queries = [];
   let failWith = null;
+  let storageFailWith = null;
   let counter = 0;
 
   const createDb = (token) => {
@@ -87,7 +90,8 @@ export function fakeDbFactory(tables = {}, { shared = [], unique = {}, rls = tru
         const run = () => {
           queries.push({ actingAs, ...state });
           if (failWith) return { data: null, error: failWith };
-          return { data: matching(), error: null };
+          // Copies, like a real client: callers must not be able to edit stored rows by accident.
+          return { data: matching().map((r) => ({ ...r })), error: null };
         };
 
         const doInsert = (row) => {
@@ -110,11 +114,13 @@ export function fakeDbFactory(tables = {}, { shared = [], unique = {}, rls = tru
             id: `fake-id-${counter}`,
             created_at: new Date(Date.UTC(2025, 0, 1, 0, 0, counter)).toISOString(),
             status: table === 'shipments' ? 'submitted' : undefined,
+            processing_status: table === 'documents' ? 'uploaded' : undefined,
             ...row,
             user_id: row.user_id ?? actingAs,
             owner: actingAs,
           };
           if (stored.status === undefined) delete stored.status;
+          if (stored.processing_status === undefined) delete stored.processing_status;
           tables[table].push(stored);
           return { data: stored, error: null };
         };
@@ -143,8 +149,14 @@ export function fakeDbFactory(tables = {}, { shared = [], unique = {}, rls = tru
           then(resolve, reject) {
             return Promise.resolve(run()).then(resolve, reject);
           },
-          insert(row) {
-            const result = doInsert(row);
+          insert(input) {
+            let result;
+            if (Array.isArray(input)) {
+              const done = input.map(doInsert);
+              result = done.find((r) => r.error) ?? { data: done.map((r) => r.data), error: null };
+            } else {
+              result = doInsert(input);
+            }
             const chain = {
               select() {
                 return chain;
@@ -162,13 +174,120 @@ export function fakeDbFactory(tables = {}, { shared = [], unique = {}, rls = tru
             return chain;
           },
         };
+        // update(values) / delete() only touch rows this user can see, and only those that match
+        // the .eq()/.in() filters, like Row Level Security plus a WHERE clause.
+        const mutation = (apply) => {
+          const filters = {};
+          const lists = {};
+          let selecting = false;
+          const exec = () => {
+            const saved = { f: state.filters, l: state.inList };
+            state.filters = filters;
+            state.inList = lists;
+            queries.push({ actingAs, ...state });
+            const rows = failWith ? [] : matching();
+            state.filters = saved.f;
+            state.inList = saved.l;
+            if (failWith) return { data: null, error: failWith };
+            apply(rows);
+            return { data: selecting ? rows : null, error: null };
+          };
+          const chain = {
+            eq(column, value) {
+              filters[column] = value;
+              return chain;
+            },
+            in(column, values) {
+              lists[column] = values;
+              return chain;
+            },
+            select() {
+              selecting = true;
+              return chain;
+            },
+            async maybeSingle() {
+              const res = exec();
+              return res.error ? res : { data: res.data[0] ?? null, error: null };
+            },
+            then(resolve, reject) {
+              return Promise.resolve(exec()).then(resolve, reject);
+            },
+          };
+          return chain;
+        };
+        api.update = (values) => {
+          updates.push({ actingAs, table, values });
+          return mutation((rows) => rows.forEach((r) => Object.assign(r, values)));
+        };
+        api.delete = () => {
+          deletes.push({ actingAs, table });
+          return mutation((rows) => {
+            const list = tables[table] ?? [];
+            for (const r of rows) list.splice(list.indexOf(r), 1);
+          });
+        };
         return api;
+      },
+      storage: {
+        from(bucket) {
+          return fakeBucket(bucket, actingAs);
+        },
+      },
+    };
+  };
+
+  // A private bucket that only lets a user touch objects under their own user-id folder,
+  // like the storage policies in the migration. Objects are kept in `objects` (path -> Blob).
+  const objects = new Map();
+  const storageCalls = [];
+  const denied = { data: null, error: { message: 'new row violates row-level security policy' } };
+  const fakeBucket = (bucket, actingAs) => {
+    const allowed = (path) => actingAs !== null && String(path).split('/')[0] === actingAs;
+    return {
+      async upload(path, body, options = {}) {
+        storageCalls.push({ op: 'upload', bucket, path, options, actingAs });
+        if (!allowed(path)) return denied;
+        if (storageFailWith) return { data: null, error: storageFailWith };
+        if (objects.has(path))
+          return { data: null, error: { message: 'The resource already exists' } };
+        objects.set(path, new Blob([body]));
+        return { data: { path }, error: null };
+      },
+      async download(path) {
+        storageCalls.push({ op: 'download', bucket, path, actingAs });
+        if (!allowed(path) || !objects.has(path)) {
+          return { data: null, error: { message: 'Object not found' } };
+        }
+        return { data: objects.get(path), error: null };
+      },
+      async remove(paths) {
+        storageCalls.push({ op: 'remove', bucket, paths, actingAs });
+        const mine = paths.filter(allowed);
+        for (const p of mine) objects.delete(p);
+        return { data: mine.map((name) => ({ name })), error: null };
+      },
+      async createSignedUrl(path, seconds) {
+        storageCalls.push({ op: 'sign', bucket, path, seconds, actingAs });
+        if (!allowed(path) || !objects.has(path)) {
+          return { data: null, error: { message: 'Object not found' } };
+        }
+        return {
+          data: { signedUrl: `https://storage.example.test/sign/${bucket}/${path}?token=t` },
+          error: null,
+        };
       },
     };
   };
 
   return {
     createDb,
+    updates,
+    deletes,
+    objects,
+    storageCalls,
+    failStorageWith(error) {
+      storageFailWith = error;
+    },
     inserts,
     queries,
     failNextWith(error) {

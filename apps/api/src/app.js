@@ -9,6 +9,7 @@ import { authRouter } from './modules/auth/routes.js';
 import { shipmentsRouter } from './modules/shipments/routes.js';
 import { portsRouter } from './modules/ports/routes.js';
 import { routesRouter } from './modules/routes/routes.js';
+import { documentsRouter, shipmentDocumentsRouter } from './modules/documents/routes.js';
 
 /**
  * Builds the Express app without starting a server. Keeping "build" separate from "listen"
@@ -30,7 +31,7 @@ export function createApp(env, { logger = console, auth = null } = {}) {
   app.use(cors({ origin: env.CORS_ORIGIN }));
   app.use(express.json({ limit: '1mb' }));
 
-  // Basic abuse protection. Stricter limits will be added on AI and upload routes.
+  // Basic abuse protection. Upload and AI routes add a stricter limit of their own.
   app.use(
     '/api',
     rateLimit({
@@ -55,6 +56,8 @@ export function createApp(env, { logger = console, auth = null } = {}) {
       shipments: shipmentsRouter,
       ports: portsRouter,
       routes: routesRouter,
+      shipmentDocuments: () => shipmentDocumentsRouter({ env, logger }),
+      documents: () => documentsRouter({ env, logger }),
     });
   }
 

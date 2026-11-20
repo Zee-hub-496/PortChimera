@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { apiGet } from '../lib/api.js';
 
 export default function Landing() {
@@ -19,6 +20,9 @@ export default function Landing() {
       <p className="text-sm text-slate-400">
         API status: <span className="font-mono">{apiStatus}</span>
       </p>
+      <Link to="/login" className="text-sm text-sky-400 underline">
+        Sign in
+      </Link>
     </main>
   );
 }
