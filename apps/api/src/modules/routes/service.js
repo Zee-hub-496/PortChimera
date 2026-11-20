@@ -68,7 +68,7 @@ export async function calculateRoute(db, userId, input, engine) {
     throw err;
   }
 
-  const nameOf = new Map(graphInput.ports.map((p) => [p.code, p.name]));
+  const portOf = new Map(graphInput.ports.map((p) => [p.code, p]));
   const base = {
     shipmentId,
     objective: result.objective,
@@ -79,7 +79,10 @@ export async function calculateRoute(db, userId, input, engine) {
 
   return {
     ...base,
-    path: result.path.map((code) => ({ code, name: nameOf.get(code) ?? code })),
+    path: result.path.map((code) => {
+      const p = portOf.get(code);
+      return { code, name: p?.name ?? code, lat: p?.lat ?? null, lon: p?.lon ?? null };
+    }),
     totals: result.totals,
   };
 }

@@ -15,6 +15,8 @@ describe('GET /api/ports handler', () => {
       'code',
       'country',
       'dataLabel',
+      'lat',
+      'lon',
       'name',
     ]);
     assert.equal(res.body.data[0].dataLabel, 'illustrative');

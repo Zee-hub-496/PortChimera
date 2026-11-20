@@ -75,3 +75,11 @@ made between 1 and 12 tests fail.
 **Verified:** 26 new tests pass in the authoring sandbox. Five deliberate breakages of the code were each caught by a failing test, then restored.
 
 **Not verified:** the Express route tests and the production environment test have not been run (dependencies cannot be installed in the sandbox). Nothing has been tried against a real Supabase project, and the migration has not been run. The setup guide lists the manual checks.
+
+## 2026-11-19: Web login, shipments and route page
+
+**What Kiro produced:** API modules for shipments, ports and route calculation, then a React login page, a protected shipments page (create and list) and a route page with an SVG sketch of the path. All decisions (validation, formatting, projecting coordinates) sit in plain JavaScript files under `apps/web/src/lib`, so components only display them.
+
+**Verified:** the plain-JavaScript logic and the API service and handler tests pass with `node --test` in the authoring sandbox, including a two-user check (Bob cannot see or open Alice's shipment).
+
+**Not verified:** the web build (`vite build`), the React pages in a browser, the Express routes, the zod schema tests, and sign in against a real Supabase project. Dependencies could not be installed in the sandbox. Follow `docs/MILESTONE_LOGIN_SHIPMENTS.md` to check these yourself. Route results are not saved to `route_results` yet.
