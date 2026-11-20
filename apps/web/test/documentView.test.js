@@ -2,6 +2,8 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   MAX_UPLOAD_BYTES,
+  STATUS_LABELS,
+  STATUS_TONES,
   buildReviewPayload,
   canProcess,
   canReview,
@@ -283,5 +285,11 @@ describe('shownPayload after approval', () => {
   it('shows the AI payload before any review', () => {
     assert.equal(shownPayload({ extraction: { payload: original } }), original);
     assert.equal(shownPayload(null), null);
+  });
+});
+
+describe('STATUS_TONES', () => {
+  it('has a tone for every document status', () => {
+    for (const status of Object.keys(STATUS_LABELS)) assert.ok(STATUS_TONES[status], status);
   });
 });
