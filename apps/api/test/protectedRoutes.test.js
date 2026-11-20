@@ -7,6 +7,8 @@ const factories = () => ({
   shipments: () => 'shipmentsRouter',
   ports: () => 'portsRouter',
   routes: () => 'routesRouter',
+  shipmentDocuments: () => 'shipmentDocumentsRouter',
+  documents: () => 'documentsRouter',
 });
 
 describe('mountProtectedRoutes', () => {
@@ -19,7 +21,14 @@ describe('mountProtectedRoutes', () => {
       assert.equal(mw, protect);
       assert.match(router, /Router$/);
     }
-    for (const p of ['/api/shipments', '/api/ports', '/api/routes', '/api/auth']) {
+    for (const p of [
+      '/api/shipments',
+      '/api/ports',
+      '/api/routes',
+      '/api/auth',
+      '/api/shipments/:shipmentId/documents',
+      '/api/documents',
+    ]) {
       assert.ok(
         calls.some((c) => c[0] === p),
         p,
