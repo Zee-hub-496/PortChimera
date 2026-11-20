@@ -44,6 +44,8 @@ export function fakeVerifier({ down = false } = {}) {
  *
  * Options:
  *  - shared: table names readable by every signed-in user (reference data such as ports).
+ *  - rls: set to false to switch the row-level emulation off, so only filters written in code
+ *    (such as .eq('user_id', ...)) separate users. Use it to test the code-level ownership check.
  *  - unique: { table: [columns] } makes a second insert with the same values (for the same
  *    owner) fail with Postgres error code 23505, like a unique constraint.
  *
@@ -51,7 +53,7 @@ export function fakeVerifier({ down = false } = {}) {
  * `id` and `created_at` when missing. Inserting a row whose user_id is someone else fails with
  * code 42501, like a failed RLS `with check`.
  */
-export function fakeDbFactory(tables = {}, { shared = [], unique = {} } = {}) {
+export function fakeDbFactory(tables = {}, { shared = [], unique = {}, rls = true } = {}) {
   const inserts = [];
   const queries = [];
   let failWith = null;
@@ -63,7 +65,9 @@ export function fakeDbFactory(tables = {}, { shared = [], unique = {} } = {}) {
       from(table) {
         const state = { table, filters: {}, inList: {}, orderBy: null };
         const visibleRows = () =>
-          (tables[table] ?? []).filter((r) => shared.includes(table) || r.owner === actingAs);
+          (tables[table] ?? []).filter(
+            (r) => !rls || shared.includes(table) || r.owner === actingAs,
+          );
         const matching = () => {
           let rows = visibleRows().filter((r) =>
             Object.entries(state.filters).every(([c, v]) => r[c] === v),

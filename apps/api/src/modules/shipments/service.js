@@ -15,8 +15,13 @@ async function loadPortsByIds(db, ids) {
 /**
  * Creates a shipment for the signed-in user. `input` is already validated.
  * The user id comes from the sign-in (`userId`), never from the request body.
+ *
+ * Audit policy: the insert and the audit write are two separate calls (no transaction). If the
+ * audit write fails after the shipment exists, we return success and log the failure loudly
+ * (`audit_write_failed`), because a 500 here would make a retry hit the unique shipment number
+ * (409) while the shipment already exists. Move both into one RPC when a transaction is added.
  */
-export async function createShipment(db, userId, input) {
+export async function createShipment(db, userId, input, logger = console) {
   const { shipmentNumber, originPortCode, destinationPortCode, incoterm } = input;
 
   const { data: ports, error: portError } = await db
@@ -54,12 +59,21 @@ export async function createShipment(db, userId, input) {
   }
   if (error || !row) throw new AppError(500, 'SHIPMENT_CREATE_FAILED', 'Could not create shipment');
 
-  await recordAudit(db, {
-    userId,
-    shipmentId: row.id,
-    action: 'shipment.created',
-    details: { shipmentNumber, origin: originPortCode, destination: destinationPortCode },
-  });
+  try {
+    await recordAudit(db, {
+      userId,
+      shipmentId: row.id,
+      action: 'shipment.created',
+      details: { shipmentNumber, origin: originPortCode, destination: destinationPortCode },
+    });
+  } catch (err) {
+    logger.error('audit_write_failed', {
+      action: 'shipment.created',
+      shipmentId: row.id,
+      userId,
+      reason: err?.code ?? err?.message,
+    });
+  }
 
   return toShipmentView(row, indexPorts([origin, destination]));
 }

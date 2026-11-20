@@ -29,7 +29,11 @@ export const createShipmentSchema = z
     destinationPortCode: portCode,
     incoterm: z.enum(INCOTERMS).optional(),
   })
-  .strict();
+  .strict()
+  .refine((v) => v.originPortCode !== v.destinationPortCode, {
+    path: ['destinationPortCode'],
+    message: 'Origin and destination must be different ports',
+  });
 
 /** Path parameter :id. */
 export const shipmentIdSchema = z.string().uuid();

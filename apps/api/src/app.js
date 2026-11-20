@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import { requireAuth } from './middleware/requireAuth.js';
+import { mountProtectedRoutes } from './protectedRoutes.js';
 import { authRouter } from './modules/auth/routes.js';
 import { shipmentsRouter } from './modules/shipments/routes.js';
 import { portsRouter } from './modules/ports/routes.js';
@@ -49,10 +50,12 @@ export function createApp(env, { logger = console, auth = null } = {}) {
   // behind `protect`, never above it.
   if (auth) {
     const protect = requireAuth({ ...auth, logger });
-    app.use('/api/auth', protect, authRouter());
-    app.use('/api/shipments', protect, shipmentsRouter());
-    app.use('/api/ports', protect, portsRouter());
-    app.use('/api/routes', protect, routesRouter());
+    mountProtectedRoutes(app, protect, {
+      auth: authRouter,
+      shipments: shipmentsRouter,
+      ports: portsRouter,
+      routes: routesRouter,
+    });
   }
 
   app.use(notFoundHandler);

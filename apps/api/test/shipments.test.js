@@ -178,3 +178,49 @@ describe('toShipmentView', () => {
     });
   });
 });
+
+describe('code-level ownership filter (database row security emulation off)', () => {
+  const setupNoRls = () => {
+    const factory = fakeDbFactory(
+      { ports, shipments: [], audit_logs: [] },
+      { shared: ['ports'], rls: false },
+    );
+    return { alice: factory.createDb('alice-token'), bob: factory.createDb('bob-token') };
+  };
+
+  it('listShipments filters on user_id in code', async () => {
+    const { alice, bob } = setupNoRls();
+    await createShipment(alice, 'user-alice', input('A-1'));
+    assert.equal((await listShipments(alice, 'user-alice')).length, 1);
+    assert.deepEqual(await listShipments(bob, 'user-bob'), []);
+  });
+
+  it('getShipment returns null for another user even if the database would return the row', async () => {
+    const { alice, bob } = setupNoRls();
+    const view = await createShipment(alice, 'user-alice', input());
+    assert.equal(await getShipment(bob, 'user-bob', view.id), null);
+    assert.equal((await getShipment(alice, 'user-alice', view.id)).id, view.id);
+  });
+});
+
+describe('audit failure after insert', () => {
+  it('still returns the shipment and logs the failure loudly', async () => {
+    const { factory, alice } = setup();
+    const logged = [];
+    const logger = { error: (...a) => logged.push(a) };
+    // Let the port lookup and insert pass, then fail only the audit insert.
+    const failing = {
+      from(table) {
+        if (table === 'audit_logs') {
+          return { insert: async () => ({ error: { code: 'XX000', message: 'down' } }) };
+        }
+        return alice.from(table);
+      },
+    };
+    const view = await createShipment(failing, 'user-alice', input(), logger);
+    assert.equal(view.shipmentNumber, 'SHP-1');
+    assert.equal(logged.length, 1);
+    assert.equal(logged[0][0], 'audit_write_failed');
+    assert.equal(factory.inserts.filter((i) => i.table === 'shipments').length, 1);
+  });
+});

@@ -27,12 +27,16 @@ export default function ShipmentRoute() {
 
   useEffect(() => {
     if (!shipment) return;
+    let ignore = false; // a slower, older response must not overwrite the latest objective
     setBusy(true);
     setError('');
     apiPost('/api/routes/calculate', { shipmentId: id, objective })
-      .then(setResult)
-      .catch((err) => setError(err.message))
-      .finally(() => setBusy(false));
+      .then((r) => !ignore && setResult(r))
+      .catch((err) => !ignore && setError(err.message))
+      .finally(() => !ignore && setBusy(false));
+    return () => {
+      ignore = true;
+    };
   }, [shipment, id, objective]);
 
   const projected = useMemo(() => projectPorts(ports, VIEW), [ports]);

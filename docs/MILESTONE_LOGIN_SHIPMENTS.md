@@ -62,3 +62,10 @@ PowerShell reports a 404 error with the code `SHIPMENT_NOT_FOUND`. That is the c
 - Blank page or "supabaseUrl is required": a `VITE_SUPABASE_*` value is missing. Restart `npm run dev:web` after editing the env file.
 - Sign in works but lists fail with 401: the API's Supabase settings do not match the web app's project.
 - Ports dropdown is empty: the seed data (`supabase/seed/routing_seed.sql`) has not been run.
+
+## Review follow-ups
+
+- Run `npm install` and commit the updated `package-lock.json` (new `@supabase/supabase-js`). The lockfile could not be regenerated in the sandbox, so `npm ci` fails until this is done. Then run `npm test` once: `shipmentSchemas.test.js` needs zod.
+- Audit on create: the shipment insert and the audit write are not atomic. If the audit write fails, the API still returns the created shipment and logs `audit_write_failed`. Moving both into one database function is future work.
+- Same origin and destination is now rejected by the API (422), not only by the web form.
+- Incoterms and objectives are still listed in several places. Tests compare the web lists with the API and core lists, so drift fails a test.

@@ -7,6 +7,9 @@ import {
   makeParser,
   shipmentIdSchema,
 } from '../src/modules/shipments/schemas.js';
+import { shipmentHandlers } from '../src/modules/shipments/handlers.js';
+import { INCOTERMS } from '../src/modules/shipments/schemas.js';
+import { INCOTERMS as WEB_INCOTERMS } from '../../web/src/lib/shipmentForm.js';
 import { calculateRouteSchema } from '../src/modules/routes/schemas.js';
 
 const parseCreate = makeParser(createShipmentSchema, AppError);
@@ -31,6 +34,12 @@ describe('createShipmentSchema', () => {
     assert.throws(() => parseCreate({ ...valid, originPortCode: 'X' }));
     assert.throws(() => parseCreate({ ...valid, shipmentNumber: '  ' }));
   });
+  it('rejects the same origin and destination', () => {
+    assert.throws(
+      () => parseCreate({ ...valid, destinationPortCode: 'CNSHA' }),
+      (e) => e.status === 422,
+    );
+  });
   it('accepts each valid incoterm', () => {
     assert.equal(parseCreate({ ...valid, incoterm: 'DDP' }).incoterm, 'DDP');
   });
@@ -46,5 +55,27 @@ describe('other schemas', () => {
     assert.equal(calculateRouteSchema.safeParse({ shipmentId: id }).success, true);
     assert.equal(calculateRouteSchema.safeParse({ shipmentId: id, objective: 'x' }).success, false);
     assert.equal(calculateRouteSchema.safeParse({ shipmentId: id, userId: 'u' }).success, false);
+  });
+});
+
+describe('real parser wiring', () => {
+  it('create handler gives 422 for a body with userId, and writes nothing', async () => {
+    const h = shipmentHandlers({ parseCreate, parseId: makeParser(shipmentIdSchema, AppError) });
+    const db = {
+      from() {
+        throw new Error('database must not be touched');
+      },
+    };
+    const req = { auth: { userId: 'user-alice' }, db, body: { ...valid, userId: 'user-bob' } };
+    await assert.rejects(
+      h.create(req, { status: () => ({ json() {} }) }),
+      (e) => e instanceof AppError && e.status === 422,
+    );
+  });
+});
+
+describe('duplicated enums stay in sync', () => {
+  it('web incoterms equal API incoterms', () => {
+    assert.deepEqual(WEB_INCOTERMS, INCOTERMS);
   });
 });
