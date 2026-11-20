@@ -71,6 +71,9 @@ export default function ShipmentRoute() {
         <Link to={`/shipments/${id}/documents`} className="text-sm text-sky-400 underline">
           Documents
         </Link>
+        <Link to={`/shipments/${id}/cross-check`} className="text-sm text-sky-400 underline">
+          Cross-check documents
+        </Link>
         <p className="rounded bg-amber-900/40 p-2 text-sm text-amber-200">{ILLUSTRATIVE_NOTICE}</p>
 
         <label className="flex flex-col gap-1 text-sm">

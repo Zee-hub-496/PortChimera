@@ -10,6 +10,7 @@ import { shipmentsRouter } from './modules/shipments/routes.js';
 import { portsRouter } from './modules/ports/routes.js';
 import { routesRouter } from './modules/routes/routes.js';
 import { documentsRouter, shipmentDocumentsRouter } from './modules/documents/routes.js';
+import { discrepanciesRouter, shipmentCrossCheckRouter } from './modules/crosscheck/routes.js';
 
 /**
  * Builds the Express app without starting a server. Keeping "build" separate from "listen"
@@ -58,6 +59,8 @@ export function createApp(env, { logger = console, auth = null } = {}) {
       routes: routesRouter,
       shipmentDocuments: () => shipmentDocumentsRouter({ env, logger }),
       documents: () => documentsRouter({ env, logger }),
+      shipmentCrossCheck: () => shipmentCrossCheckRouter({ logger }),
+      discrepancies: () => discrepanciesRouter({ logger }),
     });
   }
 

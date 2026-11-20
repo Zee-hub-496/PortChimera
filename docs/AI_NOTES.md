@@ -65,3 +65,9 @@ On the free tier, Google may use prompts to improve its products. Upload only th
 ## Known limits of the evidence check
 
 Evidence quotes are checked against the text that the server's small PDF reader extracts, which is the same text the model sees. A deliberately crafted PDF could show a reviewer different text from what that reader finds, so "Found in the document" means "found in the extracted text", not "visible on the rendered page". The reviewer still approves every value.
+
+## Cross-check does not use the AI
+
+The cross-check (spec 04) never calls the AI. It reads only values a person approved on the review screen, so an AI mistake that was not corrected before approval can still produce a wrong finding or hide a real one. Severity comes from fixed rules in `packages/core/src/crosscheck/severity.js`. An optional AI explanation for ambiguous name differences (R7) is not built. If it is added, it may only fill the explanation text and must never change severity.
+
+The demo PDFs `fixtures/documents/demo-*.pdf` are synthetic. How well Gemini reads them has not been measured.

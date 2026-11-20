@@ -93,3 +93,13 @@ made between 1 and 12 tests fail.
 **Verified:** the plain-JavaScript logic, services, handlers and web helpers pass with `node --test` in the authoring sandbox. No test calls the network.
 
 **Not verified:** the real Gemini API (no key was available), real Supabase Storage and database, Express routes, zod schemas, the React page, the Vite build and a browser. Follow `docs/MILESTONE_DOCUMENTS.md`.
+
+## 2026-11-21: Cross-check inside the app (spec 04, tasks 6, 7, 9)
+
+**What drove it:** `.kiro/specs/04-cross-checking/` and the steering files in `.kiro/steering/`. The work was split into a core fix and an in-app feature. No hooks or MCP servers were used.
+
+**What Kiro produced:** a pure mapper from reviewed extraction payloads to the checker's input, migration `0002_discrepancy_finding_key.sql`, the endpoints `POST /api/shipments/:id/cross-check`, `GET /api/shipments/:id/discrepancies` and `PATCH /api/discrepancies/:id` with audit entries, a cross-check page with accept, resolve and dismiss, a synthetic demo set of three PDFs (one planted 500 kg vs 650 kg gross weight difference), and `docs/MILESTONE_CROSSCHECK.md`.
+
+**Verified:** the mapper, re-run rules, handlers (owner-only, fewer than two reviewed documents, persistence, decisions kept on re-run, audit) and web helpers pass with `node --test` in the authoring sandbox.
+
+**Not verified:** migration 0002 on Supabase, Express routes, zod schemas, the React page, the Vite build, and whether Gemini reads the demo PDFs as the tests assume. Follow `docs/MILESTONE_CROSSCHECK.md`.

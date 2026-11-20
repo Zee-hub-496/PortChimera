@@ -259,6 +259,9 @@ export default function ShipmentDocuments() {
           Back to shipment
         </Link>
         <h1 className="text-3xl font-bold">Documents</h1>
+        <Link to={`/shipments/${id}/cross-check`} className="text-sm text-sky-400 underline">
+          Cross-check these documents
+        </Link>
         <p className="text-sm text-slate-300">
           Upload a PDF, JPEG or PNG (up to 5 MB) for each type. Use synthetic files only.
         </p>

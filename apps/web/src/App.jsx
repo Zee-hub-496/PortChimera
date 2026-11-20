@@ -1,6 +1,7 @@
 import { Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './auth/AuthContext.jsx';
 import RequireAuth from './auth/RequireAuth.jsx';
+import CrossCheck from './pages/CrossCheck.jsx';
 import Landing from './pages/Landing.jsx';
 import Login from './pages/Login.jsx';
 import ShipmentDocuments from './pages/ShipmentDocuments.jsx';
@@ -34,6 +35,14 @@ export default function App() {
           element={
             <RequireAuth>
               <ShipmentDocuments />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/shipments/:id/cross-check"
+          element={
+            <RequireAuth>
+              <CrossCheck />
             </RequireAuth>
           }
         />
