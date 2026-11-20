@@ -37,6 +37,10 @@ export function apiPut(path, body) {
   return request('PUT', path, body);
 }
 
+export function apiPatch(path, body) {
+  return request('PATCH', path, body);
+}
+
 /** Uploads a File as the raw request body (no JSON, no multipart). */
 export async function apiUploadFile(path, file) {
   const { data } = await supabase.auth.getSession();

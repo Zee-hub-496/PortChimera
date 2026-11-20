@@ -166,11 +166,39 @@ export async function markProcessing(db, userId, id) {
 
 const REVIEWABLE = ['extracted', 'reviewed'];
 
+const PARK_OFFSET = 1_000_000;
+const goodsKey = (description) => String(description).trim().toLowerCase().replace(/\s+/g, ' ');
+
+/**
+ * Pairs each new line with an existing row that is the SAME GOODS (same description, ignoring
+ * case and spacing), never with whatever row happens to sit at the same position. Duplicate
+ * descriptions pair in line order. Returns { matches: [[oldRow|null, item]], unmatched: [oldRow] }.
+ * A row that is paired keeps its id (and so its hs_suggestions and duty_estimates rows) even when
+ * lines above it are removed or the lines are reordered. A line whose description was edited
+ * counts as different goods: the old row is deleted and a new one inserted.
+ */
+export function matchLineItems(oldItems, items) {
+  const pool = new Map();
+  for (const old of [...oldItems].sort((a, b) => a.line_no - b.line_no)) {
+    const key = goodsKey(old.description);
+    if (!pool.has(key)) pool.set(key, []);
+    pool.get(key).push(old);
+  }
+  const matches = items.map((item) => [
+    pool.get(goodsKey(item.description))?.shift() ?? null,
+    item,
+  ]);
+  return { matches, unmatched: [...pool.values()].flat() };
+}
+
 /**
  * Replaces the line items of one document without deleting rows that still exist, because
- * hs_suggestions and duty_estimates cascade from line_items.id. Rows are matched by line_no
- * (unique per shipment and document): matching rows are updated in place, new lines are
- * inserted, and only rows whose line_no is gone are deleted (the cascade is intended there).
+ * hs_suggestions and duty_estimates cascade from line_items.id (see matchLineItems for how rows
+ * are paired). Matching rows are updated in place, new lines are inserted, and only rows whose
+ * goods are gone are deleted, last (the cascade is intended there).
+ *
+ * (shipment_id, source_document_id, line_no) is unique, so rows that change line_no, and rows
+ * about to be deleted, are first moved to a temporary line_no (PARK_OFFSET + old line_no).
  *
  * Returns an undo function. Undo is best effort and logs `line_items_restore_failed` for every
  * step whose returned `error` is set (supabase-js does not throw for database errors).
@@ -183,21 +211,15 @@ async function syncLineItems(db, row, id, items, logger) {
     .eq('shipment_id', row.shipment_id)
     .eq('source_document_id', id);
   if (readError) throw fail();
-  const oldItems = existing ?? [];
-  const oldByNo = new Map(oldItems.map((o) => [o.line_no, o]));
-  const newNos = new Set(items.map((i) => i.line_no));
-  const updated = [];
-  const inserted = [];
-  const deleted = [];
+  const { matches, unmatched } = matchLineItems(existing ?? [], items);
+  const touched = []; // original copies of rows that were parked or updated
+  const inserted = []; // line_no of rows this call inserted
+  const deleted = []; // original copies of rows this call deleted
 
   const undo = async () => {
     const report = (step, error) => {
       if (error) logger.error('line_items_restore_failed', { documentId: id, step });
     };
-    for (const old of deleted) {
-      const { error } = await db.from('line_items').insert(old);
-      report('reinsert', error);
-    }
     for (const lineNo of inserted) {
       const { error } = await db
         .from('line_items')
@@ -207,27 +229,51 @@ async function syncLineItems(db, row, id, items, logger) {
         .eq('line_no', lineNo);
       report('remove_inserted', error);
     }
-    for (const old of updated) {
+    const gone = new Set(deleted.map((d) => d.id));
+    const back = touched.filter((old) => !gone.has(old.id));
+    for (const old of back) {
+      const { error } = await db
+        .from('line_items')
+        .update({ line_no: PARK_OFFSET + old.line_no })
+        .eq('id', old.id);
+      report('park', error);
+    }
+    for (const old of back) {
       const { error } = await db.from('line_items').update(old).eq('id', old.id);
       report('revert_update', error);
     }
+    for (const old of deleted) {
+      const { error } = await db.from('line_items').insert(old);
+      report('reinsert', error);
+    }
+  };
+
+  const park = async (old) => {
+    touched.push(old);
+    const { error } = await db
+      .from('line_items')
+      .update({ line_no: PARK_OFFSET + old.line_no })
+      .eq('id', old.id);
+    if (error) throw fail();
   };
 
   try {
-    for (const item of items) {
-      const old = oldByNo.get(item.line_no);
+    for (const old of unmatched) await park(old);
+    for (const [old, item] of matches) {
+      if (old && old.line_no !== item.line_no) await park(old);
+    }
+    for (const [old, item] of matches) {
       if (old) {
+        if (!touched.includes(old)) touched.push(old);
         const { error } = await db.from('line_items').update(item).eq('id', old.id);
         if (error) throw fail();
-        updated.push(old);
       } else {
         const { error } = await db.from('line_items').insert(item);
         if (error) throw fail();
         inserted.push(item.line_no);
       }
     }
-    for (const old of oldItems) {
-      if (newNos.has(old.line_no)) continue;
+    for (const old of unmatched) {
       const { error } = await db.from('line_items').delete().eq('id', old.id);
       if (error) throw fail();
       deleted.push(old);

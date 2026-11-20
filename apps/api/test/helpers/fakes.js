@@ -47,7 +47,8 @@ export function fakeVerifier({ down = false } = {}) {
  *  - rls: set to false to switch the row-level emulation off, so only filters written in code
  *    (such as .eq('user_id', ...)) separate users. Use it to test the code-level ownership check.
  *  - unique: { table: [columns] } makes a second insert with the same values (for the same
- *    owner) fail with Postgres error code 23505, like a unique constraint.
+ *    owner) fail with Postgres error code 23505, like a unique constraint. Updates that would
+ *    create a duplicate fail the same way.
  *
  * Inserted rows get `owner` (and `user_id`, when the row has none) set to the acting user, and an
  * `id` and `created_at` when missing. Inserting a row whose user_id is someone else fails with
@@ -189,7 +190,8 @@ export function fakeDbFactory(tables = {}, { shared = [], unique = {}, rls = tru
             state.filters = saved.f;
             state.inList = saved.l;
             if (failWith) return { data: null, error: failWith };
-            apply(rows);
+            const clash = apply(rows);
+            if (clash) return { data: null, error: clash };
             return { data: selecting ? rows : null, error: null };
           };
           const chain = {
@@ -217,7 +219,22 @@ export function fakeDbFactory(tables = {}, { shared = [], unique = {}, rls = tru
         };
         api.update = (values) => {
           updates.push({ actingAs, table, values });
-          return mutation((rows) => rows.forEach((r) => Object.assign(r, values)));
+          return mutation((rows) => {
+            // Like a unique constraint: refuse an update that would duplicate another row.
+            const columns = unique[table];
+            if (columns && columns.some((c) => c in values)) {
+              const all = tables[table] ?? [];
+              for (const r of rows) {
+                const next = { ...r, ...values };
+                const dup = all.some(
+                  (o) => o !== r && o.owner === r.owner && columns.every((c) => o[c] === next[c]),
+                );
+                if (dup) return { code: '23505', message: 'duplicate' };
+              }
+            }
+            rows.forEach((r) => Object.assign(r, values));
+            return null;
+          });
         };
         api.delete = () => {
           deletes.push({ actingAs, table });

@@ -7,6 +7,9 @@ export const PROTECTED_PREFIXES = Object.freeze({
   // Nested under shipments: upload and list. Mounted after `shipments`, which never matches it.
   shipmentDocuments: '/api/shipments/:shipmentId/documents',
   documents: '/api/documents',
+  // Cross-check: run and list under a shipment, decisions on one discrepancy.
+  shipmentCrossCheck: '/api/shipments/:shipmentId',
+  discrepancies: '/api/discrepancies',
 });
 
 /**

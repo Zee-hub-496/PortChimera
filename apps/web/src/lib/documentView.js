@@ -92,6 +92,7 @@ export function canReview(status) {
  * true: quote found in the document text. false: not found. null: could not be checked.
  */
 export function evidenceLabel(field) {
+  if (field?.edited === true) return 'Edited by you';
   if (field?.status === 'missing') return 'Not found in the document';
   if (field?.evidence_verified === true) return 'Found in the document';
   if (field?.evidence_verified === false) return 'Evidence not found: AI suggestion';
@@ -118,7 +119,9 @@ export function fieldRows(payload) {
     status: field?.status ?? 'uncertain',
     evidence: field?.evidence ?? null,
     evidenceLabel: evidenceLabel(field),
-    needsAttention: field?.status !== 'extracted' || field?.evidence_verified === false,
+    needsAttention:
+      field?.edited !== true &&
+      (field?.status !== 'extracted' || field?.evidence_verified === false),
   }));
 }
 
@@ -155,7 +158,7 @@ function editedValue(original, text) {
 export function buildReviewPayload(payload, edits = {}) {
   const fields = {};
   for (const [key, field] of Object.entries(payload?.fields ?? {})) {
-    const { evidence_verified: _checked, ...base } = field;
+    const { evidence_verified: _checked, edited: _edited, ...base } = field;
     const text = edits[key];
     if (text === undefined || text === valueToText(field.value)) {
       fields[key] = base;
@@ -172,7 +175,7 @@ export function buildReviewPayload(payload, edits = {}) {
     body.lines = payload.lines.map((line) =>
       Object.fromEntries(
         Object.entries(line).map(([k, f]) => {
-          const { evidence_verified: _checked, ...rest } = f;
+          const { evidence_verified: _checked, edited: _edited, ...rest } = f;
           return [k, rest];
         }),
       ),
@@ -189,7 +192,38 @@ export function initialEdits(detail) {
   );
 }
 
-/** The payload to show: reviewed version when it exists. */
+/**
+ * The payload to show: the reviewed version when it exists. The server does not keep
+ * evidence_verified on reviewed values (a client could forge it), so each field's evidence
+ * result is taken from the stored original AI payload. A field whose value differs from the
+ * original is marked `edited: true` (display only; buildReviewPayload removes it again).
+ */
 export function shownPayload(detail) {
-  return detail?.extraction?.reviewedPayload ?? detail?.extraction?.payload ?? null;
+  const original = detail?.extraction?.payload ?? null;
+  const reviewed = detail?.extraction?.reviewedPayload ?? null;
+  if (!reviewed) return original;
+  const fields = {};
+  for (const [key, field] of Object.entries(reviewed.fields ?? {})) {
+    const orig = original?.fields?.[key];
+    if (orig && valueToText(orig.value) === valueToText(field?.value)) {
+      fields[key] = { ...field, evidence_verified: orig.evidence_verified ?? null };
+    } else {
+      fields[key] = { ...field, edited: true };
+    }
+  }
+  const lines = Array.isArray(reviewed.lines)
+    ? reviewed.lines.map((line, i) => {
+        const origLine = original?.lines?.[i];
+        const out = {};
+        for (const [key, cell] of Object.entries(line ?? {})) {
+          const orig = origLine?.[key];
+          out[key] =
+            orig && cell && valueToText(orig.value) === valueToText(cell.value)
+              ? { ...cell, evidence_verified: orig.evidence_verified ?? null }
+              : cell;
+        }
+        return out;
+      })
+    : reviewed.lines;
+  return { ...reviewed, fields, ...(lines === undefined ? {} : { lines }) };
 }

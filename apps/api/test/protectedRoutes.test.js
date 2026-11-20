@@ -9,6 +9,8 @@ const factories = () => ({
   routes: () => 'routesRouter',
   shipmentDocuments: () => 'shipmentDocumentsRouter',
   documents: () => 'documentsRouter',
+  shipmentCrossCheck: () => 'shipmentCrossCheckRouter',
+  discrepancies: () => 'discrepanciesRouter',
 });
 
 describe('mountProtectedRoutes', () => {
@@ -28,6 +30,8 @@ describe('mountProtectedRoutes', () => {
       '/api/auth',
       '/api/shipments/:shipmentId/documents',
       '/api/documents',
+      '/api/shipments/:shipmentId',
+      '/api/discrepancies',
     ]) {
       assert.ok(
         calls.some((c) => c[0] === p),

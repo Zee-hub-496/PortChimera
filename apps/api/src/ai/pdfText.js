@@ -84,3 +84,30 @@ function isPlausibleText(text) {
   }
   return printable / text.length > 0.9;
 }
+
+export const MIN_READABLE_CHARS = 20;
+const MIN_ALLOWED_SHARE = 0.85;
+const MIN_WORD_SHARE = 0.4;
+
+/**
+ * Pure check for "is this extracted text real, readable text?". Needs a minimum length, most
+ * characters to be letters, digits, spaces or common punctuation, and a fair share to be
+ * letters or digits. Gibberish from custom font encodings fails; evidence is then not verifiable.
+ */
+export function looksReadable(text) {
+  if (typeof text !== 'string') return false;
+  const trimmed = text.trim();
+  if (trimmed.length < MIN_READABLE_CHARS) return false;
+  let allowed = 0;
+  let wordy = 0;
+  for (const ch of trimmed) {
+    if (/[\p{L}\p{N}]/u.test(ch)) {
+      allowed += 1;
+      wordy += 1;
+    } else if (/[\s.,:;\-/()%&'"@#+_]/.test(ch)) {
+      allowed += 1;
+    }
+  }
+  const total = [...trimmed].length;
+  return allowed / total >= MIN_ALLOWED_SHARE && wordy / total >= MIN_WORD_SHARE;
+}

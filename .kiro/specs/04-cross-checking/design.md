@@ -35,7 +35,9 @@ These refine the proposal below. Each is covered by a test.
 - **Unrecognized country names** (not in our list of about 40) give a medium finding, not high, and say so.
 - **`critical` appears only in the report summary**, never on an individual finding (see the severity table).
 - **Nothing compared** gives the overall result `not_enough_data`, never `consistent`.
-- **Not done yet:** per-line origin and weight checks, quantity checks for the certificate, AI explanations (R7), persistence.
+- **Persistence (migration 0002):** `discrepancies.finding_key` holds the stable key, unique per shipment. A re-run inserts new findings, updates open ones, deletes open ones that no longer apply, and leaves decided ones untouched (a decided finding keeps its old values even if the data changed). The latest summary is stored on `shipments.cross_check_summary`.
+- **Mapping:** only reviewed payloads are used; the certificate's `quantity` and `weight` are not mapped because the rules do not compare them yet.
+- **Not done yet:** per-line origin and weight checks, quantity checks for the certificate, AI explanations (R7).
 
 ## Initial severity rules (proposal; the author can adjust)
 

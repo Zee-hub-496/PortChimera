@@ -62,6 +62,13 @@ between its ports; a seed-data test will enforce this.
 **Storage.** A private bucket `documents` accepts only PDF/JPEG/PNG up to 5 MB, and storage policies require
 the first folder in the object path to be the uploader's user id.
 
+## Migration 0002 (cross-check)
+
+`supabase/migrations/0002_discrepancy_finding_key.sql` is additive. It adds to `discrepancies` a `finding_key`
+(stable name of a finding, unique per shipment) and a `category`, and adds `cross_check_summary` and
+`cross_checked_at` to `shipments`. The key lets a re-run replace open findings and keep the ones a person
+accepted, resolved or dismissed (spec 04, R5.2). **Not yet run on a real project.** Steps: `docs/MILESTONE_CROSSCHECK.md`.
+
 ## Validating the migration
 
 1. Create a Supabase project (free tier).

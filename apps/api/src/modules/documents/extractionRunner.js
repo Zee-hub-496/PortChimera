@@ -1,12 +1,13 @@
 import { verifyEvidence } from '../../ai/evidence.js';
-
-const MIN_TEXT_CHARS = 20;
+import { looksReadable } from '../../ai/pdfText.js';
 
 /**
- * Runs one extraction: choose text or file, call the provider, validate, check evidence.
+ * Runs one extraction: call the provider, validate, check evidence.
  *
- * - If readable text exists, ONLY the text goes to the model and evidence is checked against it.
- * - Otherwise the file goes to the model inline and evidence_verified is null ("not verifiable").
+ * - The file is ALWAYS sent to the model inline, so a bad text layer never hides the real page.
+ * - If the extracted text looks readable, it is also given to the model as a hint and the
+ *   evidence quotes are checked against it. Otherwise no text is sent and evidence_verified is
+ *   null ("not verifiable").
  * - `parse(documentType, raw)` is injected (the zod parser in production). It must throw on bad
  *   output. Bad output is rejected, never repaired.
  *
@@ -14,11 +15,11 @@ const MIN_TEXT_CHARS = 20;
  * @throws whatever the provider or parser throws (AiError)
  */
 export async function runExtraction({ provider, parse, documentType, bytes, mime, text }) {
-  const hasText = typeof text === 'string' && text.trim().length >= MIN_TEXT_CHARS;
+  const hasText = looksReadable(text);
   const { raw, model } = await provider.extractDocument({
     documentType,
     text: hasText ? text : null,
-    file: hasText ? undefined : { bytes, mimeType: mime },
+    file: { bytes, mimeType: mime },
   });
   const parsed = parse(documentType, raw);
   const payload = verifyEvidence(parsed, hasText ? text : null);

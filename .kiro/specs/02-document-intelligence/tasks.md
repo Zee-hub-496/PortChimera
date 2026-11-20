@@ -17,3 +17,4 @@ Nothing involving the real Gemini API, real Supabase, a browser, zod or Express 
 - [-] 11. Review endpoint -> `line_items` (R6.2) (tested with fakes in sandbox; zod review schema and real database not run)
 - [-] 12. Web: upload page, status polling, review screen with evidence and "not verifiable" states (R6) (pure helpers tested in sandbox with `node --test apps/web/test/documentView.test.js`; React page, Vite build and browser not run)
 - [x] 13. Docs: `docs/AI_NOTES.md` (what the AI does and does not do) (`docs/AI_NOTES.md` written; the model and limits it tells you to look up are still unchecked, see task 1)
+- [-] 14. Fixes: evidence label after approval ("Edited by you" or the original result), file always sent to Gemini with readable text as a hint, line items paired by description instead of position, undo failure tests (sandbox with fakes; zod, Express, real Gemini and Supabase not run)
