@@ -8,6 +8,21 @@ export function buildHeaders(accessToken, hasBody = false) {
   return headers;
 }
 
+/**
+ * Headers for a raw file upload. The body is the file itself, so Content-Type is the file's
+ * mime type. The filename goes in X-Filename; it is limited to plain ASCII because HTTP header
+ * values cannot hold other characters. The server decides the real type from the file bytes.
+ */
+export function buildUploadHeaders(accessToken, mimeType, filename) {
+  const headers = { Accept: 'application/json', 'Content-Type': mimeType };
+  const safeName = String(filename ?? '')
+    .replace(/[^\x20-\x7e]/g, '_')
+    .slice(0, 200);
+  if (safeName) headers['X-Filename'] = safeName;
+  if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
+  return headers;
+}
+
 /** Error thrown for any non-2xx response. `status` and `code` come from the API envelope. */
 export class ApiError extends Error {
   constructor(status, code, message) {

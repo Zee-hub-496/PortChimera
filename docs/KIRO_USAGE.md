@@ -83,3 +83,13 @@ made between 1 and 12 tests fail.
 **Verified:** the plain-JavaScript logic and the API service and handler tests pass with `node --test` in the authoring sandbox, including a two-user check (Bob cannot see or open Alice's shipment).
 
 **Not verified:** the web build (`vite build`), the React pages in a browser, the Express routes, the zod schema tests, and sign in against a real Supabase project. Dependencies could not be installed in the sandbox. Follow `docs/MILESTONE_LOGIN_SHIPMENTS.md` to check these yourself. Route results are not saved to `route_results` yet.
+
+## 2026-11-20: Document upload and AI extraction (spec 02)
+
+**What drove it:** the spec in `.kiro/specs/02-document-intelligence/` (requirements, design, tasks) and the steering files in `.kiro/steering/` (ai-integration, security, api, database, testing, conventions). The task was split into four features: AI and file logic, API endpoints, web UI, then docs. No hooks or MCP servers were used for this milestone. The design was changed from the spec on purpose: no `multer`, no `pdf-parse`, no Google SDK (see `design.md`).
+
+**What Kiro produced:** file validation by magic bytes, a small PDF text reader, zod schemas, an evidence verifier, a fake and a Gemini REST provider, document endpoints with a background job and hash cache, a review screen, synthetic fixtures in `fixtures/documents/`, `docs/AI_NOTES.md` and `docs/MILESTONE_DOCUMENTS.md`.
+
+**Verified:** the plain-JavaScript logic, services, handlers and web helpers pass with `node --test` in the authoring sandbox. No test calls the network.
+
+**Not verified:** the real Gemini API (no key was available), real Supabase Storage and database, Express routes, zod schemas, the React page, the Vite build and a browser. Follow `docs/MILESTONE_DOCUMENTS.md`.

@@ -48,7 +48,14 @@ Magic bytes: PDF `%PDF-`, JPEG `FF D8 FF`, PNG `89 50 4E 47 0D 0A 1A 0A`. Conten
 
 ## Dependencies to add (check each is necessary)
 
-`multer`, `pdf-parse`, the official Google GenAI SDK, `@supabase/supabase-js` (already needed by spec 01).
+Originally listed: `multer`, `pdf-parse`, the official Google GenAI SDK, `@supabase/supabase-js`.
+
+**Decision as built: no new dependencies.** The sandbox cannot install packages, and each one is extra supply-chain surface.
+
+- No `multer`: the upload is a raw binary body read by `express.raw` on one route (type in the query string, filename in `X-Filename`). The file type comes from magic bytes, not from the header or filename.
+- No `pdf-parse`: a small built-in reader (`apps/api/src/ai/pdfText.js`, using `node:zlib`) extracts text from simple PDFs. When it finds too little text the file goes to the model directly and evidence is marked "not verifiable".
+- No Google SDK: the Gemini REST endpoint is called with `fetch`, which keeps timeouts, retries and error messages under our control and testable with a fake fetch.
+- `@supabase/supabase-js` was already added by spec 01.
 
 ## Risks
 

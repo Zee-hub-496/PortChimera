@@ -68,6 +68,9 @@ export default function ShipmentRoute() {
             {shipment.origin?.name} to {shipment.destination?.name}
           </p>
         )}
+        <Link to={`/shipments/${id}/documents`} className="text-sm text-sky-400 underline">
+          Documents
+        </Link>
         <p className="rounded bg-amber-900/40 p-2 text-sm text-amber-200">{ILLUSTRATIVE_NOTICE}</p>
 
         <label className="flex flex-col gap-1 text-sm">

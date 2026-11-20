@@ -3,6 +3,7 @@ import { AuthProvider } from './auth/AuthContext.jsx';
 import RequireAuth from './auth/RequireAuth.jsx';
 import Landing from './pages/Landing.jsx';
 import Login from './pages/Login.jsx';
+import ShipmentDocuments from './pages/ShipmentDocuments.jsx';
 import ShipmentRoute from './pages/ShipmentRoute.jsx';
 import Shipments from './pages/Shipments.jsx';
 
@@ -25,6 +26,14 @@ export default function App() {
           element={
             <RequireAuth>
               <ShipmentRoute />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/shipments/:id/documents"
+          element={
+            <RequireAuth>
+              <ShipmentDocuments />
             </RequireAuth>
           }
         />
