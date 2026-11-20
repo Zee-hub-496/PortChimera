@@ -2,3 +2,6 @@
 # Without this, Git on Windows rewrites files to CRLF, which breaks byte-for-byte checks
 # (for example the generated seed SQL) and makes Prettier report false formatting errors.
 * text=auto eol=lf
+
+# Fixture bytes must never be rewritten.
+fixtures/documents/* binary

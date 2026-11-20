@@ -1,0 +1,64 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 618 >>
+stream
+BT
+/F1 11 Tf
+14 TL
+50 780 Td
+(SYNTHETIC TEST DOCUMENT - fictional data, not a real transaction) Tj
+T*
+(COMMERCIAL INVOICE) Tj
+T*
+(Invoice Date: 2025-03-14) Tj
+T*
+(Exporter: Example Textiles Ltd, Izmir, Turkey) Tj
+T*
+(Importer: Sample Retail GmbH, Hamburg, Germany) Tj
+T*
+(Origin Country: Turkey) Tj
+T*
+(Destination Country: Germany) Tj
+T*
+(Currency: EUR) Tj
+T*
+(Incoterm: FOB) Tj
+T*
+(Item: Cotton T-shirts, 100% cotton knitted) Tj
+T*
+(Quantity: 1000 pcs  Unit Price: 4.50  Line Total: 4500.00) Tj
+T*
+(Net Weight: 200 kg  Gross Weight: 220 kg) Tj
+T*
+(Country of Origin: Turkey) Tj
+T*
+(Total Value: 4500.00 EUR) Tj
+T*
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000241 00000 n 
+0000000910 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+980
+%%EOF
