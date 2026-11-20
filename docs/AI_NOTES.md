@@ -50,7 +50,8 @@ On the free tier, Google may use prompts to improve its products. Upload only th
 ## Known limitations
 
 - The PDF text reader is small and best effort. Many real PDFs will fall back to "not verifiable".
-- The extraction job runs inside the API process. If the API restarts while a document is `processing`, press the read button again.
+- The extraction job runs inside the API process. If the API restarts while a document is `processing`, press the read button again. Recovery of a stuck `processing` document relies on a per process guard, so it is only safe with one API instance. With several instances a started-at timestamp would be needed.
+- A re-review updates line items in place by line number, so HS suggestions and duty estimates on lines that still exist are kept. Only lines that were removed from the invoice are deleted, together with what hangs off them.
 - One document per type per shipment.
 - Line items are shown but not editable on the review screen.
 - Nothing here has been run against the real Gemini API yet.

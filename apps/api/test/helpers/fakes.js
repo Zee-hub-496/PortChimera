@@ -90,7 +90,8 @@ export function fakeDbFactory(tables = {}, { shared = [], unique = {}, rls = tru
         const run = () => {
           queries.push({ actingAs, ...state });
           if (failWith) return { data: null, error: failWith };
-          return { data: matching(), error: null };
+          // Copies, like a real client: callers must not be able to edit stored rows by accident.
+          return { data: matching().map((r) => ({ ...r })), error: null };
         };
 
         const doInsert = (row) => {

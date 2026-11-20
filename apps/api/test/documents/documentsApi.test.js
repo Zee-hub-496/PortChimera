@@ -33,16 +33,16 @@ const parseReview = (type, body) => {
 };
 
 function setup({ provider = createFakeProvider(), runJobImpl = runJob, configured = true } = {}) {
-  const factory = fakeDbFactory(
-    {
-      shipments: [],
-      documents: [],
-      document_extractions: [],
-      line_items: [],
-      audit_logs: [],
-    },
-    { unique: { documents: ['shipment_id', 'document_type'] } },
-  );
+  const tables = {
+    shipments: [],
+    documents: [],
+    document_extractions: [],
+    line_items: [],
+    audit_logs: [],
+  };
+  const factory = fakeDbFactory(tables, {
+    unique: { documents: ['shipment_id', 'document_type'] },
+  });
   const jobs = [];
   const h = documentHandlers({
     parseId,
@@ -69,7 +69,7 @@ function setup({ provider = createFakeProvider(), runJobImpl = runJob, configure
   });
   const asAlice = (extra) => reqFor(alice, 'user-alice', extra);
   const asBob = (extra) => reqFor(bob, 'user-bob', extra);
-  return { factory, h, alice, bob, jobs, asAlice, asBob, provider };
+  return { factory, tables, h, alice, bob, jobs, asAlice, asBob, provider };
 }
 
 async function newShipment(db, userId, number = 'SHP-1') {
@@ -388,15 +388,41 @@ describe('process', () => {
     assert.equal(provider.calls.length, 2);
   });
 
-  it('a document stuck in processing can be processed again', async () => {
+  it('a document left in processing by a restart can be processed again', async () => {
     const ctx = setup({ provider: createFakeProvider({ response: goodInvoice() }) });
     const { doc } = await uploaded(ctx);
-    await ctx.h.process({ ...ctx.asAlice(), params: { id: doc.id } }, fakeRes());
-    await Promise.all(ctx.jobs);
+    docRowSync(ctx, doc.id).processing_status = 'processing';
     const res = fakeRes();
     await ctx.h.process({ ...ctx.asAlice(), params: { id: doc.id } }, res);
     await Promise.all(ctx.jobs);
     assert.equal(res.statusCode, 202);
+    assert.equal(ctx.jobs.length, 1);
+    assert.equal((await docRow(ctx, doc.id)).processing_status, 'extracted');
+  });
+
+  it('answers DOCUMENT_BUSY when the status changes between the read and the update', async () => {
+    const ctx = setup({ provider: createFakeProvider({ response: goodInvoice() }) });
+    const { doc } = await uploaded(ctx);
+    const racing = {
+      ...ctx.alice,
+      from(table) {
+        const api = ctx.alice.from(table);
+        if (table !== 'documents') return api;
+        const update = api.update.bind(api);
+        api.update = (values) => {
+          // Another instance got there first, after our read.
+          docRowSync(ctx, doc.id).processing_status = 'processing';
+          return update(values);
+        };
+        return api;
+      },
+    };
+    await rejects(
+      ctx.h.process({ ...ctx.asAlice({ db: racing }), params: { id: doc.id } }, fakeRes()),
+      409,
+      'DOCUMENT_BUSY',
+    );
+    assert.equal(ctx.jobs.length, 0);
   });
 
   it('rejects a second process call while a job runs, and keeps the good extraction', async () => {
@@ -451,7 +477,11 @@ describe('process', () => {
       logger: silent,
       storage: ctx.alice.storage.from('documents'),
     });
-    assert.equal(out.status, 'failed');
+    assert.equal(out.status, 'superseded');
+    const failures = ctx.factory.inserts.filter(
+      (i) => i.table === 'audit_logs' && i.row.action === 'document.extraction_failed',
+    );
+    assert.equal(failures.length, 0);
     const row = await docRow(ctx, doc.id);
     assert.equal(row.processing_status, 'reviewed');
     const ex = await ctx.alice.from('document_extractions').select('*').eq('document_id', doc.id);
@@ -484,9 +514,40 @@ describe('process', () => {
   });
 });
 
+function docRowSync(ctx, id) {
+  return ctx.tables.documents.find((d) => d.id === id);
+}
+
 async function docRow(ctx, id) {
   const { data } = await ctx.alice.from('documents').select('*').eq('id', id).maybeSingle();
   return data;
+}
+
+/** Wraps a db so that one operation on one table resolves with { error }, like supabase-js. */
+function failing(db, table, op, { when = () => true, times = 1 } = {}) {
+  let left = times;
+  return {
+    ...db,
+    from(name) {
+      const api = db.from(name);
+      if (name !== table) return api;
+      const real = api[op].bind(api);
+      api[op] = (arg) => {
+        if (left > 0 && when(arg)) {
+          left -= 1;
+          const chain = {
+            eq: () => chain,
+            select: () => chain,
+            then: (res, rej) =>
+              Promise.resolve({ data: null, error: { message: 'boom' } }).then(res, rej),
+          };
+          return chain;
+        }
+        return real(arg);
+      };
+      return api;
+    },
+  };
 }
 
 describe('review', () => {
@@ -532,7 +593,7 @@ describe('review', () => {
   it('refuses a review while the document is processing', async () => {
     const ctx = setup({ provider: createFakeProvider({ response: goodInvoice() }) });
     const { doc } = await extracted(ctx);
-    (await docRow(ctx, doc.id)).processing_status = 'processing';
+    docRowSync(ctx, doc.id).processing_status = 'processing';
     await rejects(
       ctx.h.review({ ...ctx.asAlice(), params: { id: doc.id }, body: goodInvoice() }, fakeRes()),
       409,
@@ -545,7 +606,7 @@ describe('review', () => {
   it('refuses a review after a failed re-run', async () => {
     const ctx = setup({ provider: createFakeProvider({ response: goodInvoice() }) });
     const { doc } = await extracted(ctx);
-    (await docRow(ctx, doc.id)).processing_status = 'failed';
+    docRowSync(ctx, doc.id).processing_status = 'failed';
     await rejects(
       ctx.h.review({ ...ctx.asAlice(), params: { id: doc.id }, body: goodInvoice() }, fakeRes()),
       409,
@@ -553,53 +614,137 @@ describe('review', () => {
     );
   });
 
-  it('keeps the old line items and saves no review when the line item insert fails', async () => {
-    const ctx = setup({ provider: createFakeProvider({ response: goodInvoice() }) });
-    const { doc, shipmentId } = await extracted(ctx);
-    await ctx.h.review(
-      { ...ctx.asAlice(), params: { id: doc.id }, body: goodInvoice() },
-      fakeRes(),
-    );
-    const before = (await ctx.alice.from('line_items').select('*').eq('shipment_id', shipmentId))
-      .data;
-    assert.equal(before.length, 2);
-
-    const flaky = {
-      ...ctx.alice,
-      from(table) {
-        const api = ctx.alice.from(table);
-        if (table !== 'line_items') return api;
-        let failed = false;
-        const insert = api.insert.bind(api);
-        api.insert = (rows) => {
-          if (!failed && rows.length === 1) {
-            failed = true;
-            return insert([{ ...rows[0], user_id: 'someone-else' }]);
-          }
-          return insert(rows);
-        };
-        return api;
-      },
-    };
-    const edited = goodInvoice();
-    edited.lines = [edited.lines[0]];
-    edited.fields.invoice_number = field('INV-EDITED', 'INV-EDITED');
-    await rejects(
-      ctx.h.review(
-        { ...ctx.asAlice(), db: flaky, params: { id: doc.id }, body: edited },
+  describe('line item sync', () => {
+    async function reviewed() {
+      const logs = [];
+      const ctx = setup({ provider: createFakeProvider({ response: goodInvoice() }) });
+      const { doc, shipmentId } = await extracted(ctx);
+      await ctx.h.review(
+        { ...ctx.asAlice(), params: { id: doc.id }, body: goodInvoice() },
         fakeRes(),
-      ),
-      500,
-      'LINE_ITEMS_FAILED',
-    );
-    const after = (await ctx.alice.from('line_items').select('*').eq('shipment_id', shipmentId))
-      .data;
-    assert.deepEqual(
-      after.map((r) => [r.line_no, r.description]),
-      before.map((r) => [r.line_no, r.description]),
-    );
-    const ex = await ctx.alice.from('document_extractions').select('*').eq('document_id', doc.id);
-    assert.equal(ex.data[0].reviewed_payload.fields.invoice_number.value, 'INV-2025-0042');
+      );
+      const lines = async () =>
+        (await ctx.alice.from('line_items').select('*').eq('shipment_id', shipmentId)).data;
+      const before = (await lines()).map((r) => ({ ...r }));
+      const review = (db, body) =>
+        ctx.h.review({ ...ctx.asAlice({ db }), params: { id: doc.id }, body }, fakeRes());
+      const h = documentHandlers({
+        parseId,
+        parseType,
+        parseReview,
+        parseExtraction: plainParse,
+        getProvider: () => null,
+        logger: { error: (...a) => logs.push(a), warn() {}, log() {} },
+      });
+      const reviewLogged = (db, body) =>
+        h.review({ ...ctx.asAlice({ db }), params: { id: doc.id }, body }, fakeRes());
+      return { ctx, doc, lines, before, review, reviewLogged, logs };
+    }
+
+    it('keeps the ids of lines that still exist, so dependent rows survive a re-review', async () => {
+      const { ctx, lines, before, review, doc } = await reviewed();
+      const edited = goodInvoice();
+      edited.lines[0].name = field('Cotton shirts XL');
+      await review(ctx.alice, edited);
+      const after = await lines();
+      assert.deepEqual(
+        after.map((r) => [r.id, r.line_no, r.description]),
+        [
+          [before[0].id, 1, 'Cotton shirts XL'],
+          [before[1].id, 2, 'Denim jeans'],
+        ],
+      );
+      assert.equal(ctx.factory.deletes.filter((d) => d.table === 'line_items').length, 0);
+      assert.ok(doc);
+    });
+
+    it('inserts new lines and deletes only the lines that are gone', async () => {
+      const { ctx, lines, before, review } = await reviewed();
+      const more = goodInvoice();
+      more.lines.push({ ...more.lines[0], name: field('Socks') });
+      await review(ctx.alice, more);
+      const grown = await lines();
+      assert.equal(grown.length, 3);
+      assert.equal(grown[0].id, before[0].id);
+      assert.equal(grown[1].id, before[1].id);
+      const fewer = goodInvoice();
+      fewer.lines = [fewer.lines[0]];
+      await review(ctx.alice, fewer);
+      const shrunk = await lines();
+      assert.deepEqual(
+        shrunk.map((r) => r.id),
+        [before[0].id],
+      );
+    });
+
+    it('undoes updates and inserts when a later line item write fails', async () => {
+      const { ctx, lines, before, review } = await reviewed();
+      const edited = goodInvoice();
+      edited.lines[0].name = field('Changed');
+      edited.lines.push({ ...edited.lines[0], name: field('New line') });
+      await rejects(
+        review(failing(ctx.alice, 'line_items', 'insert'), edited),
+        500,
+        'LINE_ITEMS_FAILED',
+      );
+      assert.deepEqual(await lines(), before);
+    });
+
+    it('puts back updated, inserted and deleted lines when the review payload save fails', async () => {
+      const { ctx, lines, before, review } = await reviewed();
+      const edited = goodInvoice();
+      edited.lines[0].name = field('Changed');
+      edited.lines = [edited.lines[0]];
+      await rejects(
+        review(failing(ctx.alice, 'document_extractions', 'update'), edited),
+        500,
+        'REVIEW_SAVE_FAILED',
+      );
+      const after = await lines();
+      assert.deepEqual(
+        after.map((r) => [r.id, r.line_no, r.description]),
+        before.map((r) => [r.id, r.line_no, r.description]),
+      );
+      const ex = await ctx.alice
+        .from('document_extractions')
+        .select('*')
+        .eq('document_id', (await docRow(ctx, before[0].source_document_id)).id);
+      assert.equal(ex.data[0].reviewed_payload.fields.invoice_number.value, 'INV-2025-0042');
+    });
+
+    it('logs line_items_restore_failed when the undo itself returns an error', async () => {
+      const { ctx, reviewLogged, logs } = await reviewed();
+      const edited = goodInvoice();
+      edited.lines[0].name = field('Changed');
+      // First update (the change) works, the revert update fails, and the payload save fails.
+      const db = failing(
+        failing(ctx.alice, 'document_extractions', 'update'),
+        'line_items',
+        'update',
+        { when: (v) => v.description === 'Cotton shirts', times: 1 },
+      );
+      await rejects(reviewLogged(db, edited), 500, 'REVIEW_SAVE_FAILED');
+      assert.ok(logs.some((l) => l[0] === 'line_items_restore_failed'));
+    });
+  });
+
+  it('logs document_fail_update_failed when marking a document failed returns an error', async () => {
+    const logs = [];
+    const ctx = setup();
+    const { doc } = await uploaded(ctx);
+    const row = docRowSync(ctx, doc.id);
+    row.processing_status = 'processing';
+    const out = await runJob({
+      db: failing(ctx.alice, 'documents', 'update'),
+      userId: 'user-alice',
+      doc: row,
+      provider: createFakeProvider(),
+      parse: plainParse,
+      logger: { error: (...a) => logs.push(a), warn() {}, log() {} },
+      storage: { download: async () => ({ data: null, error: { message: 'gone' } }) },
+    });
+    assert.equal(out.status, 'failed');
+    assert.ok(logs.some((l) => l[0] === 'document_fail_update_failed'));
   });
 
   it('rejects an invalid body with 422 and saves nothing', async () => {

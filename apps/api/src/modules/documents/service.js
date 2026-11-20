@@ -166,18 +166,77 @@ export async function markProcessing(db, userId, id) {
 
 const REVIEWABLE = ['extracted', 'reviewed'];
 
-/** Best effort: puts back the line items that a failed review replaced. */
-async function restoreLineItems(db, row, id, oldItems, logger) {
+/**
+ * Replaces the line items of one document without deleting rows that still exist, because
+ * hs_suggestions and duty_estimates cascade from line_items.id. Rows are matched by line_no
+ * (unique per shipment and document): matching rows are updated in place, new lines are
+ * inserted, and only rows whose line_no is gone are deleted (the cascade is intended there).
+ *
+ * Returns an undo function. Undo is best effort and logs `line_items_restore_failed` for every
+ * step whose returned `error` is set (supabase-js does not throw for database errors).
+ */
+async function syncLineItems(db, row, id, items, logger) {
+  const fail = () => new AppError(500, 'LINE_ITEMS_FAILED', 'Could not update line items');
+  const { data: existing, error: readError } = await db
+    .from('line_items')
+    .select('*')
+    .eq('shipment_id', row.shipment_id)
+    .eq('source_document_id', id);
+  if (readError) throw fail();
+  const oldItems = existing ?? [];
+  const oldByNo = new Map(oldItems.map((o) => [o.line_no, o]));
+  const newNos = new Set(items.map((i) => i.line_no));
+  const updated = [];
+  const inserted = [];
+  const deleted = [];
+
+  const undo = async () => {
+    const report = (step, error) => {
+      if (error) logger.error('line_items_restore_failed', { documentId: id, step });
+    };
+    for (const old of deleted) {
+      const { error } = await db.from('line_items').insert(old);
+      report('reinsert', error);
+    }
+    for (const lineNo of inserted) {
+      const { error } = await db
+        .from('line_items')
+        .delete()
+        .eq('shipment_id', row.shipment_id)
+        .eq('source_document_id', id)
+        .eq('line_no', lineNo);
+      report('remove_inserted', error);
+    }
+    for (const old of updated) {
+      const { error } = await db.from('line_items').update(old).eq('id', old.id);
+      report('revert_update', error);
+    }
+  };
+
   try {
-    await db
-      .from('line_items')
-      .delete()
-      .eq('shipment_id', row.shipment_id)
-      .eq('source_document_id', id);
-    if (oldItems.length > 0) await db.from('line_items').insert(oldItems);
+    for (const item of items) {
+      const old = oldByNo.get(item.line_no);
+      if (old) {
+        const { error } = await db.from('line_items').update(item).eq('id', old.id);
+        if (error) throw fail();
+        updated.push(old);
+      } else {
+        const { error } = await db.from('line_items').insert(item);
+        if (error) throw fail();
+        inserted.push(item.line_no);
+      }
+    }
+    for (const old of oldItems) {
+      if (newNos.has(old.line_no)) continue;
+      const { error } = await db.from('line_items').delete().eq('id', old.id);
+      if (error) throw fail();
+      deleted.push(old);
+    }
   } catch (err) {
-    logger.error('line_items_restore_failed', { documentId: id, reason: err?.message });
+    await undo();
+    throw err;
   }
+  return undo;
 }
 
 /**
@@ -187,7 +246,7 @@ async function restoreLineItems(db, row, id, oldItems, logger) {
  * The review needs a settled document ('extracted' or 'reviewed'): not while a job runs, and not
  * after a failed re-run, because the stored extraction would no longer match the status.
  * There is no multi-statement transaction through the REST client, so the order is chosen to
- * fail safe: line items first (old rows are put back if anything later fails), then the
+ * fail safe: line items first (changes are undone if anything later fails), then the
  * reviewed payload, then the status.
  */
 export async function saveReview(db, userId, id, reviewedPayload, logger = console) {
@@ -207,34 +266,14 @@ export async function saveReview(db, userId, id, reviewedPayload, logger = conso
   }
 
   let lineCount = 0;
-  let oldItems = [];
-  const isInvoice = row.document_type === 'commercial_invoice';
-  if (isInvoice) {
+  let undoLineItems = null;
+  if (row.document_type === 'commercial_invoice') {
     const items = buildLineItemRows({
       shipmentId: row.shipment_id,
       documentId: id,
       payload: reviewedPayload,
     });
-    const { data: existing, error: readError } = await db
-      .from('line_items')
-      .select('*')
-      .eq('shipment_id', row.shipment_id)
-      .eq('source_document_id', id);
-    if (readError) throw new AppError(500, 'LINE_ITEMS_FAILED', 'Could not update line items');
-    oldItems = existing ?? [];
-    const { error: delError } = await db
-      .from('line_items')
-      .delete()
-      .eq('shipment_id', row.shipment_id)
-      .eq('source_document_id', id);
-    if (delError) throw new AppError(500, 'LINE_ITEMS_FAILED', 'Could not update line items');
-    if (items.length > 0) {
-      const { error: insError } = await db.from('line_items').insert(items);
-      if (insError) {
-        await restoreLineItems(db, row, id, oldItems, logger);
-        throw new AppError(500, 'LINE_ITEMS_FAILED', 'Could not save line items');
-      }
-    }
+    undoLineItems = await syncLineItems(db, row, id, items, logger);
     lineCount = items.length;
   }
 
@@ -243,7 +282,7 @@ export async function saveReview(db, userId, id, reviewedPayload, logger = conso
     .update({ reviewed_payload: reviewedPayload, reviewed_at: new Date().toISOString() })
     .eq('document_id', id);
   if (saveError) {
-    if (isInvoice) await restoreLineItems(db, row, id, oldItems, logger);
+    if (undoLineItems) await undoLineItems();
     throw new AppError(500, 'REVIEW_SAVE_FAILED', 'Could not save the review');
   }
 

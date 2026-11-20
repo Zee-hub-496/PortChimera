@@ -11,6 +11,7 @@ const SAFE_MESSAGES = Object.freeze({
   bad_output: 'The AI answer could not be validated, so it was discarded. Please try again.',
   auth: 'The AI service is not set up correctly. Contact the administrator.',
 });
+const SUPERSEDED = 'job_superseded';
 const GENERIC_MESSAGE = 'Extraction failed. Please try again.';
 
 /** The only text that is ever stored or shown after a failure: fixed strings, never raw errors. */
@@ -43,14 +44,15 @@ async function saveExtraction(db, doc, { payload, model }) {
     .select('processing_status')
     .eq('id', doc.id)
     .maybeSingle();
-  if (curError || current?.processing_status !== 'processing') throw new Error('job_superseded');
+  if (curError) throw new Error('status_lookup_failed');
+  if (current?.processing_status !== 'processing') throw new Error(SUPERSEDED);
   const { data: old, error: oldError } = await db
     .from('document_extractions')
     .select('reviewed_at')
     .eq('document_id', doc.id)
     .maybeSingle();
   if (oldError) throw new Error('extraction_lookup_failed');
-  if (old?.reviewed_at) throw new Error('job_superseded');
+  if (old?.reviewed_at) throw new Error(SUPERSEDED);
   // A re-run replaces the old extraction (document_id is unique).
   const { error: delError } = await db
     .from('document_extractions')
@@ -75,11 +77,14 @@ async function saveExtraction(db, doc, { payload, model }) {
 async function markFailed(db, userId, doc, err, logger) {
   const message = safeErrorMessage(err);
   try {
-    await db
+    const { error } = await db
       .from('documents')
       .update({ processing_status: 'failed', error_message: message })
       .eq('id', doc.id)
       .eq('processing_status', 'processing');
+    if (error) {
+      logger.error('document_fail_update_failed', { documentId: doc.id, reason: error.message });
+    }
   } catch (updateErr) {
     logger.error('document_fail_update_failed', { documentId: doc.id, reason: updateErr?.message });
   }
@@ -158,6 +163,11 @@ export async function runJob({ db, userId, doc, provider, parse, logger = consol
     );
     return { status: 'extracted', cached: false };
   } catch (err) {
+    if (err?.message === SUPERSEDED) {
+      // Another request owns the document now. Nothing failed, so no failure state or audit entry.
+      logger.warn?.('document_job_superseded', { documentId: doc.id });
+      return { status: 'superseded' };
+    }
     logger.error('document_extraction_failed', {
       documentId: doc.id,
       kind: err?.kind,
