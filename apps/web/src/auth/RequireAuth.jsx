@@ -6,7 +6,11 @@ export default function RequireAuth({ children }) {
   const { session, loading } = useAuth();
   const location = useLocation();
   if (loading) {
-    return <p className="p-6 text-slate-300 bg-slate-950 min-h-screen">Loading...</p>;
+    return (
+      <p role="status" className="min-h-screen bg-canvas p-6 text-muted">
+        Loading...
+      </p>
+    );
   }
   if (!session) return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   return children;
