@@ -5,12 +5,12 @@ import {
   AlertTriangle,
   ChevronRight,
   FileText,
-  Globe2,
+  Globe,
   LayoutDashboard,
   LogOut,
   Menu,
-  PanelLeftClose,
-  PanelLeftOpen,
+  ChevronsLeft,
+  ChevronsRight,
   Search,
   Settings,
   Ship,
@@ -28,7 +28,7 @@ const SIDEBAR_KEY = 'portchimera-sidebar';
 const NAV_ITEMS = [
   { to: '/dashboard', label: 'Dashboard', Icon: LayoutDashboard },
   { to: '/shipments', label: 'Shipments', Icon: Ship },
-  { to: '/map', label: 'Global Map', Icon: Globe2 },
+  { to: '/map', label: 'Global Map', Icon: Globe },
   { to: '/documents', label: 'Documents', Icon: FileText },
   { to: '/alerts', label: 'Alerts', Icon: AlertTriangle },
   { to: '/settings', label: 'Settings', Icon: Settings },
@@ -237,10 +237,10 @@ export default function AppLayout() {
             className="m-2 flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm text-muted hover:bg-surface-2 hover:text-fg"
           >
             {collapsed ? (
-              <PanelLeftOpen size={18} aria-hidden="true" />
+              <ChevronsRight size={18} aria-hidden="true" />
             ) : (
               <>
-                <PanelLeftClose size={18} aria-hidden="true" /> Collapse
+                <ChevronsLeft size={18} aria-hidden="true" /> Collapse
               </>
             )}
           </button>

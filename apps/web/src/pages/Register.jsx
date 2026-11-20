@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
-import { MailCheck } from 'lucide-react';
+import { Mail } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext.jsx';
 import PasswordField, { INPUT_CLASS } from '../components/PasswordField.jsx';
 import { Button } from '../components/ui.jsx';
@@ -46,7 +46,7 @@ export default function Register() {
     return (
       <AuthSplit title="Check your email">
         <div className="flex gap-3 rounded-xl border border-line bg-surface p-4">
-          <MailCheck size={20} className="mt-0.5 shrink-0 text-accent" aria-hidden="true" />
+          <Mail size={20} className="mt-0.5 shrink-0 text-accent" aria-hidden="true" />
           <p className="text-sm text-fg">
             We sent a confirmation link to <span className="font-mono">{checkEmail}</span>. Open it,
             then{' '}

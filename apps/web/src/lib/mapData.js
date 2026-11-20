@@ -148,3 +148,79 @@ export function boundsOf(points) {
     [e, n],
   ];
 }
+
+export const ROUTE_TONES = Object.freeze(['primary', 'alternative', 'blocked']);
+
+/**
+ * GeoJSON FeatureCollection with one great-circle LineString per route.
+ * Each feature carries id, tone and label so layers can style by tone.
+ * Unknown or missing tones become 'primary'. Routes with fewer than two stops are skipped.
+ * @param {Array<{id?: string, stops: Array<{lon: number, lat: number}>, tone?: string, label?: string}>} routes
+ */
+export function routesToGeoJSON(routes) {
+  const features = [];
+  (routes ?? []).forEach((r, i) => {
+    if (!r || !Array.isArray(r.stops) || r.stops.length < 2) return;
+    const tone = ROUTE_TONES.includes(r.tone) ? r.tone : 'primary';
+    features.push(
+      routeToGeoJSON(r.stops, { id: r.id ?? `route-${i}`, tone, label: r.label ?? '' }),
+    );
+  });
+  return { type: 'FeatureCollection', features };
+}
+
+/**
+ * GeoJSON FeatureCollection of the ports whose code is in `codes`, for warning markers.
+ * @param {Array<{code: string, name: string, lat: number, lon: number}>} ports
+ * @param {string[]} [codes]
+ */
+export function disruptedToGeoJSON(ports, codes = []) {
+  const set = new Set(codes);
+  return {
+    type: 'FeatureCollection',
+    features: ports
+      .filter((p) => set.has(p.code))
+      .map((p) => ({
+        type: 'Feature',
+        properties: { code: p.code, name: p.name },
+        geometry: { type: 'Point', coordinates: [p.lon, p.lat] },
+      })),
+  };
+}
+
+/**
+ * The first fraction `t` (0 to 1) of a polyline, measured by planar length in degrees.
+ * Used to draw a route progressively. `tip` is the last point, where a moving dot goes.
+ * @param {Array<[number, number]>} points
+ * @param {number} t
+ * @returns {{coordinates: Array<[number, number]>, tip: [number, number] | null}}
+ */
+export function progressiveLine(points, t) {
+  if (!points.length) return { coordinates: [], tip: null };
+  const frac = Math.min(1, Math.max(0, Number.isFinite(t) ? t : 0));
+  if (frac >= 1) return { coordinates: points.slice(), tip: points[points.length - 1] };
+  if (frac === 0 || points.length === 1) return { coordinates: [points[0]], tip: points[0] };
+  const lengths = [];
+  let total = 0;
+  for (let i = 1; i < points.length; i++) {
+    const len = Math.hypot(points[i][0] - points[i - 1][0], points[i][1] - points[i - 1][1]);
+    lengths.push(len);
+    total += len;
+  }
+  if (total === 0) return { coordinates: [points[0]], tip: points[0] };
+  let remaining = frac * total;
+  const out = [points[0]];
+  for (let i = 0; i < lengths.length; i++) {
+    if (remaining >= lengths[i]) {
+      out.push(points[i + 1]);
+      remaining -= lengths[i];
+      continue;
+    }
+    const f = remaining / lengths[i];
+    const a = points[i];
+    const b = points[i + 1];
+    out.push([a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f]);
+    break;
+  }
+  return { coordinates: out, tip: out[out.length - 1] };
+}

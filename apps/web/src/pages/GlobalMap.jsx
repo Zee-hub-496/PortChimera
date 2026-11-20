@@ -58,7 +58,7 @@ export default function GlobalMap() {
           <div className="lg:col-span-2">
             <MaritimeMapLazy
               ports={ports}
-              highlightCodes={selected ? [selected] : []}
+              selectedCode={selected}
               onPortClick={(p) => choose(p.code)}
               height={520}
               fit="world"

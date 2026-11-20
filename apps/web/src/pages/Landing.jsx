@@ -5,10 +5,10 @@ import {
   Lock,
   Route,
   Scale,
-  ScanSearch,
+  Search,
   Ship,
   ShieldAlert,
-  TriangleAlert,
+  AlertTriangle,
   Upload,
 } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext.jsx';
@@ -17,7 +17,7 @@ import { Badge, Card, LinkButton } from '../components/ui.jsx';
 import { SAMPLE_PORTS, SAMPLE_SHIPMENT } from '../lib/samplePorts.js';
 import { CAPABILITIES, DISCLAIMERS, HOW_IT_WORKS } from '../lib/siteContent.js';
 
-const ICONS = { FileSearch, ScanSearch, Route, ShieldAlert, Lock, Upload, Scale, Ship };
+const ICONS = { FileSearch, Search, Route, ShieldAlert, Lock, Upload, Scale, Ship };
 
 // Fades content in once when it scrolls into view. MotionConfig in main.jsx handles reduced motion.
 function Reveal({ children, delay = 0, className = '' }) {
@@ -106,7 +106,7 @@ function Hero({ signedIn }) {
               ariaLabel={`Sample route from ${origin.name} to ${destination.name}`}
             />
             <div className="mt-3 flex gap-3 rounded-lg border border-line bg-warn-soft p-3">
-              <TriangleAlert size={18} className="mt-0.5 shrink-0 text-warn" aria-hidden="true" />
+              <AlertTriangle size={18} className="mt-0.5 shrink-0 text-warn" aria-hidden="true" />
               <div className="text-sm">
                 <p className="font-bold text-fg">{discrepancy.field} differs between documents</p>
                 <p className="mt-0.5 text-fg">

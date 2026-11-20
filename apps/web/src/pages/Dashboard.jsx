@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { AlertTriangle, ArrowRight, FileText, Globe2, Plus, Ship } from 'lucide-react';
+import { AlertTriangle, ArrowRight, FileText, Globe, Plus, Ship } from 'lucide-react';
 import { apiGet } from '../lib/api.js';
 import { STATUS_LABELS, statusTone, summarizeShipments } from '../lib/overviewStats.js';
 import AnimatedNumber from '../components/AnimatedNumber.jsx';
@@ -20,7 +20,7 @@ const QUICK_ACTIONS = [
   { to: '/shipments', label: 'New shipment', Icon: Plus },
   { to: '/documents', label: 'Documents', Icon: FileText },
   { to: '/alerts', label: 'Alerts', Icon: AlertTriangle },
-  { to: '/map', label: 'Global map', Icon: Globe2 },
+  { to: '/map', label: 'Global map', Icon: Globe },
 ];
 
 function Kpi({ label, value, hint }) {

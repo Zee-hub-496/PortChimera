@@ -18,7 +18,7 @@ export const CAPABILITIES = Object.freeze([
   },
   {
     id: 'cross-check',
-    icon: 'ScanSearch',
+    icon: 'Search',
     title: 'Deterministic cross-checking',
     body: 'Fixed rules compare weights, values, parties and goods across documents. The same inputs always give the same result, and each finding points to its evidence.',
     status: 'available',

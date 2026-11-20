@@ -6,6 +6,10 @@ import {
   routeToGeoJSON,
   portsToGeoJSON,
   boundsOf,
+  routesToGeoJSON,
+  disruptedToGeoJSON,
+  progressiveLine,
+  ROUTE_TONES,
   CARTO_STYLES,
   styleFor,
   MAP_ATTRIBUTION,
@@ -99,4 +103,78 @@ describe('styles', () => {
     assert.match(MAP_ATTRIBUTION, /OpenStreetMap/);
     assert.match(ILLUSTRATIVE_ROUTE_NOTE, /Illustrative/);
   });
+});
+
+const stop = (c) => ({ lon: c[0], lat: c[1] });
+
+describe('routesToGeoJSON', () => {
+  it('tags each route with id, tone and label', () => {
+    const fc = routesToGeoJSON([
+      { id: 'a', stops: [stop(SHA), stop(KHI)], tone: 'alternative', label: 'Via Colombo' },
+      { id: 'b', stops: [stop(SHA), stop(KHI)], tone: 'blocked' },
+    ]);
+    assert.equal(fc.features.length, 2);
+    assert.equal(fc.features[0].properties.tone, 'alternative');
+    assert.equal(fc.features[0].properties.label, 'Via Colombo');
+    assert.equal(fc.features[1].properties.id, 'b');
+    assert.ok(fc.features[0].geometry.coordinates.length > 2);
+  });
+  it('defaults unknown tones to primary and skips short routes', () => {
+    const fc = routesToGeoJSON([
+      { stops: [stop(SHA), stop(KHI)], tone: 'weird' },
+      { id: 'x', stops: [stop(SHA)] },
+      null,
+    ]);
+    assert.equal(fc.features.length, 1);
+    assert.equal(fc.features[0].properties.tone, 'primary');
+    assert.equal(fc.features[0].properties.id, 'route-0');
+    assert.deepEqual(ROUTE_TONES, ['primary', 'alternative', 'blocked']);
+  });
+  it('handles undefined input', () => assert.deepEqual(routesToGeoJSON().features, []));
+});
+
+describe('disruptedToGeoJSON', () => {
+  const ports = [
+    { code: 'CNSHA', name: 'Shanghai', lon: SHA[0], lat: SHA[1] },
+    { code: 'SGSIN', name: 'Singapore', lon: 103.8, lat: 1.26 },
+  ];
+  it('keeps only the disrupted ports', () => {
+    const fc = disruptedToGeoJSON(ports, ['SGSIN', 'XXXXX']);
+    assert.equal(fc.features.length, 1);
+    assert.equal(fc.features[0].properties.code, 'SGSIN');
+    assert.deepEqual(fc.features[0].geometry.coordinates, [103.8, 1.26]);
+  });
+  it('returns no features without codes', () =>
+    assert.equal(disruptedToGeoJSON(ports).features.length, 0));
+});
+
+describe('progressiveLine', () => {
+  const line = [
+    [0, 0],
+    [10, 0],
+    [10, 10],
+  ];
+  it('returns the start for t = 0 and everything for t = 1', () => {
+    assert.deepEqual(progressiveLine(line, 0).coordinates, [[0, 0]]);
+    assert.deepEqual(progressiveLine(line, 1).coordinates, line);
+    assert.deepEqual(progressiveLine(line, 1).tip, [10, 10]);
+  });
+  it('interpolates inside a segment', () => {
+    const r = progressiveLine(line, 0.25);
+    assert.deepEqual(r.tip, [5, 0]);
+    assert.deepEqual(r.coordinates, [
+      [0, 0],
+      [5, 0],
+    ]);
+  });
+  it('passes vertices and clamps t', () => {
+    const r = progressiveLine(line, 0.75);
+    assert.deepEqual(r.tip, [10, 5]);
+    assert.equal(r.coordinates.length, 3);
+    assert.deepEqual(progressiveLine(line, 7).coordinates, line);
+    assert.deepEqual(progressiveLine(line, -1).coordinates, [[0, 0]]);
+    assert.deepEqual(progressiveLine(line, NaN).tip, [0, 0]);
+  });
+  it('handles empty input', () =>
+    assert.deepEqual(progressiveLine([], 0.5), { coordinates: [], tip: null }));
 });
