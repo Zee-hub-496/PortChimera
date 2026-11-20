@@ -5,6 +5,9 @@ import rateLimit from 'express-rate-limit';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import { requireAuth } from './middleware/requireAuth.js';
 import { authRouter } from './modules/auth/routes.js';
+import { shipmentsRouter } from './modules/shipments/routes.js';
+import { portsRouter } from './modules/ports/routes.js';
+import { routesRouter } from './modules/routes/routes.js';
 
 /**
  * Builds the Express app without starting a server. Keeping "build" separate from "listen"
@@ -47,6 +50,9 @@ export function createApp(env, { logger = console, auth = null } = {}) {
   if (auth) {
     const protect = requireAuth({ ...auth, logger });
     app.use('/api/auth', protect, authRouter());
+    app.use('/api/shipments', protect, shipmentsRouter());
+    app.use('/api/ports', protect, portsRouter());
+    app.use('/api/routes', protect, routesRouter());
   }
 
   app.use(notFoundHandler);
