@@ -13,7 +13,7 @@
     "cmdk": "^1.0.4",
     "framer-motion": "^12.0.0",
     "lucide-react": "^0.475.0",
-    "maplibre-gl": "^4.7.1",
+    "maplibre-gl": "^6.19.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.0.0",

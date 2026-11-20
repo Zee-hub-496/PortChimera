@@ -11,7 +11,7 @@ This milestone changes only how the web app looks and is organised. The API, the
 - A left sidebar and top bar for signed-in pages, a Ctrl+K search, and toast messages.
 - Pages: `/dashboard`, `/shipments`, `/shipments/:id` (Overview, Documents, Cross-check and Route tabs), `/map` (Global Map), `/documents`, `/alerts`, `/settings`, and a 404 page.
 - A real map (MapLibre with free CARTO tiles) on the route tab, the Global Map and the landing page.
-- New packages in `apps/web/package.json`: `lucide-react` (icons), `framer-motion` (animation), `maplibre-gl` (map), `cmdk` (search palette), `sonner` (toasts).
+- New packages in `apps/web/package.json`: `lucide-react` (icons), `framer-motion` (animation), `maplibre-gl` (map, version 6.19 or later, WebGL2 required), `cmdk` (search palette), `sonner` (toasts).
 
 ## Steps (Windows PowerShell)
 

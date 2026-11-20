@@ -113,3 +113,11 @@ made between 1 and 12 tests fail.
 **Verified:** the pure helpers (map arcs, route and marker GeoJSON, progressive line, search, breadcrumbs, site content, status tones) pass with `node --test`. Prettier and the secret scan pass. A script checked that every relative import in `apps/web/src` resolves and that named imports are exported.
 
 **Not verified:** `npm install`, `npm run dev:web`, the Vite build, any page or the map in a browser, CARTO tiles, WebGL, the Ctrl+K palette, animations, `lucide-react` icon names, and the hand-written package versions. Migration 0002 is still not run, so the cross-check page may error. Follow `docs/MILESTONE_UI.md` and send back any error text.
+
+## 2026-11-22: maplibre-gl security upgrade
+
+**What drove it:** `npm audit` reported a critical advisory for `maplibre-gl` 6.4.0 and older ([GHSA-jrc7-96c5-q579](https://github.com/advisories/GHSA-jrc7-96c5-q579), an XSS sanitizer bypass in `DOM.sanitize`). Our `^4.7.1` range was affected.
+
+**What Kiro did:** checked the advisory against MapLibre's changelog (fixed in 6.4.1) and upgraded `apps/web` to `^6.19.0`. Version 6 is ESM-only with no default export, so `MaritimeMap.jsx` now uses `import * as maplibregl from 'maplibre-gl'`. The other v5 and v6 breaking changes were checked against our usage and none apply. Our popups use `setText` and `setDOMContent`, never `setHTML`.
+
+**Not verified:** `npm install`, the Vite build and the map in a browser. `package-lock.json` is not committed yet. Run `npm install`, build, open a map page, then commit the lockfile. Version 6 needs WebGL2, and the text fallback should show without it.
