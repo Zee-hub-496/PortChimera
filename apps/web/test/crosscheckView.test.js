@@ -4,6 +4,11 @@ import {
   DECISIONS,
   DISCLAIMER,
   OVERALL_LABELS,
+  REVIEW_TONES,
+  SEVERITY_CLASSES,
+  SEVERITY_LABELS,
+  SEVERITY_TONES,
+  STATUS_LABELS,
   canDecide,
   countOpen,
   describeCrossCheckError,
@@ -99,5 +104,21 @@ describe('crosscheckView', () => {
     for (const text of all) assert.doesNotMatch(text, /fraud|fraudulent|illegal|smuggl/i);
     assert.match(DISCLAIMER, /possible inconsistencies/);
     assert.match(DISCLAIMER, /manual verification/);
+  });
+});
+
+describe('theme tokens', () => {
+  it('uses theme tokens only, no hard-coded palette colours', () => {
+    for (const cls of Object.values(SEVERITY_CLASSES)) {
+      assert.doesNotMatch(cls, /\b(?:slate|red|amber|sky|green|emerald)-\d/);
+    }
+  });
+
+  it('has a class and tone for every severity, and a tone for every review status', () => {
+    for (const severity of Object.keys(SEVERITY_LABELS)) {
+      assert.ok(SEVERITY_CLASSES[severity]);
+      assert.ok(SEVERITY_TONES[severity]);
+    }
+    for (const status of Object.keys(STATUS_LABELS)) assert.ok(REVIEW_TONES[status]);
   });
 });

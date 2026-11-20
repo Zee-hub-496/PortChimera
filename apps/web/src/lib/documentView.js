@@ -19,6 +19,15 @@ export const STATUS_LABELS = Object.freeze({
   failed: 'Reading failed',
 });
 
+// Badge tones (see components/ui.jsx) for each document status.
+export const STATUS_TONES = Object.freeze({
+  uploaded: 'neutral',
+  processing: 'info',
+  extracted: 'warn',
+  reviewed: 'success',
+  failed: 'danger',
+});
+
 // Same names as apps/api/src/ai/fieldNames.js (the web app cannot import from the API).
 export const FIELD_LABELS = Object.freeze({
   invoice_number: 'Invoice number',

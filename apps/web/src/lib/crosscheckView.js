@@ -11,12 +11,27 @@ export const SEVERITY_LABELS = Object.freeze({
   low: 'Low',
 });
 
-// Tailwind classes per severity. Text is always shown too, so colour is never the only signal.
+// Tailwind classes per severity, from the theme tokens. Text is always shown too, so colour is never the only signal.
 export const SEVERITY_CLASSES = Object.freeze({
-  critical: 'bg-red-800 text-red-100',
-  high: 'bg-red-700/80 text-red-100',
-  medium: 'bg-amber-700/80 text-amber-100',
-  low: 'bg-slate-600 text-slate-100',
+  critical: 'bg-danger text-brand-fg',
+  high: 'bg-danger-soft text-danger',
+  medium: 'bg-warn-soft text-warn',
+  low: 'bg-surface-2 text-muted',
+});
+
+// Badge tones (see components/ui.jsx) for the same severities and for review decisions.
+export const SEVERITY_TONES = Object.freeze({
+  critical: 'danger',
+  high: 'danger',
+  medium: 'warn',
+  low: 'neutral',
+});
+
+export const REVIEW_TONES = Object.freeze({
+  open: 'warn',
+  accepted: 'success',
+  resolved: 'success',
+  dismissed: 'neutral',
 });
 
 export const OVERALL_LABELS = Object.freeze({

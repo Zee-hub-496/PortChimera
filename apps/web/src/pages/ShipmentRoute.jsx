@@ -1,29 +1,43 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useOutletContext, useParams } from 'react-router-dom';
+import { Clock, DollarSign, ShieldAlert } from 'lucide-react';
 import { apiGet, apiPost } from '../lib/api.js';
-import { pickPathStops, projectPorts, toPolylinePoints } from '../lib/mapProjection.js';
 import { formatRoute, ILLUSTRATIVE_NOTICE, OBJECTIVE_LABELS } from '../lib/routeView.js';
+import MaritimeMapLazy from '../components/MaritimeMapLazy.jsx';
+import { Card, ErrorState, PageHeader, Skeleton } from '../components/ui.jsx';
 
-const VIEW = { width: 600, height: 300 };
+const STAT_ICONS = { days: Clock, cost: DollarSign, risk: ShieldAlert };
+
+// The API sends lat and lon for each stop. Fall back to the port list by code if one is missing.
+function stopsWithCoordinates(path, ports) {
+  const byCode = new Map(ports.map((p) => [p.code, p]));
+  return path
+    .map((s) => {
+      const known = byCode.get(s.code);
+      return {
+        code: s.code,
+        name: s.name,
+        lat: s.lat ?? known?.lat,
+        lon: s.lon ?? known?.lon,
+      };
+    })
+    .filter((s) => Number.isFinite(s.lat) && Number.isFinite(s.lon));
+}
 
 export default function ShipmentRoute() {
   const { id } = useParams();
-  const [shipment, setShipment] = useState(null);
+  const { shipment } = useOutletContext(); // loaded once by ShipmentLayout
   const [ports, setPorts] = useState([]);
   const [objective, setObjective] = useState('fastest');
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
-  const [notFound, setNotFound] = useState(false);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    Promise.all([apiGet(`/api/shipments/${id}`), apiGet('/api/ports')])
-      .then(([s, p]) => {
-        setShipment(s);
-        setPorts(p);
-      })
-      .catch((err) => (err.status === 404 ? setNotFound(true) : setError(err.message)));
-  }, [id]);
+    apiGet('/api/ports')
+      .then(setPorts)
+      .catch((err) => setError(err.message));
+  }, []);
 
   useEffect(() => {
     if (!shipment) return;
@@ -39,119 +53,87 @@ export default function ShipmentRoute() {
     };
   }, [shipment, id, objective]);
 
-  const projected = useMemo(() => projectPorts(ports, VIEW), [ports]);
-  const stops = useMemo(() => pickPathStops(projected, result?.path ?? []), [projected, result]);
+  const stops = useMemo(() => stopsWithCoordinates(result?.path ?? [], ports), [result, ports]);
   const view = result ? formatRoute(result) : null;
 
-  if (notFound) {
-    return (
-      <main className="min-h-screen bg-slate-950 text-slate-100 p-6">
-        <h1 className="text-2xl font-bold">Shipment not found</h1>
-        <Link to="/shipments" className="text-sky-400 underline">
-          Back to shipments
-        </Link>
-      </main>
-    );
-  }
-
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100 p-6">
-      <div className="mx-auto max-w-2xl flex flex-col gap-6">
-        <Link to="/shipments" className="text-sm text-sky-400 underline">
-          Back to shipments
-        </Link>
-        <h1 className="text-3xl font-bold">
-          {shipment ? `Shipment ${shipment.shipmentNumber}` : 'Shipment'}
-        </h1>
-        {shipment && (
-          <p className="text-slate-300">
-            {shipment.origin?.name} to {shipment.destination?.name}
-          </p>
-        )}
-        <Link to={`/shipments/${id}/documents`} className="text-sm text-sky-400 underline">
-          Documents
-        </Link>
-        <Link to={`/shipments/${id}/cross-check`} className="text-sm text-sky-400 underline">
-          Cross-check documents
-        </Link>
-        <p className="rounded bg-amber-900/40 p-2 text-sm text-amber-200">{ILLUSTRATIVE_NOTICE}</p>
+    <div className="flex max-w-4xl flex-col gap-6">
+      <PageHeader title="Route" description="An illustrative route between the two ports." />
+      <p className="rounded-lg bg-warn-soft p-2 text-sm text-warn">{ILLUSTRATIVE_NOTICE}</p>
 
-        <label className="flex flex-col gap-1 text-sm">
-          Optimize for
-          <select
-            value={objective}
-            onChange={(e) => setObjective(e.target.value)}
-            className="rounded bg-slate-800 p-2 text-slate-100"
-          >
-            {Object.entries(OBJECTIVE_LABELS).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        {error && (
-          <p role="alert" className="text-sm text-red-400">
-            {error}
-          </p>
-        )}
-        {busy && <p className="text-slate-400">Calculating route...</p>}
-
-        {view && !busy && (
-          <section className="flex flex-col gap-4">
-            {!view.found && <p className="text-slate-300">{view.message}</p>}
-            {view.found && (
-              <>
-                <dl className="grid grid-cols-3 gap-3 text-center">
-                  <div className="rounded bg-slate-900 p-3">
-                    <dt className="text-xs text-slate-400">Transit time</dt>
-                    <dd className="font-semibold">{view.days}</dd>
-                  </div>
-                  <div className="rounded bg-slate-900 p-3">
-                    <dt className="text-xs text-slate-400">Freight cost</dt>
-                    <dd className="font-semibold">{view.cost}</dd>
-                  </div>
-                  <div className="rounded bg-slate-900 p-3">
-                    <dt className="text-xs text-slate-400">Risk</dt>
-                    <dd className="font-semibold">{view.risk}</dd>
-                  </div>
-                </dl>
-                <ol className="list-decimal pl-6">
-                  {view.stops.map((stop) => (
-                    <li key={stop}>{stop}</li>
-                  ))}
-                </ol>
-                <svg
-                  viewBox={`0 0 ${VIEW.width} ${VIEW.height}`}
-                  role="img"
-                  aria-label="Sketch of the route on a plain longitude and latitude map"
-                  className="w-full rounded bg-slate-900"
-                >
-                  {projected.map((p) => (
-                    <circle key={p.code} cx={p.x} cy={p.y} r="3" fill="#475569" />
-                  ))}
-                  <polyline
-                    points={toPolylinePoints(stops)}
-                    fill="none"
-                    stroke="#38bdf8"
-                    strokeWidth="2"
-                  />
-                  {stops.map((p) => (
-                    <g key={p.code}>
-                      <circle cx={p.x} cy={p.y} r="5" fill="#38bdf8" />
-                      <text x={p.x + 7} y={p.y - 7} fontSize="11" fill="#e2e8f0">
-                        {p.name}
-                      </text>
-                    </g>
-                  ))}
-                </svg>
-              </>
-            )}
-            {view.notice && <p className="text-xs text-slate-400">{view.notice}</p>}
-          </section>
-        )}
+      <div role="radiogroup" aria-label="Optimize for" className="flex flex-col gap-1 text-sm">
+        <span className="font-medium">Optimize for</span>
+        <div className="inline-flex w-fit rounded-lg border border-line bg-surface-2 p-1">
+          {Object.entries(OBJECTIVE_LABELS).map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              role="radio"
+              aria-checked={objective === value}
+              onClick={() => setObjective(value)}
+              className={`rounded-md px-3 py-1.5 text-sm font-semibold transition-colors ${
+                objective === value ? 'bg-surface text-fg shadow-card' : 'text-muted hover:text-fg'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
-    </main>
+
+      {error && <ErrorState message={error} />}
+      {busy && <Skeleton className="h-40" />}
+
+      {view && !busy && (
+        <section className="flex flex-col gap-4">
+          {!view.found && <p className="text-muted">{view.message}</p>}
+          {view.found && (
+            <>
+              <dl className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                {[
+                  ['days', 'Transit time', view.days],
+                  ['cost', 'Freight cost', view.cost],
+                  ['risk', 'Risk', view.risk],
+                ].map(([key, label, value]) => {
+                  const Icon = STAT_ICONS[key];
+                  return (
+                    <Card key={key} className="p-3">
+                      <dt className="flex items-center gap-1.5 text-xs text-muted">
+                        <Icon size={14} aria-hidden="true" />
+                        {label}
+                      </dt>
+                      <dd className="mt-1 font-mono text-sm font-semibold">{value}</dd>
+                    </Card>
+                  );
+                })}
+              </dl>
+              <MaritimeMapLazy
+                ports={stops}
+                routes={[{ id: 'path', stops, tone: 'primary', label: view.objective }]}
+                highlightCodes={stops.length ? [stops[0].code, stops[stops.length - 1].code] : []}
+                animateRoute
+                height={380}
+                fit="route"
+                ariaLabel={`Map of the ${view.objective.toLowerCase()} route: ${view.pathLabel}`}
+              />
+              <ol aria-label="Stops" className="flex flex-col">
+                {view.stops.map((stop, i) => (
+                  <li key={stop} className="flex items-center gap-3 py-1.5 text-sm">
+                    <span
+                      aria-hidden="true"
+                      className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent-soft font-mono text-xs font-semibold text-accent"
+                    >
+                      {i + 1}
+                    </span>
+                    {stop}
+                  </li>
+                ))}
+              </ol>
+            </>
+          )}
+          {view.notice && <p className="text-xs text-muted">{view.notice}</p>}
+        </section>
+      )}
+    </div>
   );
 }

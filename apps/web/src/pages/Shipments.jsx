@@ -1,9 +1,20 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Search, Ship } from 'lucide-react';
+import { toast } from 'sonner';
 import { apiGet, apiPost } from '../lib/api.js';
+import { STATUS_LABELS, statusTone } from '../lib/overviewStats.js';
+import { filterShipments } from '../lib/search.js';
 import { INCOTERMS, validateShipmentForm } from '../lib/shipmentForm.js';
-import { supabase } from '../lib/supabase.js';
-import { useAuth } from '../auth/AuthContext.jsx';
+import {
+  Badge,
+  Button,
+  Card,
+  EmptyState,
+  ErrorState,
+  PageHeader,
+  Skeleton,
+} from '../components/ui.jsx';
 
 const EMPTY_FORM = {
   shipmentNumber: '',
@@ -11,10 +22,10 @@ const EMPTY_FORM = {
   destinationPortCode: '',
   incoterm: '',
 };
-const field = 'rounded bg-slate-800 p-2 text-slate-100';
+const field =
+  'rounded-lg border border-line bg-surface-2 p-2 text-fg placeholder:text-muted focus:border-accent';
 
 export default function Shipments() {
-  const { session } = useAuth();
   const [ports, setPorts] = useState([]);
   const [shipments, setShipments] = useState(null);
   const [loadError, setLoadError] = useState('');
@@ -22,6 +33,7 @@ export default function Shipments() {
   const [fieldErrors, setFieldErrors] = useState({});
   const [submitError, setSubmitError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [query, setQuery] = useState('');
 
   const load = useCallback(async () => {
     try {
@@ -51,15 +63,17 @@ export default function Shipments() {
       await apiPost('/api/shipments', result.value);
       setForm(EMPTY_FORM);
       await load();
+      toast.success('Shipment created');
     } catch (err) {
       setSubmitError(err.message);
+      toast.error(err.message);
     } finally {
       setBusy(false);
     }
   }
 
   const portSelect = (name, label) => (
-    <label className="flex flex-col gap-1 text-sm">
+    <label className="flex flex-col gap-1 text-sm font-medium">
       {label}
       <select value={form[name]} onChange={update(name)} className={field}>
         <option value="">Choose a port</option>
@@ -69,43 +83,34 @@ export default function Shipments() {
           </option>
         ))}
       </select>
-      {fieldErrors[name] && <span className="text-red-400">{fieldErrors[name]}</span>}
+      {fieldErrors[name] && <span className="text-danger">{fieldErrors[name]}</span>}
     </label>
   );
 
-  return (
-    <main className="min-h-screen bg-slate-950 text-slate-100 p-6">
-      <div className="mx-auto max-w-2xl flex flex-col gap-8">
-        <header className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Shipments</h1>
-          <div className="flex items-center gap-3 text-sm text-slate-400">
-            <span>{session?.user?.email}</span>
-            <button
-              type="button"
-              onClick={() => supabase.auth.signOut()}
-              className="rounded bg-slate-800 px-3 py-1 text-slate-100 hover:bg-slate-700"
-            >
-              Sign out
-            </button>
-          </div>
-        </header>
+  const visible = shipments ? filterShipments(shipments, query) : [];
 
-        <form onSubmit={onSubmit} className="flex flex-col gap-3 rounded bg-slate-900 p-4">
-          <h2 className="text-xl font-semibold">New shipment</h2>
-          <label className="flex flex-col gap-1 text-sm">
+  return (
+    <div className="flex flex-col gap-8">
+      <PageHeader
+        title="Shipments"
+        description="Create a shipment, then open it to add documents."
+      />
+
+      <Card as="form" onSubmit={onSubmit} className="flex flex-col gap-3 p-4">
+        <h2 className="text-lg font-bold">New shipment</h2>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="flex flex-col gap-1 text-sm font-medium">
             Shipment number
             <input
               value={form.shipmentNumber}
               onChange={update('shipmentNumber')}
-              className={field}
+              className={`${field} font-mono`}
             />
             {fieldErrors.shipmentNumber && (
-              <span className="text-red-400">{fieldErrors.shipmentNumber}</span>
+              <span className="text-danger">{fieldErrors.shipmentNumber}</span>
             )}
           </label>
-          {portSelect('originPortCode', 'Origin port')}
-          {portSelect('destinationPortCode', 'Destination port')}
-          <label className="flex flex-col gap-1 text-sm">
+          <label className="flex flex-col gap-1 text-sm font-medium">
             Incoterm (optional)
             <select value={form.incoterm} onChange={update('incoterm')} className={field}>
               <option value="">Not set</option>
@@ -115,51 +120,90 @@ export default function Shipments() {
                 </option>
               ))}
             </select>
-            {fieldErrors.incoterm && <span className="text-red-400">{fieldErrors.incoterm}</span>}
+            {fieldErrors.incoterm && <span className="text-danger">{fieldErrors.incoterm}</span>}
           </label>
-          {submitError && (
-            <p role="alert" className="text-sm text-red-400">
-              {submitError}
-            </p>
-          )}
-          <button
-            type="submit"
-            disabled={busy}
-            className="rounded bg-sky-600 p-2 font-semibold hover:bg-sky-500 disabled:opacity-50"
-          >
-            {busy ? 'Creating...' : 'Create shipment'}
-          </button>
-        </form>
+          {portSelect('originPortCode', 'Origin port')}
+          {portSelect('destinationPortCode', 'Destination port')}
+        </div>
+        {submitError && (
+          <p role="alert" className="text-sm text-danger">
+            {submitError}
+          </p>
+        )}
+        <Button type="submit" disabled={busy} className="self-start">
+          {busy ? 'Creating...' : 'Create shipment'}
+        </Button>
+      </Card>
 
-        <section className="flex flex-col gap-3">
-          <h2 className="text-xl font-semibold">Your shipments</h2>
-          {loadError && (
-            <p role="alert" className="text-sm text-red-400">
-              {loadError}
-            </p>
-          )}
-          {!loadError && shipments === null && <p className="text-slate-400">Loading...</p>}
-          {shipments?.length === 0 && (
-            <p className="text-slate-400">You have no shipments yet. Create one above.</p>
-          )}
-          <ul className="flex flex-col gap-2">
-            {shipments?.map((s) => (
+      <section className="flex flex-col gap-3" aria-labelledby="your-shipments">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 id="your-shipments" className="text-lg font-bold">
+            Your shipments
+          </h2>
+          <label className="relative">
+            <span className="sr-only">Search shipments</span>
+            <Search
+              size={14}
+              aria-hidden="true"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted"
+            />
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search by number, port or status"
+              className={`${field} w-72 max-w-full pl-8`}
+            />
+          </label>
+        </div>
+
+        {loadError && (
+          <ErrorState
+            message={loadError}
+            action={
+              <Button variant="secondary" onClick={load}>
+                Try again
+              </Button>
+            }
+          />
+        )}
+        {!loadError && shipments === null && (
+          <div className="flex flex-col gap-2" aria-busy="true">
+            {[0, 1, 2].map((i) => (
+              <Skeleton key={i} className="h-14" />
+            ))}
+          </div>
+        )}
+        {shipments?.length === 0 && (
+          <EmptyState
+            icon={Ship}
+            title="You have no shipments yet"
+            description="Create one with the form above."
+          />
+        )}
+        {shipments?.length > 0 && visible.length === 0 && (
+          <EmptyState icon={Search} title="No shipments match your search" />
+        )}
+        {visible.length > 0 && (
+          <Card as="ul" className="divide-y divide-line">
+            {visible.map((s) => (
               <li key={s.id}>
                 <Link
                   to={`/shipments/${s.id}`}
-                  className="flex items-center justify-between rounded bg-slate-900 p-3 hover:bg-slate-800"
+                  className="flex flex-wrap items-center justify-between gap-2 p-3 hover:bg-surface-2"
                 >
-                  <span className="font-mono">{s.shipmentNumber}</span>
-                  <span className="text-sm text-slate-300">
-                    {s.origin?.code} to {s.destination?.code}
+                  <span className="font-mono font-semibold">{s.shipmentNumber}</span>
+                  <span className="text-sm text-muted">
+                    <span className="font-mono">{s.origin?.code}</span> to{' '}
+                    <span className="font-mono">{s.destination?.code}</span>
                   </span>
-                  <span className="text-xs text-slate-400">{s.status}</span>
+                  <Badge tone={statusTone(s.status)}>{STATUS_LABELS[s.status] ?? s.status}</Badge>
                 </Link>
               </li>
             ))}
-          </ul>
-        </section>
-      </div>
-    </main>
+          </Card>
+        )}
+      </section>
+    </div>
   );
 }
