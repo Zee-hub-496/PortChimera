@@ -55,6 +55,10 @@ export function documentHandlers({
   runJob = defaultRunJob,
   logger = console,
 }) {
+  // Documents with a job running in this process. A document that says "processing" but is not
+  // in here (the API restarted mid-job) can be processed again.
+  const activeJobs = new Set();
+
   return {
     async upload(req, res) {
       const shipmentId = parseId(req.params.shipmentId);
@@ -96,7 +100,18 @@ export function documentHandlers({
           'AI extraction is not set up on this server. Ask the administrator to set GEMINI_API_KEY and GEMINI_MODEL.',
         );
       }
-      const doc = await markProcessing(req.db, req.auth.userId, id);
+      // Reserve before any await so two overlapping requests cannot both start a job.
+      if (activeJobs.has(id)) {
+        throw new AppError(409, 'DOCUMENT_BUSY', 'This document is already being processed');
+      }
+      activeJobs.add(id);
+      let doc;
+      try {
+        doc = await markProcessing(req.db, req.auth.userId, id);
+      } catch (err) {
+        activeJobs.delete(id);
+        throw err;
+      }
       // Fire and forget: the job never throws, and the catch is a last safety net.
       Promise.resolve(
         runJob({
@@ -108,7 +123,9 @@ export function documentHandlers({
           logger,
           storage: req.db.storage.from(BUCKET),
         }),
-      ).catch((err) => logger.error('document_job_crashed', { reason: err?.message }));
+      )
+        .catch((err) => logger.error('document_job_crashed', { reason: err?.message }))
+        .finally(() => activeJobs.delete(id));
       res.status(202).json({ data: { id: doc.id, processingStatus: 'processing' } });
     },
     async review(req, res) {

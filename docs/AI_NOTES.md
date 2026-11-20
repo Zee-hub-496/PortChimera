@@ -54,3 +54,7 @@ On the free tier, Google may use prompts to improve its products. Upload only th
 - One document per type per shipment.
 - Line items are shown but not editable on the review screen.
 - Nothing here has been run against the real Gemini API yet.
+
+## Known limits of the evidence check
+
+Evidence quotes are checked against the text that the server's small PDF reader extracts, which is the same text the model sees. A deliberately crafted PDF could show a reviewer different text from what that reader finds, so "Found in the document" means "found in the extracted text", not "visible on the rendered page". The reviewer still approves every value.

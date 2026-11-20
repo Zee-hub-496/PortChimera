@@ -37,6 +37,20 @@ async function findCachedExtraction(db, doc) {
 }
 
 async function saveExtraction(db, doc, { payload, model }) {
+  // Only write while this job still owns the document, and never over a reviewed extraction.
+  const { data: current, error: curError } = await db
+    .from('documents')
+    .select('processing_status')
+    .eq('id', doc.id)
+    .maybeSingle();
+  if (curError || current?.processing_status !== 'processing') throw new Error('job_superseded');
+  const { data: old, error: oldError } = await db
+    .from('document_extractions')
+    .select('reviewed_at')
+    .eq('document_id', doc.id)
+    .maybeSingle();
+  if (oldError) throw new Error('extraction_lookup_failed');
+  if (old?.reviewed_at) throw new Error('job_superseded');
   // A re-run replaces the old extraction (document_id is unique).
   const { error: delError } = await db
     .from('document_extractions')
@@ -53,7 +67,8 @@ async function saveExtraction(db, doc, { payload, model }) {
   const { error: statusError } = await db
     .from('documents')
     .update({ processing_status: 'extracted', error_message: null })
-    .eq('id', doc.id);
+    .eq('id', doc.id)
+    .eq('processing_status', 'processing');
   if (statusError) throw new Error('status_update_failed');
 }
 
@@ -63,7 +78,8 @@ async function markFailed(db, userId, doc, err, logger) {
     await db
       .from('documents')
       .update({ processing_status: 'failed', error_message: message })
-      .eq('id', doc.id);
+      .eq('id', doc.id)
+      .eq('processing_status', 'processing');
   } catch (updateErr) {
     logger.error('document_fail_update_failed', { documentId: doc.id, reason: updateErr?.message });
   }

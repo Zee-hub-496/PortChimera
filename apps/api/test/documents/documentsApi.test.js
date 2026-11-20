@@ -399,6 +399,66 @@ describe('process', () => {
     assert.equal(res.statusCode, 202);
   });
 
+  it('rejects a second process call while a job runs, and keeps the good extraction', async () => {
+    let release;
+    const gate = new Promise((r) => (release = r));
+    const inner = createFakeProvider({ response: goodInvoice() });
+    const provider = {
+      calls: inner.calls,
+      async extractDocument(input) {
+        await gate;
+        return inner.extractDocument(input);
+      },
+    };
+    const ctx = setup({ provider });
+    const { doc } = await uploaded(ctx);
+    const req = () => ({ ...ctx.asAlice(), params: { id: doc.id } });
+    const [first, second] = await Promise.allSettled([
+      ctx.h.process(req(), fakeRes()),
+      ctx.h.process(req(), fakeRes()),
+    ]);
+    assert.equal(first.status, 'fulfilled');
+    assert.equal(second.status, 'rejected');
+    assert.equal(second.reason.code, 'DOCUMENT_BUSY');
+    await rejects(ctx.h.process(req(), fakeRes()), 409, 'DOCUMENT_BUSY');
+    release();
+    await Promise.all(ctx.jobs);
+    assert.equal(ctx.jobs.length, 1);
+    const { data } = await ctx.alice.from('documents').select('*').eq('id', doc.id).maybeSingle();
+    assert.equal(data.processing_status, 'extracted');
+    // The id is released once the job ends.
+    const again = fakeRes();
+    await ctx.h.process(req(), again);
+    await Promise.all(ctx.jobs);
+    assert.equal(again.statusCode, 202);
+  });
+
+  it('a job that lost its document does not overwrite a reviewed extraction or status', async () => {
+    const ctx = setup({ provider: createFakeProvider({ response: goodInvoice() }) });
+    const { doc } = await uploaded(ctx);
+    await ctx.h.process({ ...ctx.asAlice(), params: { id: doc.id } }, fakeRes());
+    await Promise.all(ctx.jobs);
+    await ctx.h.review(
+      { ...ctx.asAlice(), params: { id: doc.id }, body: goodInvoice() },
+      fakeRes(),
+    );
+    const out = await runJob({
+      db: ctx.alice,
+      userId: 'user-alice',
+      doc: { ...(await docRow(ctx, doc.id)), processing_status: 'processing' },
+      provider: createFakeProvider({ response: goodInvoice() }),
+      parse: plainParse,
+      logger: silent,
+      storage: ctx.alice.storage.from('documents'),
+    });
+    assert.equal(out.status, 'failed');
+    const row = await docRow(ctx, doc.id);
+    assert.equal(row.processing_status, 'reviewed');
+    const ex = await ctx.alice.from('document_extractions').select('*').eq('document_id', doc.id);
+    assert.equal(ex.data.length, 1);
+    assert.ok(ex.data[0].reviewed_payload);
+  });
+
   it('runJob never throws, even with a broken storage client', async () => {
     const logs = [];
     const out = await runJob({
@@ -423,6 +483,11 @@ describe('process', () => {
     assert.equal(out.status, 'failed');
   });
 });
+
+async function docRow(ctx, id) {
+  const { data } = await ctx.alice.from('documents').select('*').eq('id', id).maybeSingle();
+  return data;
+}
 
 describe('review', () => {
   async function extracted(ctx) {
@@ -462,6 +527,79 @@ describe('review', () => {
       .filter((i) => i.table === 'audit_logs')
       .map((i) => i.row.action);
     assert.equal(actions.filter((a) => a === 'document.reviewed').length, 2);
+  });
+
+  it('refuses a review while the document is processing', async () => {
+    const ctx = setup({ provider: createFakeProvider({ response: goodInvoice() }) });
+    const { doc } = await extracted(ctx);
+    (await docRow(ctx, doc.id)).processing_status = 'processing';
+    await rejects(
+      ctx.h.review({ ...ctx.asAlice(), params: { id: doc.id }, body: goodInvoice() }, fakeRes()),
+      409,
+      'DOCUMENT_NOT_EXTRACTED',
+    );
+    const ex = await ctx.alice.from('document_extractions').select('*').eq('document_id', doc.id);
+    assert.equal(ex.data[0].reviewed_payload, undefined);
+  });
+
+  it('refuses a review after a failed re-run', async () => {
+    const ctx = setup({ provider: createFakeProvider({ response: goodInvoice() }) });
+    const { doc } = await extracted(ctx);
+    (await docRow(ctx, doc.id)).processing_status = 'failed';
+    await rejects(
+      ctx.h.review({ ...ctx.asAlice(), params: { id: doc.id }, body: goodInvoice() }, fakeRes()),
+      409,
+      'DOCUMENT_NOT_EXTRACTED',
+    );
+  });
+
+  it('keeps the old line items and saves no review when the line item insert fails', async () => {
+    const ctx = setup({ provider: createFakeProvider({ response: goodInvoice() }) });
+    const { doc, shipmentId } = await extracted(ctx);
+    await ctx.h.review(
+      { ...ctx.asAlice(), params: { id: doc.id }, body: goodInvoice() },
+      fakeRes(),
+    );
+    const before = (await ctx.alice.from('line_items').select('*').eq('shipment_id', shipmentId))
+      .data;
+    assert.equal(before.length, 2);
+
+    const flaky = {
+      ...ctx.alice,
+      from(table) {
+        const api = ctx.alice.from(table);
+        if (table !== 'line_items') return api;
+        let failed = false;
+        const insert = api.insert.bind(api);
+        api.insert = (rows) => {
+          if (!failed && rows.length === 1) {
+            failed = true;
+            return insert([{ ...rows[0], user_id: 'someone-else' }]);
+          }
+          return insert(rows);
+        };
+        return api;
+      },
+    };
+    const edited = goodInvoice();
+    edited.lines = [edited.lines[0]];
+    edited.fields.invoice_number = field('INV-EDITED', 'INV-EDITED');
+    await rejects(
+      ctx.h.review(
+        { ...ctx.asAlice(), db: flaky, params: { id: doc.id }, body: edited },
+        fakeRes(),
+      ),
+      500,
+      'LINE_ITEMS_FAILED',
+    );
+    const after = (await ctx.alice.from('line_items').select('*').eq('shipment_id', shipmentId))
+      .data;
+    assert.deepEqual(
+      after.map((r) => [r.line_no, r.description]),
+      before.map((r) => [r.line_no, r.description]),
+    );
+    const ex = await ctx.alice.from('document_extractions').select('*').eq('document_id', doc.id);
+    assert.equal(ex.data[0].reviewed_payload.fields.invoice_number.value, 'INV-2025-0042');
   });
 
   it('rejects an invalid body with 422 and saves nothing', async () => {

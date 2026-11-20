@@ -55,3 +55,10 @@ test('shape lists every field for every document type', () => {
   }
   assert.throws(() => describeShape('nope'));
 });
+
+test('nested delimiters cannot be reassembled into a closing marker', () => {
+  const nested = `a ${DATA_END.slice(0, 10)}${DATA_END}${DATA_END.slice(10)} b ${DATA_START.slice(0, 8)}${DATA_START}${DATA_START.slice(8)}`;
+  const prompt = buildUserPrompt({ documentType: 'commercial_invoice', text: nested });
+  assert.equal(prompt.split(DATA_END).length, 2);
+  assert.equal(prompt.split(DATA_START).length, 2);
+});
