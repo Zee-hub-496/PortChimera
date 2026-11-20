@@ -239,6 +239,34 @@ describe('shownPayload after approval', () => {
     assert.equal(fieldRows(shown).find((r) => r.key === 'invoice_number').needsAttention, false);
   });
 
+  it('restores evidence_verified on unchanged line cells only', () => {
+    const withLines = {
+      ...original,
+      lines: [
+        {
+          description: {
+            value: 'Widget',
+            status: 'extracted',
+            evidence: 'W',
+            evidence_verified: true,
+          },
+          quantity: { value: 5, status: 'extracted', evidence: '5', evidence_verified: false },
+        },
+      ],
+    };
+    const reviewed = {
+      lines: [
+        {
+          description: { value: 'Widget', status: 'extracted', evidence: 'W' },
+          quantity: { value: 6, status: 'extracted', evidence: '5' },
+        },
+      ],
+    };
+    const shown = shownPayload({ extraction: { payload: withLines, reviewedPayload: reviewed } });
+    assert.equal(shown.lines[0].description.evidence_verified, true);
+    assert.equal(shown.lines[0].quantity.evidence_verified, undefined);
+  });
+
   it('ignores evidence_verified forged inside the reviewed payload', () => {
     const detail = approve({});
     detail.extraction.reviewedPayload.fields.total_value.evidence_verified = true;

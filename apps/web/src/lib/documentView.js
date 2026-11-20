@@ -211,5 +211,19 @@ export function shownPayload(detail) {
       fields[key] = { ...field, edited: true };
     }
   }
-  return { ...reviewed, fields };
+  const lines = Array.isArray(reviewed.lines)
+    ? reviewed.lines.map((line, i) => {
+        const origLine = original?.lines?.[i];
+        const out = {};
+        for (const [key, cell] of Object.entries(line ?? {})) {
+          const orig = origLine?.[key];
+          out[key] =
+            orig && cell && valueToText(orig.value) === valueToText(cell.value)
+              ? { ...cell, evidence_verified: orig.evidence_verified ?? null }
+              : cell;
+        }
+        return out;
+      })
+    : reviewed.lines;
+  return { ...reviewed, fields, ...(lines === undefined ? {} : { lines }) };
 }

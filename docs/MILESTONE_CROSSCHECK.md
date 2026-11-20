@@ -79,12 +79,20 @@ For each one: upload, click **Read with AI**, wait for "Ready for your review", 
 3. Supabase website, Table Editor:
    - `discrepancies`: one row, `review_status` = `accepted`, `reviewed_by` and `reviewed_at` filled, `finding_key` = `grossWeight|commercial_invoice+packing_list`.
    - `audit_logs`: `crosscheck.run` (twice) and `discrepancy.reviewed`.
-4. Optional: on the Documents page change the packing list gross weight to 500 kg, approve, and run the check. The accepted item stays as history (its decision is never changed). A finding that is still **open** and no longer applies disappears.
+4. Optional: on the Documents page change the packing list gross weight to 500 kg, approve, and run the check. If the compared values of an accepted item change, it is reopened (status "open", decision cleared) so it never shows figures that no document contains. An accepted item with unchanged values keeps its decision. A finding that is still **open** and no longer applies disappears.
 
 ## 8. Check privacy (private browser window)
 
 1. Open a private window, go to `http://localhost:5173`, sign in as bob.
 2. Bob must not see alice's shipment. Paste the address of alice's cross-check page (`/shipments/<id>/cross-check`). It should say "Shipment not found".
+
+## Known limits (accepted for v1)
+
+- **Not one transaction.** A re-run saves its changes as separate statements through the Supabase client, which has no multi-statement transaction. If one fails part-way, the list and the summary can disagree until the next run, which repairs it because it is computed from the stored rows. A database function would remove the window; it is left out of this student demo.
+- **Overlapping runs.** The unique key `(shipment_id, finding_key)` stops duplicates. The run that loses gets a 409 "Another cross-check is running" and can be repeated.
+- **Two documents of one type.** The newest reviewed one is used. Upload order decides, so approve only the document you want compared.
+- **Decisions overwrite.** Two browser tabs deciding the same finding at once: the last one wins. The audit log records every change (`from` and `to`). No compare-and-set, since a single-user demo does not need it.
+- **Rows from before migration 0002** have no `finding_key`. The tables were empty before 0002 in this project, so no cleanup is needed. If you have old rows, delete them in the Table Editor before the first run.
 
 ## Still to verify on your machine
 

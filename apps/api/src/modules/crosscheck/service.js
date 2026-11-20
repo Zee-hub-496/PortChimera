@@ -10,6 +10,20 @@ async function requireShipment(db, userId, shipmentId) {
   return shipment;
 }
 
+const SAVE_FAILED = ['DISCREPANCY_SAVE_FAILED', 'Could not save the cross-check'];
+
+// Postgres 23505 = unique violation: another run stored the same finding first.
+function saveError(error) {
+  if (error?.code === '23505') {
+    return new AppError(
+      409,
+      'CROSS_CHECK_IN_PROGRESS',
+      'Another cross-check is running for this shipment. Try again in a moment.',
+    );
+  }
+  return new AppError(500, ...SAVE_FAILED);
+}
+
 async function loadStored(db, shipmentId) {
   const { data, error } = await db
     .from('discrepancies')
@@ -24,7 +38,10 @@ async function loadReviewedDocuments(db, shipmentId) {
   const { data: docs, error } = await db
     .from('documents')
     .select('id, document_type')
-    .eq('shipment_id', shipmentId);
+    .eq('shipment_id', shipmentId)
+    // Newest first: when a shipment has two documents of one type, the mapper uses the newest
+    // reviewed one, so the choice is the same on every run.
+    .order('created_at', { ascending: false });
   if (error) throw new AppError(500, 'DOCUMENT_LIST_FAILED', 'Could not load documents');
   const ids = (docs ?? []).map((d) => d.id);
   if (ids.length === 0) return [];
@@ -56,6 +73,9 @@ async function view(db, shipment) {
  * `engine` is `{ crossCheck }` from @portchimera/core (injected so tests need no workspace link).
  * Runs the deterministic cross-check on the reviewed documents of one shipment and stores the
  * findings. Open findings are replaced; decided ones are kept (see planRerun).
+ * The writes are separate statements, not one transaction. A failure part-way leaves the stored
+ * findings and the summary out of step; running the check again repairs it (the plan is computed
+ * from the stored rows each time). Overlapping runs that collide on the unique key get a 409.
  * Audit failures are logged, not fatal (same policy as the documents module).
  */
 export async function runCrossCheck(db, userId, shipmentId, engine, logger = console) {
@@ -69,15 +89,15 @@ export async function runCrossCheck(db, userId, shipmentId, engine, logger = con
   );
   if (plan.remove.length > 0) {
     const { error } = await db.from('discrepancies').delete().in('id', plan.remove);
-    if (error) throw new AppError(500, 'DISCREPANCY_SAVE_FAILED', 'Could not save the cross-check');
+    if (error) throw saveError(error);
   }
   for (const { id, values } of plan.update) {
     const { error } = await db.from('discrepancies').update(values).eq('id', id);
-    if (error) throw new AppError(500, 'DISCREPANCY_SAVE_FAILED', 'Could not save the cross-check');
+    if (error) throw saveError(error);
   }
   if (plan.insert.length > 0) {
     const { error } = await db.from('discrepancies').insert(plan.insert);
-    if (error) throw new AppError(500, 'DISCREPANCY_SAVE_FAILED', 'Could not save the cross-check');
+    if (error) throw saveError(error);
   }
 
   const checkedAt = new Date().toISOString();
@@ -85,9 +105,7 @@ export async function runCrossCheck(db, userId, shipmentId, engine, logger = con
     .from('shipments')
     .update({ cross_check_summary: summary, cross_checked_at: checkedAt })
     .eq('id', shipmentId);
-  if (summaryError) {
-    throw new AppError(500, 'DISCREPANCY_SAVE_FAILED', 'Could not save the cross-check');
-  }
+  if (summaryError) throw saveError(summaryError);
 
   await auditSafely(
     db,
@@ -101,6 +119,7 @@ export async function runCrossCheck(db, userId, shipmentId, engine, logger = con
         added: plan.insert.length,
         updated: plan.update.length,
         removed: plan.remove.length,
+        reopened: plan.update.filter((u) => u.values.review_status === 'open').length,
       },
     },
     logger,

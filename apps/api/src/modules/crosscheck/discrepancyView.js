@@ -39,7 +39,10 @@ const SAME = (a, b) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
  * Decides what a re-run does (spec 04, R5.2).
  * - new finding, no stored row: insert
  * - stored row still open: update it with the fresh values
- * - stored row already decided (accepted, resolved, dismissed): leave it untouched
+ * - stored row already decided (accepted, resolved, dismissed) and the compared values are the
+ *   same: leave it untouched
+ * - decided row whose compared values or difference changed: update it and reopen it, so an old
+ *   decision never sits beside figures that no document contains any more
  * - open stored row whose finding no longer appears: delete it
  * - decided stored row whose finding no longer appears: keep it (the decision is history)
  *
@@ -57,6 +60,14 @@ export function planRerun(stored, fresh) {
     else if ((old.review_status ?? 'open') === 'open') {
       const changed = Object.keys(row).some((k) => !SAME(row[k], old[k]));
       if (changed) update.push({ id: old.id, values: row });
+    } else if (
+      !SAME(row.document_values, old.document_values) ||
+      !SAME(row.difference, old.difference)
+    ) {
+      update.push({
+        id: old.id,
+        values: { ...row, review_status: 'open', reviewed_by: null, reviewed_at: null },
+      });
     }
   }
   const remove = stored

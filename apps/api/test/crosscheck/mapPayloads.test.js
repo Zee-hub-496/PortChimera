@@ -88,10 +88,21 @@ describe('planRerun', () => {
     assert.equal(plan.update.length, 1);
   });
 
-  it('leaves decided rows alone, even when the values changed', () => {
+  it('leaves decided rows alone while the compared values are the same', () => {
     const stored = [{ id: 'a', review_status: 'dismissed', ...finding() }];
     const plan = planRerun(stored, [finding({ severity: 'medium' })]);
     assert.deepEqual(plan, { insert: [], update: [], remove: [] });
+  });
+
+  it('reopens a decided row when the compared values changed', () => {
+    const stored = [{ id: 'a', review_status: 'accepted', ...finding() }];
+    const plan = planRerun(stored, [
+      finding({ values: { commercial_invoice: '500 kg', packing_list: '700 kg' } }),
+    ]);
+    assert.equal(plan.update.length, 1);
+    assert.equal(plan.update[0].values.review_status, 'open');
+    assert.equal(plan.update[0].values.reviewed_by, null);
+    assert.equal(plan.update[0].values.reviewed_at, null);
   });
 
   it('removes open rows that no longer appear and keeps decided ones', () => {

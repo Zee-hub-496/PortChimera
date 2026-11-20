@@ -183,6 +183,33 @@ describe('re-running', () => {
     assert.deepEqual(actions(t), ['crosscheck.run', 'discrepancy.reviewed', 'crosscheck.run']);
   });
 
+  it('reopens a decided finding when the documents change, and shows the new values', async () => {
+    const t = setup();
+    const id = await shipmentWithDocs(t.alice, 'user-alice', demoRows({ packingGross: '650 kg' }));
+    const first = await run(t, t.asAlice(), id);
+    await decide(t, t.asAlice(), first.body.data.discrepancies[0].id, 'accepted');
+
+    const packing = t.tables.document_extractions.find(
+      (e) => e.reviewed_payload.document_type === 'packing_list',
+    );
+    packing.reviewed_payload = demoRows({ packingGross: '700 kg' })[1].reviewed_payload;
+    const second = await run(t, t.asAlice(), id);
+    const [d] = second.body.data.discrepancies;
+    assert.equal(d.reviewStatus, 'open');
+    assert.equal(d.reviewedAt, null);
+    assert.equal(d.values.packing_list, '700 kg');
+    assert.equal(t.tables.discrepancies.length, 1);
+  });
+
+  it('uses the newest reviewed document when a type appears twice', async () => {
+    const t = setup();
+    const rows = demoRows({ packingGross: '650 kg' });
+    const oldPacking = demoRows({ packingGross: '900 kg' })[1];
+    const id = await shipmentWithDocs(t.alice, 'user-alice', [oldPacking, ...rows]);
+    const res = await run(t, t.asAlice(), id);
+    assert.equal(res.body.data.discrepancies[0].values.packing_list, '650 kg');
+  });
+
   it('removes an open finding once the documents agree, and updates one that changed', async () => {
     const t = setup();
     const id = await shipmentWithDocs(t.alice, 'user-alice', demoRows({ packingGross: '650 kg' }));
