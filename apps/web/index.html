@@ -3,7 +3,47 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PortChimera</title>
+    <title>PortChimera | Trade document checks and sea route planning</title>
+    <meta
+      name="description"
+      content="PortChimera cross-checks trade documents with AI extraction and fixed rules, and plans sea routes between ports. A student project with illustrative demo data."
+    />
+    <meta name="theme-color" content="#f6f4ef" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0a1220" media="(prefers-color-scheme: dark)" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="PortChimera" />
+    <meta
+      property="og:title"
+      content="PortChimera | Trade document checks and sea route planning"
+    />
+    <meta
+      property="og:description"
+      content="Cross-check trade documents and plan sea routes between ports."
+    />
+    <meta property="og:image" content="/icon-512.png" />
+    <meta name="twitter:card" content="summary" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400..600&family=Plus+Jakarta+Sans:wght@400..800&display=swap"
+      rel="stylesheet"
+    />
+    <script>
+      // Sets the theme before first paint. Mirrors resolveTheme in src/lib/theme.js.
+      (function () {
+        try {
+          var c = localStorage.getItem('portchimera-theme');
+          if (c !== 'light' && c !== 'dark') c = 'system';
+          var dark =
+            c === 'dark' || (c === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
+          document.documentElement.classList.toggle('dark', dark);
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
