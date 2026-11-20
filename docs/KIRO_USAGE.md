@@ -103,3 +103,13 @@ made between 1 and 12 tests fail.
 **Verified:** the mapper, re-run rules, handlers (owner-only, fewer than two reviewed documents, persistence, decisions kept on re-run, audit) and web helpers pass with `node --test` in the authoring sandbox.
 
 **Not verified:** migration 0002 on Supabase, Express routes, zod schemas, the React page, the Vite build, and whether Gemini reads the demo PDFs as the tests assume. Follow `docs/MILESTONE_CROSSCHECK.md`.
+
+## 2026-11-21: UI redesign (frontend only)
+
+**What drove it:** a request for an enterprise logistics look, split into four features on branch `feat/ui-redesign`: design system and theme, public landing and auth pages, app shell and shipment pages, then the reusable map. Steering files in `.kiro/steering/` applied (business logic in `src/lib` with tests, honest labels, no new unexplained dependencies). No hooks or MCP servers were used. API, Supabase, auth flow, upload and cross-check code were not changed.
+
+**What Kiro produced:** theme tokens and a Light, Dark and System switch, a compass logo and favicon, landing page, split-screen login and register, an app shell with sidebar, breadcrumbs and a Ctrl+K palette, shipment tabs, hub pages, and a `MaritimeMap` component (MapLibre with CARTO tiles, port pins, curved route arcs, disrupted-port markers, progressive route drawing). Five dependencies were added: `lucide-react`, `framer-motion`, `maplibre-gl`, `cmdk`, `sonner`. The old SVG route sketch (`mapProjection.js`) was removed. `docs/MILESTONE_UI.md` has the steps.
+
+**Verified:** the pure helpers (map arcs, route and marker GeoJSON, progressive line, search, breadcrumbs, site content, status tones) pass with `node --test`. Prettier and the secret scan pass. A script checked that every relative import in `apps/web/src` resolves and that named imports are exported.
+
+**Not verified:** `npm install`, `npm run dev:web`, the Vite build, any page or the map in a browser, CARTO tiles, WebGL, the Ctrl+K palette, animations, `lucide-react` icon names, and the hand-written package versions. Migration 0002 is still not run, so the cross-check page may error. Follow `docs/MILESTONE_UI.md` and send back any error text.
