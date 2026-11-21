@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
+import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import {
   ILLUSTRATIVE_ROUTE_NOTE,
   boundsOf,
@@ -21,6 +22,10 @@ const WORLD_BOUNDS = [
   [170, 65],
 ];
 const DRAW_MS = 2200;
+const STYLE_TIMEOUT_MS = 15000;
+
+// maplibre-gl 6 cannot find its worker file through a bundler, so Vite must give it the URL.
+maplibregl.setWorkerUrl(workerUrl);
 
 // Layer colours cannot use CSS variables, so each theme has its own set.
 const PALETTE = {
@@ -389,10 +394,16 @@ export default function MaritimeMap({
       if (!readyRef.current) setFailed(true);
     });
 
+    // A map whose worker or style never loads raises no error, so show the fallback after a wait.
+    const styleTimer = setTimeout(() => {
+      if (!readyRef.current) setFailed(true);
+    }, STYLE_TIMEOUT_MS);
+
     const observer = new ResizeObserver(() => map.resize());
     observer.observe(containerRef.current);
 
     return () => {
+      clearTimeout(styleTimer);
       cancelAnimationFrame(anim.frame);
       observer.disconnect();
       popupRef.current?.remove();

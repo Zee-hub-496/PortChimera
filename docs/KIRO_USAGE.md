@@ -121,3 +121,13 @@ made between 1 and 12 tests fail.
 **What Kiro did:** checked the advisory against MapLibre's changelog (fixed in 6.4.1) and upgraded `apps/web` to `^6.19.0`. Version 6 is ESM-only with no default export, so `MaritimeMap.jsx` now uses `import * as maplibregl from 'maplibre-gl'`. The other v5 and v6 breaking changes were checked against our usage and none apply. Our popups use `setText` and `setDOMContent`, never `setHTML`.
 
 **Not verified:** `npm install`, the Vite build and the map in a browser. `package-lock.json` is not committed yet. Run `npm install`, build, open a map page, then commit the lockfile. Version 6 needs WebGL2, and the text fallback should show without it.
+
+## 2026-11-21: map stayed an empty grey box after the maplibre-gl 6 upgrade
+
+**What happened:** after the upgrade the build and tests passed, but the map on `/map` was blank with no tiles, controls or fallback message.
+
+**Cause:** maplibre-gl 6 starts its worker from `new URL('./maplibre-gl-worker.mjs', import.meta.url)`. MapLibre's [v5 to v6 migration guide](https://github.com/maplibre/maplibre-gl-js/blob/v6.19.0/docs/guides/v5-to-v6-migration-guide.md) says this does not resolve inside a bundler such as Vite, so each app must call `setWorkerUrl()` once. Without the worker the style never loads, and no error event fires, so the fallback never showed.
+
+**Fix:** `MaritimeMap.jsx` now imports `maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url` and calls `setWorkerUrl()`. The `?worker&url` query is documented for Vite 6 ([Vite features guide](https://github.com/vitejs/vite/blob/v6.0.0/docs/guide/features.md)). The text fallback now also appears if the style has not loaded after 15 seconds.
+
+**Not verified:** this sandbox has no `node_modules`, so the fix was not built or run in a browser. Confirm the map renders on `/map` after pulling.
