@@ -6,7 +6,7 @@ const EXPORTER = 'Example Textiles Ltd, Izmir, Turkey';
 const IMPORTER = 'Sample Retail GmbH, Hamburg, Germany';
 
 const invoice = () => ({
-  schema_version: 1,
+  schema_version: 2,
   document_type: 'commercial_invoice',
   fields: {
     invoice_number: field('INV-2025-0100'),
@@ -18,6 +18,8 @@ const invoice = () => ({
     currency: field('EUR'),
     total_value: field('10500.00'),
     incoterm: field('FOB'),
+    total_net_weight: field('450 kg'),
+    total_gross_weight: field('500 kg'),
   },
   lines: [
     {

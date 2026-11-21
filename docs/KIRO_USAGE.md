@@ -158,3 +158,17 @@ made between 1 and 12 tests fail.
 **Honesty:** sea lanes are illustrative, not vessel tracks and not for navigation. The land test uses coarse 110m polygons, so it proves lanes do not cross the bundled land, not that they are safe.
 
 **Not verified:** no `node_modules` or network here, so the Vite build and the rendering in a browser were not run. Pull, run `npm install`, and check `/`, `/map` and a shipment Route tab.
+
+## 2026-11-21: invoice extraction failed on the real demo invoice
+
+**What happened:** with a real Gemini run, `fixtures/documents/demo-invoice.pdf` ended in "The AI answer could not be validated, so it was discarded". The packing list and certificate of origin extracted fine.
+
+**Likely cause (not confirmed from a log):** the invoice PDF states "Total Gross Weight: 500 kg", but the invoice field list had no total weight fields. The prompt only described the shape in text, and the zod schema is strict at every level, so an extra key such as `total_gross_weight` is rejected as `unrecognized_keys`.
+
+**Fix:**
+
+- `total_net_weight` and `total_gross_weight` are now optional invoice fields. The cross-check maps them to the invoice's document-level `netWeight` and `grossWeight`. The demo still gives exactly one high finding (500 kg vs 650 kg). `SCHEMA_VERSION` is now 2 so cached version 1 results are not reused. Version 1 payloads still validate and map, since the new fields are optional.
+- The request now sends `generationConfig.responseSchema`, generated from `DOCUMENT_FIELDS` in `responseSchema.js` (see `docs/AI_NOTES.md`, "Structured output").
+- A failed validation now logs the path and issue code (for example `fields: unrecognized_keys (total_gross_weight)`), never document values.
+
+**Not verified:** no real Gemini call was made. The zod tests need `node_modules`, so they were written but not run in the sandbox. Run `npm test` after pulling, then press "Read again with AI" on the demo invoice.

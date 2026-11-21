@@ -1,4 +1,5 @@
 import { AiError } from './aiError.js';
+import { buildResponseSchema } from './responseSchema.js';
 import { buildSystemPrompt, buildUserPrompt } from './prompts/extraction.js';
 
 const BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
@@ -22,7 +23,11 @@ export function buildRequest({ model, documentType, text, file }) {
     body: {
       system_instruction: { parts: [{ text: buildSystemPrompt() }] },
       contents: [{ role: 'user', parts }],
-      generationConfig: { responseMimeType: 'application/json', temperature: 0 },
+      generationConfig: {
+        responseMimeType: 'application/json',
+        responseSchema: buildResponseSchema(documentType),
+        temperature: 0,
+      },
     },
   };
 }

@@ -112,4 +112,22 @@ describe('planRerun', () => {
     ];
     assert.deepEqual(planRerun(stored, []).remove, ['a']);
   });
+
+  it('maps the invoice total weights to document level', () => {
+    const doc = mapReviewedPayloads(demoRows()).commercial_invoice;
+    assert.equal(doc.grossWeight, '500 kg');
+    assert.equal(doc.netWeight, '450 kg');
+  });
+
+  it('still maps an older invoice payload that has no total weight fields', () => {
+    const rows = demoRows();
+    const inv = rows[0].reviewed_payload;
+    delete inv.fields.total_gross_weight;
+    delete inv.fields.total_net_weight;
+    const doc = mapReviewedPayloads(rows).commercial_invoice;
+    assert.equal('grossWeight' in doc, false);
+    assert.equal('netWeight' in doc, false);
+    const { findings } = crossCheck(mapReviewedPayloads(rows));
+    assert.deepEqual(findings, []);
+  });
 });

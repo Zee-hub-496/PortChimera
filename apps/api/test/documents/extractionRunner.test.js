@@ -4,6 +4,7 @@ import { runExtraction } from '../../src/modules/documents/extractionRunner.js';
 import { createFakeProvider, emptyExtraction } from '../../src/ai/fakeProvider.js';
 import { extractPdfText } from '../../src/ai/pdfText.js';
 import { assertProvider } from '../../src/ai/aiProvider.js';
+import { SCHEMA_VERSION } from '../../src/ai/fieldNames.js';
 import { plainParse, field, missing } from '../helpers/plainParser.js';
 import {
   buildFixtures,
@@ -45,7 +46,7 @@ test('valid output with readable text: file and text sent, evidence checked', as
     mimeType: 'application/pdf',
   });
   assert.equal(provider.calls[0].text, invoiceText);
-  assert.equal(out.payload.schema_version, 1);
+  assert.equal(out.payload.schema_version, SCHEMA_VERSION);
   assert.equal(out.payload.fields.invoice_number.evidence_verified, true);
   assert.equal(out.payload.fields.total_value.evidence_verified, false);
   assert.equal(out.payload.fields.total_value.status, 'uncertain');

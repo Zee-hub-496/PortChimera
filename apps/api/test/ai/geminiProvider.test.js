@@ -1,6 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGeminiProvider, buildRequest, parseResponse } from '../../src/ai/geminiProvider.js';
+import { DOCUMENT_FIELDS } from '../../src/ai/fieldNames.js';
+import { buildResponseSchema } from '../../src/ai/responseSchema.js';
 
 const KEY = 'test-key-not-real-0000';
 const MODEL = 'test-model';
@@ -69,6 +71,7 @@ test('request has JSON mime type, no tools, and sends text hint plus the file in
     file: { bytes: Buffer.from('abc'), mimeType: 'application/pdf' },
   });
   assert.equal(body.generationConfig.responseMimeType, 'application/json');
+  assert.deepEqual(body.generationConfig.responseSchema, buildResponseSchema('commercial_invoice'));
   assert.equal(body.tools, undefined);
   assert.equal(body.contents[0].parts.length, 2);
   assert.match(body.contents[0].parts[0].text, /Some invoice text here/);
@@ -187,4 +190,19 @@ test('the key never appears in any error message', async () => {
 test('constructor requires a key and a model', () => {
   assert.throws(() => createGeminiProvider({ model: MODEL }));
   assert.throws(() => createGeminiProvider({ apiKey: KEY }));
+});
+
+test('buildRequest sends a response schema and JSON mime type for every document type', () => {
+  for (const documentType of Object.keys(DOCUMENT_FIELDS)) {
+    const { body } = buildRequest({
+      model: MODEL,
+      documentType,
+      text: null,
+      file: { bytes: Buffer.from('abc'), mimeType: 'application/pdf' },
+    });
+    assert.equal(body.generationConfig.responseMimeType, 'application/json');
+    assert.deepEqual(body.generationConfig.responseSchema, buildResponseSchema(documentType));
+    assert.equal(body.generationConfig.responseJsonSchema, undefined);
+    assert.equal(body.contents[0].parts[1].inline_data.mime_type, 'application/pdf');
+  }
 });

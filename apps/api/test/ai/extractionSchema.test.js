@@ -57,3 +57,27 @@ test('error messages do not echo document values', () => {
     (e) => !e.message.includes('TOP-SECRET-VALUE'),
   );
 });
+
+test('accepts an invoice with total_gross_weight and total_net_weight', () => {
+  const raw = emptyExtraction('commercial_invoice');
+  raw.fields.total_gross_weight = field('500 kg');
+  raw.fields.total_net_weight = field('450 kg');
+  const out = parseExtraction('commercial_invoice', raw);
+  assert.equal(out.fields.total_gross_weight.value, '500 kg');
+});
+
+test('accepts an older invoice payload without the optional total weights', () => {
+  const raw = emptyExtraction('commercial_invoice');
+  delete raw.fields.total_gross_weight;
+  delete raw.fields.total_net_weight;
+  assert.ok(parseExtraction('commercial_invoice', raw));
+});
+
+test('still rejects an unknown invoice key and names it in the error', () => {
+  const raw = emptyExtraction('commercial_invoice');
+  raw.fields.total_volume = field('3 m3');
+  assert.throws(() => parseExtraction('commercial_invoice', raw), {
+    kind: 'bad_output',
+    message: /fields: unrecognized_keys \(total_volume\)/,
+  });
+});

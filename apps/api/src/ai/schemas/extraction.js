@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { AiError } from '../aiError.js';
+import { describeIssue } from '../validationIssue.js';
 import { DOCUMENT_FIELDS, FIELD_STATUSES, SCHEMA_VERSION } from '../fieldNames.js';
 
 export { SCHEMA_VERSION };
@@ -48,9 +49,11 @@ export function parseExtraction(documentType, raw) {
   if (!schema) throw new AiError('bad_output', 'Unknown document type');
   const result = schema.safeParse(raw);
   if (!result.success) {
-    const first = result.error.issues[0];
-    const where = first?.path?.join('.') || 'root';
-    throw new AiError('bad_output', `Model output failed validation at ${where}`);
+    // Path and issue code only, never the document values.
+    throw new AiError(
+      'bad_output',
+      `Model output failed validation at ${describeIssue(result.error.issues[0])}`,
+    );
   }
   return { schema_version: SCHEMA_VERSION, document_type: documentType, ...result.data };
 }
