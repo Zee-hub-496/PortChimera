@@ -102,6 +102,7 @@ function Hero({ signedIn }) {
               highlightCodes={[origin.code, destination.code]}
               height={220}
               interactive={false}
+              showChokepoints={false}
               fit="route"
               ariaLabel={`Sample route from ${origin.name} to ${destination.name}`}
             />
@@ -297,6 +298,11 @@ function HowItWorks() {
   );
 }
 
+// Shanghai, Singapore, Karachi, Jebel Ali: a chain of seeded lanes, drawn along the sea.
+const NETWORK_STOPS = ['CNSHA', 'SGSIN', 'PKKHI', 'AEJEA'].map((code) =>
+  SAMPLE_PORTS.find((p) => p.code === code),
+);
+
 function Network() {
   return (
     <section id="network" className="scroll-mt-20 mx-auto max-w-6xl px-4 py-20">
@@ -305,10 +311,11 @@ function Network() {
       </SectionHeading>
       <MaritimeMapLazy
         ports={SAMPLE_PORTS}
-        height={420}
+        routes={[{ id: 'sample-network', stops: NETWORK_STOPS, tone: 'primary' }]}
+        height={440}
         interactive
-        fit="world"
-        ariaLabel="World map with five sample ports"
+        fit="ports"
+        ariaLabel="World map with five sample ports and a sea lane from Shanghai to Jebel Ali"
       />
       <ul className="mt-4 flex flex-wrap gap-2" aria-label="Legend">
         {SAMPLE_PORTS.map((p) => (

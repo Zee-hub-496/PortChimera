@@ -186,8 +186,7 @@ export default function PublicLayout() {
             <p>{DISCLAIMERS.footer}</p>
             <p>{DISCLAIMERS.ai}</p>
             <p>
-              Map data © OpenStreetMap contributors, basemap © CARTO. Port positions are
-              illustrative.
+              Basemap: Natural Earth, public domain. Port positions and sea lanes are illustrative.
             </p>
             <p>© {new Date().getFullYear()} PortChimera</p>
           </div>

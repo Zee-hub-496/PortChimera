@@ -10,14 +10,13 @@ import {
   disruptedToGeoJSON,
   progressiveLine,
   ROUTE_TONES,
-  CARTO_TILES,
-  TILE_SUBDOMAINS,
+  splitAtDateLine,
   toLatLngs,
-  styleFor,
   MAP_ATTRIBUTION,
   ILLUSTRATIVE_ROUTE_NOTE,
 } from '../src/lib/mapData.js';
 
+const stopOf = (c) => ({ lon: c[0], lat: c[1] });
 const SHA = [121.47, 31.23];
 const LAX = [-118.27, 33.73];
 const KHI = [66.98, 24.84];
@@ -94,15 +93,7 @@ describe('boundsOf', () => {
   it('returns null for no points', () => assert.equal(boundsOf([]), null));
 });
 
-describe('styles', () => {
-  it('picks the tile template by theme', () => {
-    assert.equal(styleFor('dark'), CARTO_TILES.dark);
-    assert.equal(styleFor('light'), CARTO_TILES.light);
-    assert.notEqual(CARTO_TILES.dark, CARTO_TILES.light);
-    assert.match(CARTO_TILES.light, /light_all\/\{z\}\/\{x\}\/\{y\}\{r\}\.png$/);
-    assert.match(CARTO_TILES.dark, /dark_all\/\{z\}\/\{x\}\/\{y\}\{r\}\.png$/);
-    assert.equal(TILE_SUBDOMAINS, 'abcd');
-  });
+describe('helpers and attribution', () => {
   it('converts [lon, lat] to [lat, lng]', () => {
     assert.deepEqual(
       toLatLngs([
@@ -115,11 +106,88 @@ describe('styles', () => {
       ],
     );
   });
-  it('keeps attribution and the illustrative note', () => {
-    assert.match(MAP_ATTRIBUTION, /CARTO/);
-    assert.match(MAP_ATTRIBUTION, /OpenStreetMap/);
+  it('credits Natural Earth and names no tile service', () => {
+    assert.match(MAP_ATTRIBUTION, /Natural Earth/);
+    assert.match(MAP_ATTRIBUTION, /public domain/);
+    assert.doesNotMatch(MAP_ATTRIBUTION, /CARTO|OpenStreetMap/i);
     assert.match(ILLUSTRATIVE_ROUTE_NOTE, /Illustrative/);
+    assert.match(ILLUSTRATIVE_ROUTE_NOTE, /sea lane/);
   });
+});
+
+describe('sea lanes in routes', () => {
+  const sg = { code: 'SGSIN', lon: 103.82, lat: 1.26 };
+  const khi = { code: 'PKKHI', lon: 66.98, lat: 24.84 };
+  it('draws a seeded lane along its waypoints instead of the great-circle arc', () => {
+    const lane = routeToGeoJSON([sg, khi]).geometry.coordinates;
+    const arc = greatCirclePoints([sg.lon, sg.lat], [khi.lon, khi.lat], 64);
+    assert.ok(lane.length > 20);
+    assert.notDeepEqual(lane, arc);
+    assert.deepEqual(lane[0], [sg.lon, sg.lat]);
+    assert.deepEqual(lane[lane.length - 1], [khi.lon, khi.lat]);
+    // The Malacca waypoint, which a straight arc to Karachi never goes near.
+    assert.ok(lane.some(([lon, lat]) => Math.abs(lon - 101) < 0.1 && Math.abs(lat - 2.7) < 0.1));
+  });
+  it('falls back to the arc for a pair without a lane', () => {
+    const lane = routeToGeoJSON([sg, { code: 'USLAX', lon: -118.26, lat: 33.73 }]);
+    assert.equal(lane.geometry.coordinates.length, 65);
+  });
+  it('falls back to the arc for stops without codes', () => {
+    assert.equal(routeToGeoJSON([stopOf(SHA), stopOf(KHI)]).geometry.coordinates.length, 65);
+  });
+});
+
+describe('splitAtDateLine', () => {
+  it('leaves a line inside the world as one piece', () => {
+    const line = [
+      [10, 0],
+      [20, 5],
+    ];
+    assert.deepEqual(splitAtDateLine(line), [line]);
+  });
+  it('cuts an eastward line at 180 and continues from -180', () => {
+    const pieces = splitAtDateLine([
+      [170, 10],
+      [190, 30],
+      [200, 30],
+    ]);
+    assert.equal(pieces.length, 2);
+    assert.deepEqual(pieces[0], [
+      [170, 10],
+      [180, 20],
+    ]);
+    assert.deepEqual(pieces[1], [
+      [-180, 20],
+      [-170, 30],
+      [-160, 30],
+    ]);
+  });
+  it('cuts a westward line at -180', () => {
+    const pieces = splitAtDateLine([
+      [-170, 0],
+      [-190, 10],
+    ]);
+    assert.deepEqual(pieces, [
+      [
+        [-170, 0],
+        [-180, 5],
+      ],
+      [
+        [180, 5],
+        [170, 10],
+      ],
+    ]);
+  });
+  it('keeps every piece inside [-180, 180] for a real Pacific lane', () => {
+    const sha = { code: 'CNSHA', lon: 121.47, lat: 31.23 };
+    const lax = { code: 'USLAX', lon: -118.26, lat: 33.73 };
+    const line = routeToGeoJSON([sha, lax]).geometry.coordinates;
+    assert.ok(Math.max(...line.map((p) => p[0])) > 180);
+    const pieces = splitAtDateLine(line);
+    assert.equal(pieces.length, 2);
+    for (const p of pieces.flat()) assert.ok(p[0] >= -180 && p[0] <= 180);
+  });
+  it('handles empty input', () => assert.deepEqual(splitAtDateLine([]), []));
 });
 
 const stop = (c) => ({ lon: c[0], lat: c[1] });

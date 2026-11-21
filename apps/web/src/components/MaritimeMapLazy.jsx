@@ -10,7 +10,7 @@ export default function MaritimeMapLazy(props) {
     <Suspense
       fallback={
         <div className={className}>
-          <div aria-hidden="true" className="skeleton w-full rounded-xl" style={{ height }} />
+          <div aria-hidden="true" className="skeleton w-full rounded-2xl" style={{ height }} />
         </div>
       }
     >

@@ -142,10 +142,46 @@ body {
   }
 }
 
-/* Leaflet popups, tooltips and controls follow the theme. */
+/* Map. The basemap is drawn on a canvas from bundled land polygons. The sea is the background. */
+:root {
+  --map-sea: linear-gradient(180deg, #e3eef4 0%, #cfe2ec 100%);
+}
+.dark {
+  --map-sea: linear-gradient(180deg, #0c1829 0%, #0a1322 100%);
+}
 .leaflet-container {
   font-family: var(--font-sans);
   background: var(--surface-2);
+}
+.leaflet-container.pc-map {
+  background: var(--map-sea);
+  outline-offset: -2px;
+}
+.pc-map .leaflet-bar {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+.pc-map .leaflet-bar a {
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  backdrop-filter: blur(6px);
+  color: var(--fg);
+  border-bottom: 1px solid var(--line);
+  width: 32px;
+  height: 32px;
+  line-height: 32px;
+}
+.pc-map .leaflet-bar a:last-child {
+  border-bottom: 0;
+}
+.pc-map .leaflet-bar a:hover {
+  background: var(--surface-2);
+  color: var(--accent);
+}
+.pc-map .leaflet-bar a.leaflet-disabled {
+  color: var(--muted);
+  opacity: 0.5;
 }
 .leaflet-popup-content-wrapper,
 .leaflet-popup-tip {
@@ -155,14 +191,105 @@ body {
   box-shadow: var(--shadow-pop);
 }
 .leaflet-popup-content-wrapper {
-  border-radius: 10px;
+  border-radius: 12px;
 }
 .leaflet-popup-content {
-  margin: 10px 12px;
+  margin: 10px 14px;
 }
 .leaflet-container a.leaflet-popup-close-button {
   color: var(--muted);
 }
+.pc-pop-title {
+  font-weight: 700;
+}
+.pc-pop-code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  opacity: 0.75;
+}
+.pc-pop-note {
+  font-size: 12px;
+  color: var(--muted);
+  max-width: 220px;
+}
+.pc-pop-flag {
+  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--warn);
+}
+
+/* Port pins: a white ring and a soft shadow. Highlighted ports use the accent colour. */
+.pc-pin-wrap,
+.pc-choke-wrap,
+.pc-disrupted-wrap {
+  background: transparent;
+  border: 0;
+}
+.pc-pin {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: var(--fg);
+  border: 2.5px solid #fff;
+  box-shadow:
+    0 1px 3px rgb(0 0 0 / 0.35),
+    0 3px 10px rgb(0 0 0 / 0.22);
+  transition: transform 0.15s ease;
+}
+.dark .pc-pin {
+  border-color: var(--surface);
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 0.25),
+    0 3px 10px rgb(0 0 0 / 0.5);
+}
+.pc-pin-hi {
+  background: var(--accent);
+  border-width: 3px;
+}
+.leaflet-marker-icon:hover .pc-pin,
+.leaflet-marker-icon:focus-visible .pc-pin {
+  transform: scale(1.18);
+}
+.leaflet-marker-icon:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 50%;
+}
+
+/* Chokepoints: small diamonds. Those on the drawn route are filled and in the warning colour. */
+.pc-choke {
+  box-sizing: border-box;
+  width: 11px;
+  height: 11px;
+  margin: 3.5px;
+  transform: rotate(45deg);
+  border: 2px solid var(--warn);
+  background: var(--surface);
+  opacity: 0.8;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.3);
+}
+.pc-choke-on {
+  background: var(--warn);
+  opacity: 1;
+}
+.leaflet-tooltip.pc-choke-tip {
+  background: var(--surface);
+  color: var(--fg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow-pop);
+  white-space: normal;
+  max-width: 220px;
+  padding: 8px 10px;
+  font-size: 12px;
+}
+.leaflet-tooltip-top.pc-choke-tip::before {
+  border-top-color: var(--line);
+}
+
+/* Port labels with a halo so they stay readable over land, sea and routes. */
 .leaflet-tooltip.pc-port-label {
   background: transparent;
   border: 0;
@@ -171,49 +298,58 @@ body {
   color: var(--fg);
   font-size: 11px;
   font-weight: 600;
+  letter-spacing: 0.01em;
   text-shadow:
-    0 0 3px var(--surface),
-    0 0 3px var(--surface),
-    0 0 3px var(--surface);
+    0 0 2px var(--surface),
+    0 0 2px var(--surface),
+    0 0 4px var(--surface),
+    0 0 4px var(--surface);
+}
+.leaflet-tooltip.pc-port-label-hi {
+  font-size: 12px;
+  font-weight: 700;
 }
 .leaflet-tooltip.pc-port-label::before {
   display: none;
 }
-.pc-map-nolabels .pc-port-label {
+.pc-map-nolabels .pc-port-label:not(.pc-port-label-hi) {
   display: none;
 }
+
+.pc-disrupted {
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 2.5px solid var(--warn);
+}
 .pc-pulse {
-  transform-box: fill-box;
-  transform-origin: center;
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--warn);
+  opacity: 0;
   animation: pc-pulse 1.6s ease-out infinite;
   pointer-events: none;
 }
 @keyframes pc-pulse {
   from {
     transform: scale(0.6);
-    opacity: 0.8;
+    opacity: 0.55;
   }
   to {
-    transform: scale(2.2);
+    transform: scale(2);
     opacity: 0;
   }
 }
-.dark .leaflet-bar a {
-  background: var(--surface);
-  color: var(--fg);
-  border-color: var(--line);
-}
-.dark .leaflet-bar a:hover {
-  background: var(--surface-2);
-}
 .leaflet-control-attribution {
   font-size: 10px;
-}
-.dark .leaflet-control-attribution {
   background: color-mix(in srgb, var(--surface) 80%, transparent);
   color: var(--muted);
+  border-top-left-radius: 8px;
 }
-.dark .leaflet-control-attribution a {
+.leaflet-control-attribution a {
   color: var(--muted);
 }
 

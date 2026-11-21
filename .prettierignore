@@ -5,3 +5,4 @@ package-lock.json
 .kiro/specs
 
 fixtures/documents/
+apps/web/src/assets/world-110m.json
