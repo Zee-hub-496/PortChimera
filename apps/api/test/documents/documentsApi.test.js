@@ -6,7 +6,7 @@ import { runJob } from '../../src/modules/documents/processJob.js';
 import { buildLineItemRows } from '../../src/modules/documents/documentView.js';
 import { DOCUMENT_TYPES } from '../../src/modules/documents/fileValidation.js';
 import { createFakeProvider, emptyExtraction } from '../../src/ai/fakeProvider.js';
-import { DOCUMENT_FIELDS } from '../../src/ai/fieldNames.js';
+import { DOCUMENT_FIELDS, SCHEMA_VERSION } from '../../src/ai/fieldNames.js';
 import { fakeDbFactory, fakeRes } from '../helpers/fakes.js';
 import { field, missing, plainParse } from '../helpers/plainParser.js';
 import { buildFixtures } from '../../../../scripts/generate-document-fixtures.mjs';
@@ -317,7 +317,7 @@ describe('process', () => {
       .map((i) => i.row.action);
     assert.ok(actions.includes('document.extracted'));
     const ex = ctx.factory.inserts.find((i) => i.table === 'document_extractions').row;
-    assert.equal(ex.schema_version, 1);
+    assert.equal(ex.schema_version, SCHEMA_VERSION);
     assert.equal(ex.payload.fields.invoice_number.evidence_verified, true);
   });
 

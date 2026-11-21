@@ -37,6 +37,9 @@ const MAPPERS = {
       ['currency', valueOf(f.currency)],
       ['totalValue', valueOf(f.total_value)],
       ['originCountry', valueOf(f.origin_country)],
+      // Optional totals stated on the invoice. Older payloads do not have them.
+      ['grossWeight', valueOf(f.total_gross_weight)],
+      ['netWeight', valueOf(f.total_net_weight)],
     ]);
     doc.lines = mapLines(payload.lines, (l) => [
       ['description', valueOf(l.description) ?? valueOf(l.name)],

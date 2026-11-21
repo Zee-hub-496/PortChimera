@@ -3,7 +3,10 @@
 // `fields` are top-level values. `lineFields` are the values inside each entry of `lines`.
 // Names in `optional` may be left out completely when the document does not have them.
 
-export const SCHEMA_VERSION = 1;
+// Version 2 added optional total_net_weight and total_gross_weight to commercial_invoice.
+// Version 1 payloads are still valid (the new names are optional); the bump only stops the
+// extraction cache from reusing version 1 results that never looked for the totals.
+export const SCHEMA_VERSION = 2;
 
 export const FIELD_STATUSES = Object.freeze(['extracted', 'missing', 'uncertain', 'conflicting']);
 
@@ -19,8 +22,10 @@ export const DOCUMENT_FIELDS = Object.freeze({
       'currency',
       'total_value',
       'incoterm',
+      'total_net_weight',
+      'total_gross_weight',
     ],
-    optional: ['incoterm'],
+    optional: ['incoterm', 'total_net_weight', 'total_gross_weight'],
     lineFields: [
       'name',
       'description',

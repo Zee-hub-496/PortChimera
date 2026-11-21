@@ -21,7 +21,17 @@ Every field is `{ value, confidence, status, evidence }`:
 - `status`: `extracted`, `missing`, `uncertain` or `conflicting`. `missing` must have a `null` value.
 - `evidence`: a short exact quote from the document, or `null`.
 
+Invoices may also carry `total_net_weight` and `total_gross_weight` (both optional, omitted when the document does not state them).
+
 Invoices and packing lists also have `lines` (one entry per product). The server rejects any output that does not match this shape exactly (extra keys, wrong types, bad status). Rejected output is not repaired. The document is marked `failed` and you can try again.
+
+## Structured output
+
+The request sends `generationConfig.responseSchema` (with `responseMimeType: application/json`), built by `apps/api/src/ai/responseSchema.js` from the same `DOCUMENT_FIELDS` list that feeds the prompt and the zod validator. It makes Gemini return exactly the listed keys, with the required ones present, `status` limited to the four values, `confidence` between 0 and 1, and `value` a string, a number or null.
+
+Why `responseSchema` and not `responseJsonSchema`: the field names and supported features come from Google's [js-genai `types.ts`](https://github.com/googleapis/js-genai/blob/main/src/types.ts). `responseSchema` is the documented default (an OpenAPI 3.0 subset with `nullable`, `enum`, `required`, `minimum` and `maximum`). `responseJsonSchema` also allows `additionalProperties`, but Google says not all JSON Schema features are supported there and it is the fallback "if `response_schema` doesn't process your schema correctly". The subset cannot forbid extra keys, so the zod schema stays the final gate: it still rejects extra keys and never repairs.
+
+When validation fails, the API log `document_extraction_failed` has a reason such as `Model output failed validation at fields: unrecognized_keys (total_volume)`. It holds the path, the issue code and (for unknown keys) key names that look like field names. It never holds document values.
 
 ## Evidence verification
 

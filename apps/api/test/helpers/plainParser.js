@@ -1,7 +1,7 @@
 // A small zod-free stand-in for parseExtraction, so runner tests run without node_modules.
 // It mirrors the real rules: strict keys, status/confidence checks, missing means value null.
 import { AiError } from '../../src/ai/aiError.js';
-import { DOCUMENT_FIELDS, FIELD_STATUSES } from '../../src/ai/fieldNames.js';
+import { DOCUMENT_FIELDS, FIELD_STATUSES, SCHEMA_VERSION } from '../../src/ai/fieldNames.js';
 
 const bad = (msg) => new AiError('bad_output', msg);
 
@@ -40,7 +40,7 @@ export function plainParse(documentType, raw) {
       for (const n of def.lineFields) checkField(line[n], `lines.${i}.${n}`);
     });
   }
-  return { schema_version: 1, document_type: documentType, ...raw };
+  return { schema_version: SCHEMA_VERSION, document_type: documentType, ...raw };
 }
 
 /** Builds a field object for tests. */
