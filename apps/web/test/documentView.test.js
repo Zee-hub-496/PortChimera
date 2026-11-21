@@ -11,6 +11,7 @@ import {
   describeError,
   evidenceLabel,
   fieldRows,
+  formatFileSize,
   initialEdits,
   lineTable,
   precheckFile,
@@ -62,6 +63,19 @@ describe('precheckFile', () => {
     assert.match(precheckFile({ size: 0, type: 'application/pdf' }), /empty/);
     assert.match(precheckFile({ size: MAX_UPLOAD_BYTES + 1, type: 'application/pdf' }), /5 MB/);
     assert.match(precheckFile({ size: 5, type: 'application/zip' }), /PDF, JPEG and PNG/);
+  });
+});
+
+describe('formatFileSize', () => {
+  it('formats bytes, KB and MB', () => {
+    assert.equal(formatFileSize(0), '0 B');
+    assert.equal(formatFileSize(512), '512 B');
+    assert.equal(formatFileSize(1434), '1.4 KB');
+    assert.equal(formatFileSize(2.3 * 1024 * 1024), '2.3 MB');
+  });
+  it('returns an empty string for invalid sizes', () => {
+    assert.equal(formatFileSize(undefined), '');
+    assert.equal(formatFileSize(-1), '');
   });
 });
 
