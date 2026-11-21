@@ -1,27 +1,16 @@
 // Pure map helpers. No leaflet import, so node:test can run them.
-// Routes here are drawn as great-circle arcs for display only; they are not routing results.
+// Routes here follow hand-drawn sea lanes (see seaLanes.js) for display only. They are not routing results.
 
-export const CARTO_TILES = Object.freeze({
-  light: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-  dark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-});
+import { greatCirclePoints } from './geo.js';
+import { seaLanePath } from './seaLanes.js';
 
-export const TILE_SUBDOMAINS = 'abcd';
-export const TILE_MAX_ZOOM = 19;
+export { greatCirclePoints };
 
 export const MAP_ATTRIBUTION =
-  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
+  'Basemap: <a href="https://www.naturalearthdata.com/" target="_blank" rel="noopener">Natural Earth</a>, public domain';
 
 export const ILLUSTRATIVE_ROUTE_NOTE =
-  'Illustrative route. The line shows a great-circle arc between ports, not a real vessel track.';
-
-/**
- * Tile URL template for the resolved theme.
- * @param {'light'|'dark'} resolvedTheme
- */
-export function styleFor(resolvedTheme) {
-  return resolvedTheme === 'dark' ? CARTO_TILES.dark : CARTO_TILES.light;
-}
+  'Illustrative route. The line follows a hand-drawn sea lane between ports, not a real vessel track. Not for navigation.';
 
 /**
  * Converts [lon, lat] pairs to Leaflet's [lat, lng] order.
@@ -30,47 +19,6 @@ export function styleFor(resolvedTheme) {
  */
 export function toLatLngs(points) {
   return points.map(([lon, lat]) => [lat, lon]);
-}
-
-const rad = (d) => (d * Math.PI) / 180;
-const deg = (r) => (r * 180) / Math.PI;
-
-/**
- * Points along the great circle from a to b, both included. Each point is [lon, lat].
- * @param {[number, number]} a [lon, lat]
- * @param {[number, number]} b [lon, lat]
- * @param {number} [n] number of segments (at least 1)
- * @returns {Array<[number, number]>}
- */
-export function greatCirclePoints(a, b, n = 64) {
-  const steps = Math.max(1, Math.floor(n));
-  const [lon1, lat1] = [rad(a[0]), rad(a[1])];
-  const [lon2, lat2] = [rad(b[0]), rad(b[1])];
-  const d =
-    2 *
-    Math.asin(
-      Math.sqrt(
-        Math.sin((lat2 - lat1) / 2) ** 2 +
-          Math.cos(lat1) * Math.cos(lat2) * Math.sin((lon2 - lon1) / 2) ** 2,
-      ),
-    );
-  if (d < 1e-9)
-    return [
-      [a[0], a[1]],
-      [b[0], b[1]],
-    ];
-  const out = [[a[0], a[1]]];
-  for (let i = 1; i < steps; i++) {
-    const f = i / steps;
-    const A = Math.sin((1 - f) * d) / Math.sin(d);
-    const B = Math.sin(f * d) / Math.sin(d);
-    const x = A * Math.cos(lat1) * Math.cos(lon1) + B * Math.cos(lat2) * Math.cos(lon2);
-    const y = A * Math.cos(lat1) * Math.sin(lon1) + B * Math.cos(lat2) * Math.sin(lon2);
-    const z = A * Math.sin(lat1) + B * Math.sin(lat2);
-    out.push([deg(Math.atan2(y, x)), deg(Math.atan2(z, Math.sqrt(x * x + y * y)))]);
-  }
-  out.push([b[0], b[1]]);
-  return out;
 }
 
 /**
@@ -96,17 +44,28 @@ export function unwrapLongitudes(points) {
 }
 
 /**
- * GeoJSON LineString feature through the stops, one great-circle arc per leg.
+ * Points for one leg between two stops. Uses the hand-drawn sea lane when both stops are seeded
+ * ports with a known lane, otherwise a great-circle arc.
+ */
+function legPoints(from, to) {
+  const a = [from.lon, from.lat];
+  const b = [to.lon, to.lat];
+  if (from.code && to.code) {
+    const lane = seaLanePath(from.code, to.code, a, b);
+    if (lane) return lane;
+  }
+  return greatCirclePoints(a, b);
+}
+
+/**
+ * GeoJSON LineString feature through the stops, one sea lane (or great-circle arc) per leg.
  * @param {Array<{lon: number, lat: number, code?: string, name?: string}>} stops
  * @param {object} [properties]
  */
 export function routeToGeoJSON(stops, properties = {}) {
   const coords = [];
   for (let i = 0; i < stops.length - 1; i++) {
-    const leg = greatCirclePoints(
-      [stops[i].lon, stops[i].lat],
-      [stops[i + 1].lon, stops[i + 1].lat],
-    );
+    const leg = legPoints(stops[i], stops[i + 1]);
     coords.push(...(i === 0 ? leg : leg.slice(1)));
   }
   if (coords.length === 0 && stops.length === 1) coords.push([stops[0].lon, stops[0].lat]);
@@ -115,6 +74,38 @@ export function routeToGeoJSON(stops, properties = {}) {
     properties,
     geometry: { type: 'LineString', coordinates: unwrapLongitudes(coords) },
   };
+}
+
+/**
+ * Cuts a line with unwrapped longitudes (it may pass 180 or -180) into pieces that each stay inside
+ * [-180, 180], adding a point on the date line at every cut. A map that does not repeat the world
+ * draws the pieces as separate lines.
+ * @param {Array<[number, number]>} points
+ * @returns {Array<Array<[number, number]>>}
+ */
+export function splitAtDateLine(points) {
+  if (!points.length) return [];
+  const world = (lon) => Math.floor((lon + 180) / 360);
+  let w = world(points[0][0]);
+  let cur = [[points[0][0] - 360 * w, points[0][1]]];
+  const pieces = [];
+  for (let i = 1; i < points.length; i++) {
+    const a = points[i - 1];
+    const b = points[i];
+    const wb = world(b[0]);
+    while (w !== wb) {
+      const dir = wb > w ? 1 : -1;
+      const boundary = dir > 0 ? -180 + 360 * (w + 1) : -180 + 360 * w;
+      const lat = a[1] + ((b[1] - a[1]) * (boundary - a[0])) / (b[0] - a[0]);
+      cur.push([dir > 0 ? 180 : -180, lat]);
+      pieces.push(cur);
+      w += dir;
+      cur = [[dir > 0 ? -180 : 180, lat]];
+    }
+    cur.push([b[0] - 360 * w, b[1]]);
+  }
+  pieces.push(cur);
+  return pieces.length === 1 ? pieces : pieces.filter((p) => p.length >= 2);
 }
 
 /**
@@ -165,7 +156,7 @@ export function boundsOf(points) {
 export const ROUTE_TONES = Object.freeze(['primary', 'alternative', 'blocked']);
 
 /**
- * GeoJSON FeatureCollection with one great-circle LineString per route.
+ * GeoJSON FeatureCollection with one sea-lane LineString per route.
  * Each feature carries id, tone and label so layers can style by tone.
  * Unknown or missing tones become 'primary'. Routes with fewer than two stops are skipped.
  * @param {Array<{id?: string, stops: Array<{lon: number, lat: number}>, tone?: string, label?: string}>} routes

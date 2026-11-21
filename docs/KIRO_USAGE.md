@@ -141,3 +141,20 @@ made between 1 and 12 tests fail.
 **What Kiro did:** rewrote `MaritimeMap.jsx` with the same props. The basemap is CARTO raster tiles (light and dark) that swap with the theme. Ports are `circleMarker` pins with name labels and DOM-built popups. Routes are great-circle polylines (solid, solid in a second colour, red dashed). Disrupted ports get a ring and a CSS pulse. The text fallback shows when no tile loads or nothing arrives within 15 seconds. `styleFor` in `mapData.js` now returns tile URL templates, with a new `toLatLngs` helper and tests. `maplibre-gl` was removed from `apps/web/package.json` and `leaflet` added. `package-lock.json` was not edited.
 
 **Not verified:** this sandbox has no `node_modules` or network, so `npm install`, the Vite build and the map in a browser were not run. Run `npm install` in the repo root (this removes `maplibre-gl` and adds `leaflet`), then open `/`, `/map` and a shipment Route tab.
+
+## 2026-11-21: replaced the CARTO tiles with a self-hosted vector map
+
+**What happened:** Leaflet rendered, but every CARTO tile showed the watermark "API KEY REQUIRED carto.com/basemaps/apikey". CARTO basemaps now need a key, so the background was unusable. The landing page "port network" map also showed five tiny pins in a wrapped world, and routes were straight great-circle arcs that crossed land (Singapore to Karachi cut through India).
+
+**Fix:** no external tile service any more.
+
+- **Basemap:** `scripts/build-world-geojson.mjs` turns Natural Earth 1:110m countries (public domain, per its LICENSE.md) into `apps/web/src/assets/world-110m.json` (names and geometry only, 2 decimals, no Antarctica, about 160 KB). Leaflet draws it with `L.geoJSON` on a canvas renderer. The sea is the container background, and land, borders and a faint graticule take their colours from the light or dark theme. `worldCopyJump` is off and `maxBounds` plus a computed minimum zoom keep the world from repeating.
+- **Sea lanes:** `apps/web/src/lib/seaLanes.js` has hand-picked waypoints for all 30 seeded lanes, reversed for the opposite direction, with great-circle pieces between them. Legs without a lane fall back to the old arc. Lines that cross the date line are cut into two pieces. Routing and the API are unchanged.
+- **Chokepoints:** `apps/web/src/lib/chokepoints.js` plus `chokepointsOnPath`. The map draws diamonds, highlights those on the route and names them under the map.
+- **Look:** DOM pins with a white ring and soft shadow, halo labels (hidden at world zoom when there are many ports, always shown for highlighted ports), themed zoom controls, rounded bordered container.
+
+**Tests:** node:test only. The main one samples every lane every 25 km against the bundled polygons and fails on any sample on land, except within 60 km of a port or a narrow passage (Suez, Bab-el-Mandeb, Hormuz, Gibraltar, Dover). The first run found three lanes on land (Gulf of Suez, the Salalah coast and the Namibian coast), which were fixed by moving waypoints. Other tests cover chokepoints on the Shanghai to Karachi and Rotterdam to Karachi routes, the date-line split, and that the asset has no URL and stays under 300 KB.
+
+**Honesty:** sea lanes are illustrative, not vessel tracks and not for navigation. The land test uses coarse 110m polygons, so it proves lanes do not cross the bundled land, not that they are safe.
+
+**Not verified:** no `node_modules` or network here, so the Vite build and the rendering in a browser were not run. Pull, run `npm install`, and check `/`, `/map` and a shipment Route tab.
