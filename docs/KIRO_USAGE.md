@@ -121,3 +121,23 @@ made between 1 and 12 tests fail.
 **What Kiro did:** checked the advisory against MapLibre's changelog (fixed in 6.4.1) and upgraded `apps/web` to `^6.19.0`. Version 6 is ESM-only with no default export, so `MaritimeMap.jsx` now uses `import * as maplibregl from 'maplibre-gl'`. The other v5 and v6 breaking changes were checked against our usage and none apply. Our popups use `setText` and `setDOMContent`, never `setHTML`.
 
 **Not verified:** `npm install`, the Vite build and the map in a browser. `package-lock.json` is not committed yet. Run `npm install`, build, open a map page, then commit the lockfile. Version 6 needs WebGL2, and the text fallback should show without it.
+
+## 2026-11-21: map stayed an empty grey box after the maplibre-gl 6 upgrade
+
+**What happened:** after the upgrade the build and tests passed, but the map on `/map` was blank with no tiles, controls or fallback message.
+
+**Cause:** maplibre-gl 6 starts its worker from `new URL('./maplibre-gl-worker.mjs', import.meta.url)`. MapLibre's [v5 to v6 migration guide](https://github.com/maplibre/maplibre-gl-js/blob/v6.19.0/docs/guides/v5-to-v6-migration-guide.md) says this does not resolve inside a bundler such as Vite, so each app must call `setWorkerUrl()` once. Without the worker the style never loads, and no error event fires, so the fallback never showed.
+
+**Fix:** `MaritimeMap.jsx` now imports `maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url` and calls `setWorkerUrl()`. The `?worker&url` query is documented for Vite 6 ([Vite features guide](https://github.com/vitejs/vite/blob/v6.0.0/docs/guide/features.md)). The text fallback now also appears if the style has not loaded after 15 seconds.
+
+**Not verified:** this sandbox has no `node_modules`, so the fix was not built or run in a browser. Confirm the map renders on `/map` after pulling.
+
+## 2026-11-21: replaced maplibre-gl with Leaflet
+
+**What happened:** the map was still a blank grey box on the landing page, `/map` and the shipment Route tab. Chrome logged `Error: Worker failed to load. Check that the worker URL is correct.` from the pre-bundled `maplibre-gl.js`, even after the `setWorkerUrl()` fix above.
+
+**Why Leaflet:** MapLibre 6 needs a separate worker file and WebGL, and its worker failed to load under the Vite dev server. Leaflet 1.9.4 (latest stable, no advisories in the GitHub advisory database) uses neither a worker nor WebGL, so this whole failure class is gone. Brief allowed "maplibre-gl (or leaflet + react-leaflet)". Plain `leaflet` is used imperatively, so `react-leaflet` is not needed.
+
+**What Kiro did:** rewrote `MaritimeMap.jsx` with the same props. The basemap is CARTO raster tiles (light and dark) that swap with the theme. Ports are `circleMarker` pins with name labels and DOM-built popups. Routes are great-circle polylines (solid, solid in a second colour, red dashed). Disrupted ports get a ring and a CSS pulse. The text fallback shows when no tile loads or nothing arrives within 15 seconds. `styleFor` in `mapData.js` now returns tile URL templates, with a new `toLatLngs` helper and tests. `maplibre-gl` was removed from `apps/web/package.json` and `leaflet` added. `package-lock.json` was not edited.
+
+**Not verified:** this sandbox has no `node_modules` or network, so `npm install`, the Vite build and the map in a browser were not run. Run `npm install` in the repo root (this removes `maplibre-gl` and adds `leaflet`), then open `/`, `/map` and a shipment Route tab.

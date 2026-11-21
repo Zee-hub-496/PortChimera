@@ -9,7 +9,7 @@
 - [ ] 6. `GET /api/dashboard/summary` + test with two users to prove counts are personal (R4)
 - [-] 7. Web: shared components with loading, empty and error states (R7)
   - Shared Card, Badge, Skeleton, EmptyState and ErrorState written in the UI redesign. Not built or rendered.
-  - `MaritimeMap` (MapLibre) is written, not run. It has no automated test; manual map checks are in `docs/MILESTONE_UI.md`.
+  - `MaritimeMap` (Leaflet) is written, not run. It has no automated test; manual map checks are in `docs/MILESTONE_UI.md`.
 - [-] 8. Web: New shipment + upload page (R6)
   - Only the new shipment form and list are written (`Shipments.jsx`); form validation is tested. No upload yet. Page not run.
 - [ ] 9. Web: Kanban board and cards (R2, R3.2)

@@ -1,26 +1,30 @@
 import { useEffect, useRef, useState } from 'react';
-import * as maplibregl from 'maplibre-gl';
-import 'maplibre-gl/dist/maplibre-gl.css';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import {
   ILLUSTRATIVE_ROUTE_NOTE,
+  MAP_ATTRIBUTION,
+  TILE_MAX_ZOOM,
+  TILE_SUBDOMAINS,
   boundsOf,
   disruptedToGeoJSON,
   portsToGeoJSON,
   progressiveLine,
   routesToGeoJSON,
   styleFor,
+  toLatLngs,
 } from '../lib/mapData.js';
 import { useTheme } from './ThemeProvider.jsx';
 
-const PORTS_SOURCE = 'pc-ports';
-const ROUTES_SOURCE = 'pc-routes';
-const DISRUPTED_SOURCE = 'pc-disrupted';
-const DOT_SOURCE = 'pc-dot';
+// [[south, west], [north, east]] in Leaflet order.
 const WORLD_BOUNDS = [
-  [-130, -40],
-  [170, 65],
+  [-40, -130],
+  [65, 170],
 ];
 const DRAW_MS = 2200;
+const LOAD_TIMEOUT_MS = 15000;
+const LABEL_MIN_ZOOM = 4;
+const MANY_PORTS = 8;
 
 // Layer colours cannot use CSS variables, so each theme has its own set.
 const PALETTE = {
@@ -32,8 +36,6 @@ const PALETTE = {
     highlight: '#0e7490',
     warn: '#b45309',
     ring: '#ffffff',
-    text: '#0b1f3a',
-    halo: '#ffffff',
   },
   dark: {
     primary: '#22d3ee',
@@ -43,8 +45,6 @@ const PALETTE = {
     highlight: '#22d3ee',
     warn: '#fbbf24',
     ring: '#0a1220',
-    text: '#e8eef7',
-    halo: '#0a1220',
   },
 };
 
@@ -54,125 +54,10 @@ const TONE_LABELS = {
   blocked: 'Blocked',
 };
 
-const EMPTY = { type: 'FeatureCollection', features: [] };
+const prefersReducedMotion = () =>
+  typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-// Reuse a font stack that the loaded CARTO style already uses, so glyphs exist.
-// Returns undefined when none is found, and the label layer then omits text-font.
-function fontFromStyle(map) {
-  const layers = map.getStyle()?.layers ?? [];
-  for (const l of layers) {
-    const font = l.type === 'symbol' ? l.layout?.['text-font'] : undefined;
-    if (Array.isArray(font) && font.length && font.every((f) => typeof f === 'string')) return font;
-  }
-  return undefined;
-}
-
-function toneColor(c) {
-  return ['match', ['get', 'tone'], 'alternative', c.alternative, 'blocked', c.blocked, c.primary];
-}
-
-function addOverlay(map, theme) {
-  const c = PALETTE[theme] ?? PALETTE.light;
-  for (const id of [ROUTES_SOURCE, PORTS_SOURCE, DISRUPTED_SOURCE, DOT_SOURCE]) {
-    if (!map.getSource(id)) map.addSource(id, { type: 'geojson', data: EMPTY });
-  }
-  if (!map.getLayer('pc-routes-casing')) {
-    map.addLayer({
-      id: 'pc-routes-casing',
-      type: 'line',
-      source: ROUTES_SOURCE,
-      layout: { 'line-cap': 'round', 'line-join': 'round' },
-      paint: { 'line-color': toneColor(c), 'line-width': 7, 'line-opacity': 0.14 },
-    });
-    map.addLayer({
-      id: 'pc-routes-solid',
-      type: 'line',
-      source: ROUTES_SOURCE,
-      filter: ['!=', ['get', 'tone'], 'blocked'],
-      layout: { 'line-cap': 'round', 'line-join': 'round' },
-      paint: { 'line-color': toneColor(c), 'line-width': 2.75 },
-    });
-    map.addLayer({
-      id: 'pc-routes-blocked',
-      type: 'line',
-      source: ROUTES_SOURCE,
-      filter: ['==', ['get', 'tone'], 'blocked'],
-      layout: { 'line-cap': 'butt', 'line-join': 'round' },
-      paint: { 'line-color': c.blocked, 'line-width': 2.5, 'line-dasharray': [1.5, 2] },
-    });
-  }
-  if (!map.getLayer('pc-disrupted-pulse')) {
-    map.addLayer({
-      id: 'pc-disrupted-pulse',
-      type: 'circle',
-      source: DISRUPTED_SOURCE,
-      paint: { 'circle-radius': 12, 'circle-color': c.warn, 'circle-opacity': 0.25 },
-    });
-    map.addLayer({
-      id: 'pc-disrupted-ring',
-      type: 'circle',
-      source: DISRUPTED_SOURCE,
-      paint: {
-        'circle-radius': 11,
-        'circle-color': c.warn,
-        'circle-opacity': 0,
-        'circle-stroke-color': c.warn,
-        'circle-stroke-width': 2.5,
-      },
-    });
-  }
-  if (!map.getLayer('pc-ports-circle')) {
-    map.addLayer({
-      id: 'pc-ports-circle',
-      type: 'circle',
-      source: PORTS_SOURCE,
-      paint: {
-        'circle-radius': ['case', ['get', 'highlight'], 8, 5.5],
-        'circle-color': ['case', ['get', 'highlight'], c.highlight, c.port],
-        'circle-stroke-color': c.ring,
-        'circle-stroke-width': 2,
-      },
-    });
-    const font = fontFromStyle(map);
-    map.addLayer({
-      id: 'pc-ports-label',
-      type: 'symbol',
-      source: PORTS_SOURCE,
-      layout: {
-        'text-field': ['get', 'name'],
-        ...(font ? { 'text-font': font } : {}),
-        'text-size': 12,
-        'text-offset': [0, 1.1],
-        'text-anchor': 'top',
-        'text-optional': true,
-      },
-      paint: { 'text-color': c.text, 'text-halo-color': c.halo, 'text-halo-width': 1.5 },
-    });
-  }
-  if (!map.getLayer('pc-dot')) {
-    map.addLayer({
-      id: 'pc-dot',
-      type: 'circle',
-      source: DOT_SOURCE,
-      paint: {
-        'circle-radius': 5,
-        'circle-color': c.primary,
-        'circle-stroke-color': c.ring,
-        'circle-stroke-width': 2,
-      },
-    });
-  }
-}
-
-function fitMap(map, data, fit, animate) {
-  let bounds = WORLD_BOUNDS;
-  if (fit === 'route') {
-    const coords = data.routesGeoJSON.features.flatMap((f) => f.geometry.coordinates);
-    bounds = boundsOf(coords.length ? coords : data.portPoints) ?? WORLD_BOUNDS;
-  }
-  map.fitBounds(bounds, { padding: 40, maxZoom: 5, animate, duration: 600 });
-}
-
+// Content is built with textContent only, never from an HTML string.
 function defaultPopup(port) {
   const root = document.createElement('div');
   const name = document.createElement('div');
@@ -187,9 +72,35 @@ function defaultPopup(port) {
   return root;
 }
 
+function toNode(content) {
+  if (typeof content !== 'string') return content;
+  const el = document.createElement('div');
+  el.textContent = content;
+  return el;
+}
+
+// Fits the route (or the ports) or the world. Does nothing while the container has no size.
+function fitMap(map, data, fit, animate) {
+  const size = map.getSize();
+  if (!size.x || !size.y) return false;
+  let bounds = WORLD_BOUNDS;
+  if (fit === 'route') {
+    const coords = data.routesGeoJSON.features.flatMap((f) => f.geometry.coordinates);
+    const b = boundsOf(coords.length ? coords : data.portPoints);
+    if (b) {
+      bounds = [
+        [b[0][1], b[0][0]],
+        [b[1][1], b[1][0]],
+      ];
+    }
+  }
+  map.fitBounds(bounds, { padding: [40, 40], maxZoom: 5, animate, duration: 0.6 });
+  return true;
+}
+
 /**
- * Interactive map with a CARTO basemap, port pins and curved (great-circle) route arcs.
- * The basemap follows the app theme. Falls back to a text list if WebGL or the style fails.
+ * Interactive Leaflet map with a CARTO raster basemap, port pins and curved (great-circle) route arcs.
+ * The basemap follows the app theme. Needs no web worker and no WebGL. Falls back to a text list if the tiles fail to load.
  * The map only draws what it is given. It never computes routes.
  *
  * Props contract (stable, the crisis rerouting screen only needs `routes` and `disruptedCodes`):
@@ -230,7 +141,6 @@ export default function MaritimeMap({
   const containerRef = useRef(null);
   const mapRef = useRef(null);
   const readyRef = useRef(false);
-  const popupRef = useRef(null);
   const [failed, setFailed] = useState(false);
 
   const routeList =
@@ -257,146 +167,278 @@ export default function MaritimeMap({
     popupRender,
     animateRoute,
   };
-  const animRef = useRef({ frame: 0, start: 0 });
+  const renderedKey = useRef('');
 
   function showPopup(port) {
     const map = mapRef.current;
     if (!map) return;
-    popupRef.current?.remove();
     const content = live.current.popupRender?.(port) ?? defaultPopup(port);
-    const popup = new maplibregl.Popup({ offset: 12, closeButton: true });
-    if (typeof content === 'string') popup.setText(content);
-    else popup.setDOMContent(content);
-    popup.setLngLat([port.lon, port.lat]).addTo(map);
-    popupRef.current = popup;
+    L.popup({ offset: [0, -4], closeButton: true })
+      .setLatLng([port.lat, port.lon])
+      .setContent(toNode(content))
+      .openOn(map);
   }
   const showPopupRef = useRef(showPopup);
   showPopupRef.current = showPopup;
 
   // Create the map once.
   useEffect(() => {
+    const container = containerRef.current;
     let map;
     try {
-      map = new maplibregl.Map({
-        container: containerRef.current,
-        style: styleFor(live.current.theme),
-        center: [60, 20],
-        zoom: 1.2,
-        interactive,
-        cooperativeGestures: interactive,
-        attributionControl: false,
-        dragRotate: false,
+      map = L.map(container, {
+        center: [20, 60],
+        zoom: 2,
+        zoomControl: interactive,
+        attributionControl: true,
+        dragging: interactive,
+        touchZoom: interactive,
+        doubleClickZoom: interactive,
+        boxZoom: interactive,
+        keyboard: interactive,
+        scrollWheelZoom: false,
+        worldCopyJump: true,
+        minZoom: 1,
+        maxBoundsViscosity: 0,
       });
     } catch {
       setFailed(true);
       return undefined;
     }
     mapRef.current = map;
-    map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
+    map.attributionControl.setPrefix(false);
+
+    const reduce = prefersReducedMotion();
+    const groups = {
+      routes: L.layerGroup().addTo(map),
+      disrupted: L.layerGroup().addTo(map),
+      ports: L.layerGroup().addTo(map),
+      dot: L.layerGroup().addTo(map),
+    };
+    const anim = { frame: 0, start: 0, lines: [], dot: null };
+
+    // Wheel zoom would hijack page scrolling, so it turns on after a click and off when leaving.
+    let wheelOn = false;
+    function onMouseLeave() {
+      if (wheelOn) map.scrollWheelZoom.disable();
+      wheelOn = false;
+    }
     if (interactive) {
-      map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
+      map.on('click', () => {
+        if (wheelOn) return;
+        wheelOn = true;
+        map.scrollWheelZoom.enable();
+      });
+      container.addEventListener('mouseleave', onMouseLeave);
     }
 
-    const reduce =
-      typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const anim = animRef.current;
+    // Tiles. One tile error never hides the map. Only a map where nothing ever loads falls back.
+    let tiles = null;
+    let loaded = 0;
+    let errors = 0;
+    function addTiles(theme) {
+      tiles?.remove();
+      tiles = L.tileLayer(styleFor(theme), {
+        subdomains: TILE_SUBDOMAINS,
+        maxZoom: TILE_MAX_ZOOM,
+        attribution: MAP_ATTRIBUTION,
+      });
+      tiles.on('tileload', () => {
+        loaded += 1;
+        readyRef.current = true;
+      });
+      tiles.on('tileerror', () => {
+        errors += 1;
+      });
+      tiles.on('load', () => {
+        if (loaded === 0 && errors > 0) setFailed(true);
+      });
+      tiles.addTo(map);
+      tiles.bringToBack();
+    }
+    live.current.setTheme = addTiles;
+    addTiles(live.current.theme);
 
-    // One requestAnimationFrame loop: progressive route drawing, moving dot, pulsing warning rings.
+    function toggleLabels() {
+      const many = live.current.ports.length > MANY_PORTS;
+      container.classList.toggle('pc-map-nolabels', many && map.getZoom() < LABEL_MIN_ZOOM);
+    }
+    map.on('zoomend', toggleLabels);
+
+    // One requestAnimationFrame loop for the progressive route drawing and the moving dot.
     function tick(now) {
-      const { data: d, animateRoute: draw } = live.current;
-      let busy = false;
-      const drawing = draw && !reduce && d.routesGeoJSON.features.length > 0;
-      if (drawing) {
-        const t = Math.min(1, (now - anim.start) / DRAW_MS);
-        const features = d.routesGeoJSON.features.map((f) =>
-          f.properties.tone === 'blocked'
-            ? f
-            : {
-                ...f,
-                geometry: {
-                  ...f.geometry,
-                  coordinates: progressiveLine(f.geometry.coordinates, t).coordinates,
-                },
-              },
-        );
-        map.getSource(ROUTES_SOURCE)?.setData({ type: 'FeatureCollection', features });
-        const lead = d.routesGeoJSON.features.find((f) => f.properties.tone !== 'blocked');
-        const tip = lead ? progressiveLine(lead.geometry.coordinates, t).tip : null;
-        map
-          .getSource(DOT_SOURCE)
-          ?.setData(
-            tip && t < 1
-              ? { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: tip } }
-              : EMPTY,
-          );
-        if (t < 1) busy = true;
+      const t = Math.min(1, (now - anim.start) / DRAW_MS);
+      let tip = null;
+      anim.lines.forEach((entry, i) => {
+        const part = progressiveLine(entry.coords, t);
+        entry.line.setLatLngs(toLatLngs(part.coordinates));
+        if (i === 0) tip = part.tip;
+      });
+      if (anim.dot) {
+        if (tip && t < 1) {
+          anim.dot.setLatLng([tip[1], tip[0]]);
+          if (!groups.dot.hasLayer(anim.dot)) anim.dot.addTo(groups.dot);
+        } else {
+          groups.dot.clearLayers();
+        }
       }
-      if (!reduce && d.disruptedGeoJSON.features.length && map.getLayer('pc-disrupted-pulse')) {
-        const phase = (now % 1600) / 1600;
-        map.setPaintProperty('pc-disrupted-pulse', 'circle-radius', 11 + phase * 14);
-        map.setPaintProperty('pc-disrupted-pulse', 'circle-opacity', 0.35 * (1 - phase));
-        busy = true;
-      }
-      anim.frame = busy ? requestAnimationFrame(tick) : 0;
+      anim.frame = t < 1 ? requestAnimationFrame(tick) : 0;
     }
 
-    // Pushes the current data into the sources. Safe to call repeatedly.
+    // Rebuilds every overlay layer from the current props. Safe to call repeatedly.
     function render() {
-      const { data: d, theme } = live.current;
-      addOverlay(map, theme);
-      map.getSource(PORTS_SOURCE)?.setData(d.portsGeoJSON);
-      map.getSource(ROUTES_SOURCE)?.setData(d.routesGeoJSON);
-      map.getSource(DISRUPTED_SOURCE)?.setData(d.disruptedGeoJSON);
-      map.getSource(DOT_SOURCE)?.setData(EMPTY);
+      const { data: d, theme, animateRoute: draw } = live.current;
+      const c = PALETTE[theme] ?? PALETTE.light;
       cancelAnimationFrame(anim.frame);
-      anim.start = performance.now();
-      anim.frame = requestAnimationFrame(tick);
+      anim.frame = 0;
+      anim.lines = [];
+      anim.dot = null;
+      Object.values(groups).forEach((g) => g.clearLayers());
+
+      const animate = draw && !reduce;
+      let minLon = Infinity;
+      let maxLon = -Infinity;
+      d.routesGeoJSON.features.forEach((f) => {
+        const blocked = f.properties.tone === 'blocked';
+        const color = c[f.properties.tone] ?? c.primary;
+        const lons = f.geometry.coordinates.map((p) => p[0]);
+        minLon = Math.min(minLon, ...lons);
+        maxLon = Math.max(maxLon, ...lons);
+        // Arcs that cross the date line are drawn again one world over, so both ends have a pin.
+        const shifts = [0];
+        if (Math.max(...lons) > 180) shifts.push(-360);
+        if (Math.min(...lons) < -180) shifts.push(360);
+        shifts.forEach((shift) => {
+          const coords = f.geometry.coordinates.map(([lon, lat]) => [lon + shift, lat]);
+          const start = animate && !blocked ? progressiveLine(coords, 0).coordinates : coords;
+          L.polyline(toLatLngs(start), {
+            color,
+            weight: 7,
+            opacity: 0.14,
+            lineCap: 'round',
+            interactive: false,
+          }).addTo(groups.routes);
+          const line = L.polyline(toLatLngs(start), {
+            color,
+            weight: blocked ? 2.5 : 2.75,
+            opacity: 1,
+            lineCap: blocked ? 'butt' : 'round',
+            lineJoin: 'round',
+            dashArray: blocked ? '6 8' : undefined,
+            interactive: false,
+          }).addTo(groups.routes);
+          if (animate && !blocked) anim.lines.push({ line, coords });
+        });
+      });
+      // World copies of a pin, only where the route reaches, so the date line shows both ends.
+      const copies = (lon) => {
+        if (!d.routesGeoJSON.features.length || live.current.fit !== 'route') return [0];
+        return [0, -360, 360].filter(
+          (o) => o === 0 || (lon + o >= minLon - 1 && lon + o <= maxLon + 1),
+        );
+      };
+
+      d.disruptedGeoJSON.features.forEach((f) => {
+        const [lon, lat] = f.geometry.coordinates;
+        copies(lon).forEach((o) => {
+          if (!reduce) {
+            L.circleMarker([lat, lon + o], {
+              radius: 11,
+              stroke: false,
+              fillColor: c.warn,
+              fillOpacity: 0.35,
+              className: 'pc-pulse',
+              interactive: false,
+            }).addTo(groups.disrupted);
+          }
+          L.circleMarker([lat, lon + o], {
+            radius: 11,
+            color: c.warn,
+            weight: 2.5,
+            fill: false,
+            interactive: false,
+          }).addTo(groups.disrupted);
+        });
+      });
+
+      d.portsGeoJSON.features.forEach((f) => {
+        const { code, name, highlight } = f.properties;
+        const [lon, lat] = f.geometry.coordinates;
+        copies(lon).forEach((o) => {
+          const marker = L.circleMarker([lat, lon + o], {
+            radius: highlight ? 8 : 5.5,
+            color: c.ring,
+            weight: 2,
+            fillColor: highlight ? c.highlight : c.port,
+            fillOpacity: 1,
+          });
+          marker.bindTooltip(name, {
+            permanent: true,
+            direction: 'bottom',
+            offset: [0, 6],
+            className: 'pc-port-label',
+          });
+          marker.on('click', () => {
+            const port = live.current.ports.find((p) => p.code === code);
+            if (!port) return;
+            live.current.onPortClick?.(port);
+            showPopupRef.current(port);
+          });
+          marker.addTo(groups.ports);
+        });
+      });
+
+      if (animate && anim.lines.length) {
+        anim.dot = L.circleMarker([0, 0], {
+          radius: 5,
+          color: c.ring,
+          weight: 2,
+          fillColor: c.primary,
+          fillOpacity: 1,
+          interactive: false,
+        });
+        anim.start = performance.now();
+        anim.frame = requestAnimationFrame(tick);
+      }
+      toggleLabels();
     }
     live.current.render = render;
 
-    map.on('style.load', () => {
-      render();
-      if (!readyRef.current) {
-        readyRef.current = true;
-        fitMap(map, live.current.data, live.current.fit, false);
-        const first = live.current.ports.find((p) => p.code === live.current.selectedCode);
-        if (first) {
-          map.jumpTo({ center: [first.lon, first.lat], zoom: 3.5 });
-          showPopupRef.current(first);
-        }
+    // The first fit needs a container with a size, so it may wait for the ResizeObserver.
+    let fitted = false;
+    function firstFit() {
+      if (fitted) return;
+      if (!fitMap(map, live.current.data, live.current.fit, false)) return;
+      fitted = true;
+      const first = live.current.ports.find((p) => p.code === live.current.selectedCode);
+      if (first) {
+        map.setView([first.lat, first.lon], 4, { animate: false });
+        showPopupRef.current(first);
       }
-    });
+    }
+    render();
+    renderedKey.current = live.current.key;
+    firstFit();
 
-    map.on('click', 'pc-ports-circle', (e) => {
-      const feature = e.features?.[0];
-      if (!feature) return;
-      const port = live.current.ports.find((p) => p.code === feature.properties.code);
-      if (!port) return;
-      live.current.onPortClick?.(port);
-      showPopupRef.current(port);
+    const observer = new ResizeObserver(() => {
+      map.invalidateSize();
+      firstFit();
     });
-    map.on('mouseenter', 'pc-ports-circle', () => {
-      map.getCanvas().style.cursor = 'pointer';
-    });
-    map.on('mouseleave', 'pc-ports-circle', () => {
-      map.getCanvas().style.cursor = '';
-    });
+    observer.observe(container);
 
-    // An error before the first style load means tiles or style could not be fetched.
-    // Errors for a single source or tile (sprites, glyphs, one tile) leave a usable map, so skip them.
-    map.on('error', (event) => {
-      if (event?.sourceId || event?.tile) return;
-      if (!readyRef.current) setFailed(true);
-    });
-
-    const observer = new ResizeObserver(() => map.resize());
-    observer.observe(containerRef.current);
+    // Tiles that never arrive raise no single error, so show the fallback after a wait.
+    const timer = setTimeout(() => {
+      if (loaded === 0) setFailed(true);
+    }, LOAD_TIMEOUT_MS);
 
     return () => {
+      clearTimeout(timer);
       cancelAnimationFrame(anim.frame);
       observer.disconnect();
-      popupRef.current?.remove();
+      container.removeEventListener('mouseleave', onMouseLeave);
       readyRef.current = false;
+      live.current.render = null;
+      live.current.setTheme = null;
       map.remove();
       mapRef.current = null;
     };
@@ -404,42 +446,45 @@ export default function MaritimeMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [interactive]);
 
-  // Switch basemap with the theme. The overlay is re-added in the style.load handler.
+  // Switch the basemap with the theme, without recreating the map.
   const lastTheme = useRef(resolved);
   useEffect(() => {
-    const map = mapRef.current;
-    if (!map || lastTheme.current === resolved) return;
+    if (lastTheme.current === resolved) return;
     lastTheme.current = resolved;
-    map.setStyle(styleFor(resolved));
+    live.current.setTheme?.(resolved);
   }, [resolved]);
 
-  // Push new ports, routes or markers into the sources and refit.
+  // Redraw the layers when ports, routes, markers or the theme change. Refit only for new geometry.
   const geometrySignature = JSON.stringify([
     portList.map((p) => p.code),
     routeList.map((r) => [r.id, r.tone, (r.stops ?? []).map((s) => [s.lat, s.lon])]),
     disruptedCodes,
     fit,
   ]);
-  const signature = JSON.stringify([geometrySignature, highlights]);
+  const key = JSON.stringify([geometrySignature, highlights, resolved, animateRoute]);
+  live.current.key = key;
   const lastGeometry = useRef(geometrySignature);
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !readyRef.current) return;
+    if (!map || renderedKey.current === key) return;
+    renderedKey.current = key;
     live.current.render?.();
     // Highlight-only changes (a port selection) must not refit the view.
     if (lastGeometry.current !== geometrySignature) {
       lastGeometry.current = geometrySignature;
       fitMap(map, live.current.data, live.current.fit, true);
     }
-  }, [signature]);
+  }, [key, geometrySignature]);
 
   // Fly to and open the selected port.
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !readyRef.current || !selectedCode) return;
+    if (!map || !selectedCode) return;
     const port = live.current.ports.find((p) => p.code === selectedCode);
-    if (!port) return;
-    map.flyTo({ center: [port.lon, port.lat], zoom: Math.max(map.getZoom(), 3.5), duration: 800 });
+    if (!port || !map.getSize().x) return;
+    const zoom = Math.max(map.getZoom(), 4);
+    if (prefersReducedMotion()) map.setView([port.lat, port.lon], zoom, { animate: false });
+    else map.flyTo([port.lat, port.lon], zoom, { duration: 0.8 });
     showPopupRef.current(port);
   }, [selectedCode]);
 
@@ -467,7 +512,7 @@ export default function MaritimeMap({
           <div role="alert" className="absolute inset-0 overflow-auto p-4 text-sm">
             <p className="font-bold text-fg">The map could not be loaded.</p>
             <p className="mt-1 text-muted">
-              This can happen without WebGL or when the map tiles are blocked. Stops are listed
+              This can happen when the map tiles are blocked or you are offline. Stops are listed
               instead.
             </p>
             <ol className="mt-3 list-decimal space-y-1 pl-5 text-fg">
