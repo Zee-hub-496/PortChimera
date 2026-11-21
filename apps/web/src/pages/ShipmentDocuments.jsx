@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { CheckCircle2, FileText } from 'lucide-react';
+import { CheckCircle2, FileText, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiGet, apiPost, apiPut, apiUploadFile } from '../lib/api.js';
 import {
@@ -13,6 +13,7 @@ import {
   canReview,
   describeError,
   fieldRows,
+  formatFileSize,
   initialEdits,
   lineTable,
   precheckFile,
@@ -33,6 +34,7 @@ function DocumentCard({ shipmentId, documentType, summary, onChanged }) {
   const [detail, setDetail] = useState(null);
   const [edits, setEdits] = useState({});
   const [file, setFile] = useState(null);
+  const inputRef = useRef(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -60,6 +62,14 @@ function DocumentCard({ shipmentId, documentType, summary, onChanged }) {
     return () => clearInterval(timer);
   }, [status, load]);
 
+  // Clearing the native input too lets the user pick the same file again.
+  function clearFile() {
+    setFile(null);
+    if (inputRef.current) inputRef.current.value = '';
+  }
+
+  const fileProblem = file ? precheckFile(file) : null;
+
   async function run(action) {
     setBusy(true);
     setError('');
@@ -79,7 +89,7 @@ function DocumentCard({ shipmentId, documentType, summary, onChanged }) {
       const problem = precheckFile(file);
       if (problem) throw new Error(problem);
       await apiUploadFile(`/api/shipments/${shipmentId}/documents?type=${documentType}`, file);
-      setFile(null);
+      clearFile();
       await onChanged();
       toast.success('File uploaded');
     });
@@ -120,17 +130,48 @@ function DocumentCard({ shipmentId, documentType, summary, onChanged }) {
       </div>
 
       {!summary && (
-        <div className="flex flex-wrap items-center gap-2">
-          <input
-            type="file"
-            accept="application/pdf,image/jpeg,image/png"
-            aria-label={`Choose ${DOCUMENT_TYPES[documentType]} file`}
-            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-            className="text-sm text-muted file:mr-3 file:rounded-lg file:border file:border-line file:bg-surface-2 file:px-3 file:py-1.5 file:text-fg"
-          />
-          <Button onClick={upload} disabled={busy || !file} className="px-3 py-1">
-            {busy ? 'Uploading...' : 'Upload'}
-          </Button>
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              ref={inputRef}
+              type="file"
+              accept="application/pdf,image/jpeg,image/png"
+              aria-label={`Choose ${DOCUMENT_TYPES[documentType]} file`}
+              disabled={busy}
+              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+              className="text-sm text-muted file:mr-3 file:rounded-lg file:border file:border-line file:bg-surface-2 file:px-3 file:py-1.5 file:text-fg"
+            />
+            <Button
+              onClick={upload}
+              disabled={busy || !file || !!fileProblem}
+              className="px-3 py-1"
+            >
+              {busy ? 'Uploading...' : 'Upload'}
+            </Button>
+          </div>
+          {file && (
+            <div className="flex flex-col gap-1 rounded-lg border border-line bg-surface-2 p-2">
+              <div className="flex items-center justify-between gap-2">
+                <p className="min-w-0 text-sm text-fg">
+                  <span className="break-all font-semibold">{file.name}</span>{' '}
+                  <span className="whitespace-nowrap text-muted">
+                    ({formatFileSize(file.size)})
+                  </span>
+                </p>
+                <button
+                  type="button"
+                  onClick={clearFile}
+                  disabled={busy}
+                  aria-label={`Remove selected file ${file.name}`}
+                  title="Remove selected file"
+                  className="shrink-0 rounded-lg p-1 text-muted hover:text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-50"
+                >
+                  <X size={16} aria-hidden="true" />
+                </button>
+              </div>
+              {fileProblem && <p className="text-sm text-danger">{fileProblem}</p>}
+            </div>
+          )}
         </div>
       )}
 
