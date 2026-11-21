@@ -10,7 +10,9 @@ import {
   disruptedToGeoJSON,
   progressiveLine,
   ROUTE_TONES,
-  CARTO_STYLES,
+  CARTO_TILES,
+  TILE_SUBDOMAINS,
+  toLatLngs,
   styleFor,
   MAP_ATTRIBUTION,
   ILLUSTRATIVE_ROUTE_NOTE,
@@ -93,10 +95,25 @@ describe('boundsOf', () => {
 });
 
 describe('styles', () => {
-  it('picks the style by theme', () => {
-    assert.equal(styleFor('dark'), CARTO_STYLES.dark);
-    assert.equal(styleFor('light'), CARTO_STYLES.light);
-    assert.notEqual(CARTO_STYLES.dark, CARTO_STYLES.light);
+  it('picks the tile template by theme', () => {
+    assert.equal(styleFor('dark'), CARTO_TILES.dark);
+    assert.equal(styleFor('light'), CARTO_TILES.light);
+    assert.notEqual(CARTO_TILES.dark, CARTO_TILES.light);
+    assert.match(CARTO_TILES.light, /light_all\/\{z\}\/\{x\}\/\{y\}\{r\}\.png$/);
+    assert.match(CARTO_TILES.dark, /dark_all\/\{z\}\/\{x\}\/\{y\}\{r\}\.png$/);
+    assert.equal(TILE_SUBDOMAINS, 'abcd');
+  });
+  it('converts [lon, lat] to [lat, lng]', () => {
+    assert.deepEqual(
+      toLatLngs([
+        [10, 20],
+        [-5, 7],
+      ]),
+      [
+        [20, 10],
+        [7, -5],
+      ],
+    );
   });
   it('keeps attribution and the illustrative note', () => {
     assert.match(MAP_ATTRIBUTION, /CARTO/);

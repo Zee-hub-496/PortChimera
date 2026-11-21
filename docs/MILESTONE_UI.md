@@ -10,8 +10,8 @@ This milestone changes only how the web app looks and is organised. The API, the
 - New public landing page at `/`, and a split-screen `/login` and `/register`.
 - A left sidebar and top bar for signed-in pages, a Ctrl+K search, and toast messages.
 - Pages: `/dashboard`, `/shipments`, `/shipments/:id` (Overview, Documents, Cross-check and Route tabs), `/map` (Global Map), `/documents`, `/alerts`, `/settings`, and a 404 page.
-- A real map (MapLibre with free CARTO tiles) on the route tab, the Global Map and the landing page.
-- New packages in `apps/web/package.json`: `lucide-react` (icons), `framer-motion` (animation), `maplibre-gl` (map, version 6.19 or later, WebGL2 required), `cmdk` (search palette), `sonner` (toasts).
+- A real map (Leaflet with free CARTO tiles) on the route tab, the Global Map and the landing page.
+- New packages in `apps/web/package.json`: `lucide-react` (icons), `framer-motion` (animation), `leaflet` (map, version 1.9.4, no web worker and no WebGL), `cmdk` (search palette), `sonner` (toasts).
 
 ## Steps (Windows PowerShell)
 
@@ -84,7 +84,7 @@ Tick each one. Note what looks wrong.
 
 ## Things to know
 
-- **The map needs internet** to load CARTO tiles, and it needs WebGL in your browser. If it fails, the page lists the stops as text instead.
+- **The map needs internet** to load CARTO tiles, to load. If it fails, the page lists the stops as text instead.
 - **CARTO terms and attribution:** the basemaps are free without a key for light, non-commercial use. The attribution "© OpenStreetMap contributors © CARTO" must stay visible. Check the CARTO terms before any commercial use.
 - **Migration 0002 is not run on your database yet.** The cross-check page may show an error until you run `supabase/migrations/0002_discrepancy_finding_key.sql`. Steps are in `docs/MILESTONE_CROSSCHECK.md`.
 - **Route lines are illustrative.** They are great-circle arcs between ports, not real vessel tracks.

@@ -1,22 +1,35 @@
-// Pure map helpers. No maplibre import, so node:test can run them.
+// Pure map helpers. No leaflet import, so node:test can run them.
 // Routes here are drawn as great-circle arcs for display only; they are not routing results.
 
-export const CARTO_STYLES = Object.freeze({
-  light: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
-  dark: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+export const CARTO_TILES = Object.freeze({
+  light: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+  dark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
 });
 
-export const MAP_ATTRIBUTION = '© OpenStreetMap contributors © CARTO';
+export const TILE_SUBDOMAINS = 'abcd';
+export const TILE_MAX_ZOOM = 19;
+
+export const MAP_ATTRIBUTION =
+  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
 
 export const ILLUSTRATIVE_ROUTE_NOTE =
   'Illustrative route. The line shows a great-circle arc between ports, not a real vessel track.';
 
 /**
- * Style URL for the resolved theme.
+ * Tile URL template for the resolved theme.
  * @param {'light'|'dark'} resolvedTheme
  */
 export function styleFor(resolvedTheme) {
-  return resolvedTheme === 'dark' ? CARTO_STYLES.dark : CARTO_STYLES.light;
+  return resolvedTheme === 'dark' ? CARTO_TILES.dark : CARTO_TILES.light;
+}
+
+/**
+ * Converts [lon, lat] pairs to Leaflet's [lat, lng] order.
+ * @param {Array<[number, number]>} points
+ * @returns {Array<[number, number]>}
+ */
+export function toLatLngs(points) {
+  return points.map(([lon, lat]) => [lat, lon]);
 }
 
 const rad = (d) => (d * Math.PI) / 180;
