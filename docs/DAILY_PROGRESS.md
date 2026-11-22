@@ -54,7 +54,7 @@ Plan reference: `docs/PORTCHIMERA_EXECUTION_PLAYBOOK.md`.
 
 ### Files changed
 
-- Added: `docs/PORTCHIMERA_EXECUTION_PLAYBOOK.md`, `docs/DAILY_PROGRESS.md`, `.kiro/steering/09-kiroween-execution.md`.
+- Added: `LICENSE` (MIT), `docs/PORTCHIMERA_EXECUTION_PLAYBOOK.md`, `docs/DAILY_PROGRESS.md`, `.kiro/steering/09-kiroween-execution.md`.
 
 ### Tests performed
 
@@ -72,8 +72,8 @@ Plan reference: `docs/PORTCHIMERA_EXECUTION_PLAYBOOK.md`.
 
 ### Blockers
 
-- Owner decisions needed: which open-source license; confirm migrations 0001 and 0002 are applied to the real Supabase project; provide a Gemini key locally for Day 1 real-API tests (never paste it in chat).
+- None open. Owner confirmed: MIT license (holder `Zee-hub-496`); migrations 0001 and 0002 applied (16 tables, 0002 columns present); Gemini key set locally and extraction of all three PDFs works (owner-reported).
 
 ### Next session's starting point
 
-Day 1 (Nov 23). Start with: `npm install`, `npm test`, record the baseline, then follow the Day 1 task list in the playbook.
+Day 1 (Nov 23). Day 1 also runs the read-only RLS check: list tables with RLS off (expect none) and the `shipments` policies (expect `shipments_owner_update`, the known gap). Start with: `npm install`, `npm test`, record the baseline, then follow the Day 1 task list in the playbook.
