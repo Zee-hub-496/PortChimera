@@ -49,6 +49,20 @@ export function parseResponse(body) {
   }
 }
 
+const GOOGLE_STATUS = /^[A-Z_]{3,40}$/;
+
+/** "HTTP 404, NOT_FOUND": the status code plus Google's status word when it looks like one. */
+async function describeClientError(res) {
+  let word = '';
+  try {
+    const status = (await res.json())?.error?.status;
+    if (typeof status === 'string' && GOOGLE_STATUS.test(status)) word = `, ${status}`;
+  } catch {
+    // Body was not JSON. The HTTP status alone is still useful.
+  }
+  return `HTTP ${res.status}${word}`;
+}
+
 function isTimeout(err) {
   return err?.name === 'TimeoutError' || err?.name === 'AbortError';
 }
@@ -88,8 +102,14 @@ export function createGeminiProvider({
     }
     if (res.status >= 500) throw new AiError('upstream', 'The AI service returned an error');
     if (!res.ok) {
-      // 400 and other client errors: our request is wrong, so repeating it will not help.
-      const err = new AiError('upstream', 'The AI service rejected the request');
+      // 400, 404 and other client errors: our request is wrong (bad schema, retired model), so
+      // repeating it will not help. Keep the HTTP status and Google's status word (for example
+      // INVALID_ARGUMENT or NOT_FOUND) for the server log. Never the message text: it can quote
+      // the request.
+      const err = new AiError(
+        'upstream',
+        `The AI service rejected the request (${await describeClientError(res)})`,
+      );
       err.noRetry = true;
       throw err;
     }
