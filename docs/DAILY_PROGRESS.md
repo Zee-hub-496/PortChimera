@@ -80,7 +80,7 @@ Branch: `feat/day1-core-correctness`. Started from `main` at `c761043` (PRs #19 
 
 ### Pull requests
 
-- PR link added below after creation.
+- https://github.com/Zee-hub-496/PortChimera/pull/21 (open, not merged).
 
 ### Files changed
 
