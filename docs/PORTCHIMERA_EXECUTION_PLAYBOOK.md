@@ -156,10 +156,10 @@ Goal: the demo path works with real data and status is truthful.
 Tasks:
 
 1. `npm install`; run `npm test`; record exact baseline (pass, fail, skipped, count).
-2. Confirm migrations 0001 and 0002 are applied to the Supabase project.
+2. ~~Confirm migrations 0001 and 0002 are applied.~~ Owner confirmed on 2026-11-22: 16 public tables exist and the 0002 columns exist (owner-reported from the Supabase SQL Editor). Still run the RLS/policy check query listed in `DAILY_PROGRESS.md`.
 3. Confirm GitHub shows "MIT License" on the repo page after PR #19 is merged, and re-read the 2026 Devpost rules page for license and eligibility wording.
 4. Check current Gemini model availability and set `GEMINI_MODEL` to one that will work through Dec 4. Cite the source in the PR.
-5. Run real Gemini extraction on synthetic invoice, packing list and certificate PDFs (owner provides key locally; never paste it in chat). Record outcomes honestly, including failures.
+5. Owner reports the Gemini key works and all three PDFs extracted after the Nov 21 invoice fix (owner-reported, not yet reproduced from a clean install). Re-run once and record evidence. Run real Gemini extraction on synthetic invoice, packing list and certificate PDFs (owner provides key locally; never paste it in chat). Record outcomes honestly, including failures.
 6. Verify response schema acceptance and Zod validation; improve safe diagnostics (issue paths only, never document values), cache versioning, retry on timeout/429/5xx only.
 7. Shipment status derivation: pure function in `packages/core` (`documents`, `discrepancies` in, status out), called from the API after each relevant change. Remove misleading dashboard counts; counts come from derived status.
 8. Design (not ship) database-level status protection. Preferred option to compare: a trigger that blocks `status` changes unless made by the server role, versus column privileges versus moving writes to a `SECURITY DEFINER` function. Ship on Day 6.
