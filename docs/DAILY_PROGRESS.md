@@ -117,6 +117,14 @@ After changes:
 - `prettier --check`: run on touched code and docs, see the PR for the final result.
 - NOT run: `eslint` (missing `@eslint/js`), `vite build`, browser tests at 1280px and 390px, real Gemini, real Supabase, two-user isolation against a real database.
 
+### Owner-run checks on Windows (Node 22, Prettier 3.10.1), branch `feat/day1-core-correctness`
+
+- `npm test`: **615 tests, 615 pass, 0 fail** (the 5 suites that could not load in the sandbox load and pass here; that is why the count is higher than the sandbox's 582).
+- `npm run build -w @portchimera/web`: built. Warning: `index` chunk is 828 kB (over 500 kB). Already planned for Day 7.
+- `npm run format:check`: passed, after `git restore .` re-created 40 files that still had CRLF line endings from a checkout made before `.gitattributes` existed. No content changed.
+- `npm run lint`: 208 errors. 2 were real unused variables in test files (fixed in commit `a357094`). The other 206 are false positives: `eslint.config.js` has no React/JSX support, so every component used only in JSX looks unused, plus one unknown `react-hooks/exhaustive-deps` rule. This predates Day 1. Fix needs `eslint-plugin-react` and `eslint-plugin-react-hooks` (new dev dependencies, owner approval pending).
+- Not yet done by the owner: browser check at desktop and mobile, Supabase RLS queries, AI Studio model names, GitHub license, Devpost rules.
+
 ### Unresolved bugs
 
 - Everything in playbook section 6 for Days 2 to 7 is still open.
