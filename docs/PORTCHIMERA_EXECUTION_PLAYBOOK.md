@@ -124,7 +124,7 @@ Authoritative detail is in `.kiro/steering/security.md`. Sprint-specific additio
 
 | Finding                                                                                                                                                                      | Why it matters                                                  | Planned day |
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- | ----------- |
-| **No `LICENSE` file** in the repo [checked]                                                                                                                                  | Kiroween requires an open-source license. Disqualification risk | Day 1 (tiny, ask owner which license) |
+| **No `LICENSE` file** in the repo [checked]. **Fixed in PR #19:** MIT license added (copyright holder `Zee-hub-496`)                                                           | The 2025 Kiroween rules asked for a public repo with an OSI-approved license. The 2026 rules page could not be opened by the assistant, so the owner must confirm on the Devpost rules page | Done in PR #19; confirm GitHub shows "MIT License" after merge |
 | `.kiro/steering/ai-integration.md` says Gemini 2.5 requests start being rerouted on 2026-12-01                                                                              | Demo and judging happen Dec 1-4. Model must be verified Day 1   | 1           |
 | Migrations 0001 and 0002 were described in the README as "not yet run". Confirm they are applied to the real Supabase project                                                | Everything depends on it                                        | 1           |
 | README "Current status" table is stale (says tests were run on Windows with Node 24, UI "NOT run")                                                                           | Judges read the README                                          | Dec 1       |
@@ -157,7 +157,7 @@ Tasks:
 
 1. `npm install`; run `npm test`; record exact baseline (pass, fail, skipped, count).
 2. Confirm migrations 0001 and 0002 are applied to the Supabase project.
-3. Choose and add an open-source `LICENSE` (ask owner; MIT is the common default).
+3. Confirm GitHub shows "MIT License" on the repo page after PR #19 is merged, and re-read the 2026 Devpost rules page for license and eligibility wording.
 4. Check current Gemini model availability and set `GEMINI_MODEL` to one that will work through Dec 4. Cite the source in the PR.
 5. Run real Gemini extraction on synthetic invoice, packing list and certificate PDFs (owner provides key locally; never paste it in chat). Record outcomes honestly, including failures.
 6. Verify response schema acceptance and Zod validation; improve safe diagnostics (issue paths only, never document values), cache versioning, retry on timeout/429/5xx only.
@@ -172,7 +172,7 @@ Acceptance criteria:
 - Dashboard counts equal a direct count of shipments by derived status.
 - Real Gemini run documented for three document types, or the exact failure and next step.
 - Throwing inside a page shows a recoverable fallback, not a white screen; the sidebar still works.
-- `LICENSE` exists.
+- `LICENSE` is merged and detected by GitHub.
 
 ### Day 2: Nov 24, Deployment and reliability
 

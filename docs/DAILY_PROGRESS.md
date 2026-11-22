@@ -54,7 +54,7 @@ Plan reference: `docs/PORTCHIMERA_EXECUTION_PLAYBOOK.md`.
 
 ### Files changed
 
-- Added: `docs/PORTCHIMERA_EXECUTION_PLAYBOOK.md`, `docs/DAILY_PROGRESS.md`, `.kiro/steering/09-kiroween-execution.md`.
+- Added: `LICENSE` (MIT), `docs/PORTCHIMERA_EXECUTION_PLAYBOOK.md`, `docs/DAILY_PROGRESS.md`, `.kiro/steering/09-kiroween-execution.md`.
 
 ### Tests performed
 
@@ -72,7 +72,7 @@ Plan reference: `docs/PORTCHIMERA_EXECUTION_PLAYBOOK.md`.
 
 ### Blockers
 
-- Owner decisions needed: which open-source license; confirm migrations 0001 and 0002 are applied to the real Supabase project; provide a Gemini key locally for Day 1 real-API tests (never paste it in chat).
+- Owner decisions needed: confirm migrations 0001 and 0002 are applied to the real Supabase project; provide a Gemini key locally for Day 1 real-API tests (never paste it in chat).
 
 ### Next session's starting point
 
