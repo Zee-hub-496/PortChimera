@@ -6,8 +6,8 @@ Plan reference: `docs/PORTCHIMERA_EXECUTION_PLAYBOOK.md`.
 
 ## Kiro credits
 
-| Date       | Credits used (from Kiro dashboard) | Remaining | Note                                      |
-| ---------- | ---------------------------------- | --------- | ----------------------------------------- |
+| Date       | Credits used (from Kiro dashboard) | Remaining   | Note                                                           |
+| ---------- | ---------------------------------- | ----------- | -------------------------------------------------------------- |
 | 2026-11-22 | about 250 (owner's figure)         | about 3,750 | Starting point before the sprint. Not measured by this session |
 
 ## Template for each day
@@ -36,6 +36,105 @@ Plan reference: `docs/PORTCHIMERA_EXECUTION_PLAYBOOK.md`.
 ### Next session's starting point
 -
 ```
+
+---
+
+## Day 1: 2026-11-22 (session run on Nov 22 for the Nov 23 plan), core correctness
+
+Branch: `feat/day1-core-correctness`. Started from `main` at `c761043` (PRs #19 and #20 merged, working tree clean, level with `origin/main`).
+
+### Environment limits in this session (read first)
+
+- The sandbox network is `INTEGRATIONS_ONLY`. `npm install` fails with `403 Forbidden` for every package (`express`, `react`, `zod`, `eslint` all tested). So `node_modules` could not be installed.
+- Because of that: no ESLint run, no web production build, no browser/Playwright test, no real Gemini call (Gemini host unreachable), no Supabase SQL check. None of these were run. They need to be done on the owner's machine or in CI.
+- To run API tests that import `@portchimera/core`, a local symlink `node_modules/@portchimera/core -> packages/core` was created (what `npm install` does for workspaces). `node_modules` is git-ignored.
+
+### Completed
+
+- **Task 1, baseline** (see numbers below).
+- **Task 7, shipment status derivation:** new pure function `deriveShipmentStatus` in `packages/core/src/shipment/status.js`. New `syncShipmentStatus` in `apps/api/src/modules/shipments/statusSync.js`, called after upload, extraction start, extraction finish or failure, document review, cross-check run, and discrepancy decision. Failures are logged and never undo the user's action. Each change is audited as `shipment.status_changed` (from, to). `cleared` is never derived and never overwritten.
+- **Dashboard:** counts already came from the stored `status`, which is now truthful. Replaced the always-zero "Cleared" tile with "AI pre-cleared" (hint: internal label, not customs clearance). The "Cleared" badge only shows if a shipment has that status.
+- **Task 9, error boundaries:** `ErrorBoundary` component. Root level in `main.jsx`; page level in `AppLayout.jsx` (sidebar and header stay usable; navigating clears the error). Helper `describeCrash` is unit-tested. The component itself was not rendered (no React install).
+- **Task 6, diagnostics:** retry on timeout/429/5xx already existed and is tested. Added: an upstream 4xx now logs `HTTP <code>, <GOOGLE_STATUS>` (for example `HTTP 404, NOT_FOUND` for a retired model), never the message text. Zod validation issues already log path only.
+- **Task 8, design only:** `docs/DESIGN_STATUS_PROTECTION.md`. Key finding: the API writes as the signed-in user, so the database cannot tell an API write from a forged REST write. Needs the owner's decision (Option A or D).
+- **Docs:** `.kiro/steering/architecture.md` module layout now matches the code (no `controller.js` / `repo.js`).
+
+### Status rules implemented (for the owner to confirm)
+
+| Situation                                                                   | Status                                 |
+| --------------------------------------------------------------------------- | -------------------------------------- |
+| Any document being read by AI                                               | `ai_processing`                        |
+| Any document extracted and waiting for approval                             | `requires_review`                      |
+| Not all three required document types approved (includes none, failed)      | `submitted`                            |
+| All approved, cross-check never run, or an approval is newer than the check | `requires_review`                      |
+| Cross-check has an open discrepancy                                         | `requires_review`                      |
+| All approved, check is current, no open discrepancy                         | `ai_pre_cleared` (internal label only) |
+
+### Not done on Day 1 (needs the owner or a machine with network)
+
+- Task 2 RLS/policy SQL check: the query must be run in the Supabase SQL Editor (not run).
+- Task 3: GitHub "MIT License" detection and the 2026 Devpost rules (not checked; no GitHub web access from here).
+- Task 4, Gemini model: official Google pages returned 403 to the fetch tool. Search results (third-party summaries quoting Google's models page) say Gemini 2.5 Flash and Pro are scheduled to be rerouted on 2026-12-01, and that Google recommends `gemini-3.8-flash` or 3.5 Flash-Lite for new projects. `GEMINI_MODEL` was NOT changed (it is an env var, not code). The owner must confirm the exact model code on the AI Studio page and set it in `apps/api/.env` and in Render.
+- Task 5, real Gemini run on the three synthetic PDFs: not run (no network from the sandbox, and the key must stay local).
+- Task 6 cache versioning: not changed. `SCHEMA_VERSION = 2` already gates cache hits; no change was needed from what was inspected.
+
+### Pull requests
+
+- PR link added below after creation.
+
+### Files changed
+
+- Added: `packages/core/src/shipment/status.js`, `packages/core/test/shipmentStatus.test.js`, `apps/api/src/modules/shipments/statusSync.js`, `apps/api/test/shipmentStatusSync.test.js`, `apps/web/src/components/ErrorBoundary.jsx`, `apps/web/src/lib/crashInfo.js`, `apps/web/test/crashInfo.test.js`, `docs/DESIGN_STATUS_PROTECTION.md`.
+- Modified: `packages/core/src/index.js`, `apps/api/src/modules/documents/{service,handlers,processJob}.js`, `apps/api/src/modules/crosscheck/service.js`, `apps/api/src/ai/geminiProvider.js`, `apps/api/test/documents/documentsApi.test.js`, `apps/api/test/ai/geminiProvider.test.js`, `apps/web/src/main.jsx`, `apps/web/src/layouts/AppLayout.jsx`, `apps/web/src/pages/Dashboard.jsx`, `apps/web/test/overviewStats.test.js`, `.kiro/steering/architecture.md`, `docs/DAILY_PROGRESS.md` (also Prettier-formatted, it already failed the format check on `main`), `docs/PORTCHIMERA_EXECUTION_PLAYBOOK.md` (Prettier whitespace only).
+
+### Database migrations
+
+- None. No migration was written or applied.
+
+### Tests performed (all are automated `node:test` with a fake database; no real Supabase, Gemini or browser)
+
+Baseline on `main` (before changes), run per group because the API group cannot fully load:
+
+| Group          | Tests | Pass | Fail | Note                                                                             |
+| -------------- | ----- | ---- | ---- | -------------------------------------------------------------------------------- |
+| core + scripts | 190   | 190  | 0    |                                                                                  |
+| api            | 203   | 198  | 5    | `ERR_MODULE_NOT_FOUND` for `express` / `zod` (not installed). Not a code failure |
+| web            | 147   | 147  | 0    |                                                                                  |
+| **Total**      | 540   | 535  | 5    | The audit's "about 540" figure matches                                           |
+
+After changes:
+
+| Group          | Tests | Pass | Fail |
+| -------------- | ----- | ---- | ---- |
+| core + scripts | 213   | 213  | 0    |
+| api            | 218   | 213  | 5    |
+| web            | 151   | 151  | 0    |
+| **Total**      | 582   | 577  | 5    |
+
+- The same 5 API suites fail as in the baseline (`extractionSchema`, `app`, `authRoutes`, `envProduction`, `shipmentSchemas`), all because `express` / `zod` cannot be installed here. They must be run in CI or locally.
+- New tests: 23 core (every status transition, approval revoked, all discrepancies resolved, stale check, input validation), 10 API status-sync (ownership, error handling, cleared preserved, full mismatch and consistent flows), 3 API document-flow status checks, 2 Gemini 4xx diagnostics, 3 `describeCrash`, 1 dashboard count consistency.
+- `npm run scan:secrets`: passed (278 files).
+- `prettier --check`: run on touched code and docs, see the PR for the final result.
+- NOT run: `eslint` (missing `@eslint/js`), `vite build`, browser tests at 1280px and 390px, real Gemini, real Supabase, two-user isolation against a real database.
+
+### Unresolved bugs
+
+- Everything in playbook section 6 for Days 2 to 7 is still open.
+- Status cannot yet be protected in the database (design pending approval; ships Day 6).
+- Status is recomputed by separate reads and one write, so two events at the very same moment can leave an older result until the next event. Low risk; documented in the code.
+- Shipments created before this change still show `submitted` until their next event (upload, review, cross-check, decision).
+- `product.md` steering still says "17-day MVP", "seven pages" and lists a crisis page as out of scope. Not edited; needs the owner's decision.
+
+### Blockers
+
+- Network-restricted sandbox (see top). The owner (or CI on Day 2) must run: `npm install`, `npm test`, `npm run lint`, `npm run format:check`, `npm run build -w @portchimera/web`.
+
+### Next session's starting point
+
+1. Owner reviews and merges the Day 1 PR, runs `npm install && npm test && npm run lint` locally and reports the numbers (expect 582 tests, 0 failures).
+2. Owner answers: Option A or D in `docs/DESIGN_STATUS_PROTECTION.md`; the exact `GEMINI_MODEL` code; whether to update `product.md`.
+3. Owner runs the RLS query in the Supabase SQL Editor and the real Gemini extraction of the three PDFs, and shares results (no keys).
+4. Then Day 2: deployment, `trust proxy`, CI, stuck-processing recovery.
 
 ---
 
