@@ -82,6 +82,14 @@ export function precheckFile(file) {
   return null;
 }
 
+/** Human-readable file size, e.g. "512 B", "1.4 KB", "2.3 MB". */
+export function formatFileSize(bytes) {
+  if (!Number.isFinite(bytes) || bytes < 0) return '';
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 /** Keep polling only while the server is working on the document. */
 export function shouldPoll(status) {
   return status === 'processing';
