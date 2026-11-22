@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { extractPdfText } from '../../ai/pdfText.js';
 import { SCHEMA_VERSION } from '../../ai/fieldNames.js';
 import { runExtraction } from './extractionRunner.js';
+import { syncShipmentStatus } from '../shipments/statusSync.js';
 import { auditSafely } from './service.js';
 
 const SAFE_MESSAGES = Object.freeze({
@@ -133,6 +134,7 @@ export async function runJob({ db, userId, doc, provider, parse, logger = consol
         },
         logger,
       );
+      await syncShipmentStatus(db, userId, doc.shipment_id, logger);
       return { status: 'extracted', cached: true };
     }
 
@@ -161,6 +163,7 @@ export async function runJob({ db, userId, doc, provider, parse, logger = consol
       },
       logger,
     );
+    await syncShipmentStatus(db, userId, doc.shipment_id, logger);
     return { status: 'extracted', cached: false };
   } catch (err) {
     if (err?.message === SUPERSEDED) {
@@ -176,6 +179,7 @@ export async function runJob({ db, userId, doc, provider, parse, logger = consol
     await markFailed(db, userId, doc, err, logger).catch((e) =>
       logger.error('document_fail_handling_failed', { reason: e?.message }),
     );
+    await syncShipmentStatus(db, userId, doc.shipment_id, logger);
     return { status: 'failed' };
   }
 }

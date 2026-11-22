@@ -111,7 +111,7 @@ export function documentHandlers({
       activeJobs.add(id);
       let doc;
       try {
-        doc = await markProcessing(req.db, req.auth.userId, id);
+        doc = await markProcessing(req.db, req.auth.userId, id, logger);
       } catch (err) {
         activeJobs.delete(id);
         throw err;

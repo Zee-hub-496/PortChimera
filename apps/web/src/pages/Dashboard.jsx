@@ -92,15 +92,21 @@ export default function Dashboard() {
             <Kpi label="Total shipments" value={stats.total} />
             <Kpi label="Requires review" value={stats.needsReview} hint="Waiting for a person" />
             <Kpi label="Ports used" value={stats.portCount} hint="Origins and destinations" />
-            <Kpi label="Cleared" value={stats.byStatus.cleared} hint="Cleared by a person" />
+            <Kpi
+              label="AI pre-cleared"
+              value={stats.byStatus.ai_pre_cleared}
+              hint="Internal label. Not customs clearance"
+            />
           </section>
 
           <section aria-label="Shipments by status" className="mt-4 flex flex-wrap gap-2">
-            {Object.entries(STATUS_LABELS).map(([status, label]) => (
-              <Badge key={status} tone={statusTone(status)}>
-                {label}: <span className="font-mono">{stats.byStatus[status]}</span>
-              </Badge>
-            ))}
+            {Object.entries(STATUS_LABELS)
+              .filter(([status]) => status !== 'cleared' || stats.byStatus.cleared > 0)
+              .map(([status, label]) => (
+                <Badge key={status} tone={statusTone(status)}>
+                  {label}: <span className="font-mono">{stats.byStatus[status]}</span>
+                </Badge>
+              ))}
           </section>
 
           <div className="mt-6 grid gap-6 lg:grid-cols-3">

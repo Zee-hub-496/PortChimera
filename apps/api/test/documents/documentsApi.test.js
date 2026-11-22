@@ -924,3 +924,49 @@ describe('helpers', () => {
     assert.equal(rows[1].line_no, 2);
   });
 });
+
+describe('shipment status follows the document flow', () => {
+  const statusOf = async (ctx, shipmentId) =>
+    (await ctx.alice.from('shipments').select('*').eq('id', shipmentId).maybeSingle()).data.status;
+
+  it('submitted -> ai_processing -> requires_review when extraction succeeds', async () => {
+    let release;
+    const gate = new Promise((r) => (release = r));
+    const inner = createFakeProvider({ response: goodInvoice() });
+    const provider = {
+      calls: inner.calls,
+      async extractDocument(input) {
+        await gate;
+        return inner.extractDocument(input);
+      },
+    };
+    const ctx = setup({ provider });
+    const { doc, shipmentId } = await uploaded(ctx);
+    assert.equal(await statusOf(ctx, shipmentId), 'submitted');
+    await ctx.h.process({ ...ctx.asAlice(), params: { id: doc.id } }, fakeRes());
+    assert.equal(await statusOf(ctx, shipmentId), 'ai_processing');
+    release();
+    await Promise.all(ctx.jobs);
+    assert.equal(await statusOf(ctx, shipmentId), 'requires_review');
+  });
+
+  it('goes back to submitted when extraction fails', async () => {
+    const ctx = setup({ provider: createFakeProvider({ mode: 'server500' }) });
+    const { doc, shipmentId } = await uploaded(ctx);
+    await ctx.h.process({ ...ctx.asAlice(), params: { id: doc.id } }, fakeRes());
+    await Promise.all(ctx.jobs);
+    assert.equal(await statusOf(ctx, shipmentId), 'submitted');
+  });
+
+  it('stays submitted after one approved document while others are missing', async () => {
+    const ctx = setup({ provider: createFakeProvider({ response: goodInvoice() }) });
+    const { doc, shipmentId } = await uploaded(ctx);
+    await ctx.h.process({ ...ctx.asAlice(), params: { id: doc.id } }, fakeRes());
+    await Promise.all(ctx.jobs);
+    await ctx.h.review(
+      { ...ctx.asAlice(), params: { id: doc.id }, body: goodInvoice() },
+      fakeRes(),
+    );
+    assert.equal(await statusOf(ctx, shipmentId), 'submitted');
+  });
+});

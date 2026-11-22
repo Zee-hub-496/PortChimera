@@ -1,6 +1,7 @@
 import { AppError } from '../../middleware/errorHandler.js';
 import { auditSafely } from '../documents/service.js';
 import { getShipmentRow } from '../shipments/service.js';
+import { syncShipmentStatus } from '../shipments/statusSync.js';
 import { findingToRow, planRerun, toDiscrepancyView } from './discrepancyView.js';
 import { mapReviewedPayloads } from './mapPayloads.js';
 
@@ -124,6 +125,7 @@ export async function runCrossCheck(db, userId, shipmentId, engine, logger = con
     },
     logger,
   );
+  await syncShipmentStatus(db, userId, shipmentId, logger);
   return view(db, { ...shipment, cross_check_summary: summary, cross_checked_at: checkedAt });
 }
 
@@ -166,6 +168,7 @@ export async function decideDiscrepancy(db, userId, id, reviewStatus, logger = c
     },
     logger,
   );
+  await syncShipmentStatus(db, userId, row.shipment_id, logger);
   return toDiscrepancyView({
     ...row,
     review_status: reviewStatus,
