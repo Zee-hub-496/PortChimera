@@ -13,7 +13,6 @@ import { buildFixtures } from '../../../../scripts/generate-document-fixtures.mj
 
 const fx = buildFixtures();
 const PDF = fx['commercial-invoice.pdf'];
-const nextTick = () => new Promise((r) => setImmediate(r));
 
 const silent = { error() {}, warn() {}, log() {} };
 const parseId = (v) => {
