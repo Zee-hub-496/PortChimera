@@ -25,9 +25,10 @@ Allowed direction: `web` -> HTTP -> `api` -> `core`. `web` never imports `core` 
 
 ## API module layout
 
-Each feature under `apps/api/src/modules/<name>/` has: `routes.js` (URL wiring), `controller.js`
-(HTTP in/out), `service.js` (use-case logic, calls core + repo), `repo.js` (database access),
-`schemas.js` (zod request validation). Controllers stay thin; no business logic in routes or React.
+Each feature under `apps/api/src/modules/<name>/` has: `routes.js` (URL wiring), `handlers.js`
+(HTTP in/out), `service.js` (use-case logic and database access through the user-scoped client; calls
+core), `schemas.js` (zod request validation), plus small feature helpers such as `*View.js` mappers.
+There is no `controller.js` or `repo.js`. Handlers stay thin; no business logic in routes or React.
 
 ## Key decisions (do not change without asking the author)
 

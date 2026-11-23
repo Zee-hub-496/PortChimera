@@ -1,6 +1,7 @@
 import { AppError } from '../../middleware/errorHandler.js';
 import { recordAudit } from '../audit/service.js';
 import { getShipmentRow } from '../shipments/service.js';
+import { syncShipmentStatus } from '../shipments/statusSync.js';
 import { buildStoragePath, sanitizeFilename, validateUpload } from './fileValidation.js';
 import { buildLineItemRows, toDocumentDetailView, toDocumentView } from './documentView.js';
 
@@ -111,6 +112,7 @@ export async function uploadDocument(
     },
     logger,
   );
+  await syncShipmentStatus(db, userId, shipmentId, logger);
   return toDocumentView(row);
 }
 
@@ -146,7 +148,7 @@ export async function createDownloadUrl(db, userId, id) {
  * The update only applies while the status is still the one that was read (compare and set), so
  * two overlapping requests cannot both start a job.
  */
-export async function markProcessing(db, userId, id) {
+export async function markProcessing(db, userId, id, logger = console) {
   const row = await getDocumentRow(db, userId, id);
   if (row.processing_status === 'reviewed') {
     throw new AppError(409, 'DOCUMENT_ALREADY_REVIEWED', 'This document was already reviewed');
@@ -161,6 +163,7 @@ export async function markProcessing(db, userId, id) {
   if (!data || data.length === 0) {
     throw new AppError(409, 'DOCUMENT_BUSY', 'This document is already being processed');
   }
+  await syncShipmentStatus(db, userId, row.shipment_id, logger);
   return { ...row, processing_status: 'processing', error_message: null };
 }
 
@@ -348,5 +351,6 @@ export async function saveReview(db, userId, id, reviewedPayload, logger = conso
     },
     logger,
   );
+  await syncShipmentStatus(db, userId, row.shipment_id, logger);
   return getDocumentDetail(db, userId, id);
 }

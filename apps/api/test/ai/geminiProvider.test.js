@@ -130,6 +130,26 @@ test('400 is not retried', async () => {
   assert.equal(f.calls.length, 1);
 });
 
+test('a client error logs the HTTP status and Google status word, never the message text', async () => {
+  const body = { error: { status: 'NOT_FOUND', message: `model gone, key ${KEY}, doc text` } };
+  const f = scripted([resp(404, body)]);
+  await assert.rejects(make(f).provider.extractDocument(input), (e) => {
+    assert.equal(e.kind, 'upstream');
+    assert.match(e.message, /\(HTTP 404, NOT_FOUND\)/);
+    assert.ok(!e.message.includes('doc text') && !e.message.includes(KEY));
+    return true;
+  });
+  assert.equal(f.calls.length, 1);
+});
+
+test('a client error with an odd status word keeps only the HTTP status', async () => {
+  const f = scripted([resp(400, { error: { status: 'bad value <script>' } })]);
+  await assert.rejects(make(f).provider.extractDocument(input), (e) => {
+    assert.match(e.message, /\(HTTP 400\)$/);
+    return true;
+  });
+});
+
 test('401 and 403 are auth errors and not retried', async () => {
   for (const status of [401, 403]) {
     const f = scripted([resp(status, {})]);

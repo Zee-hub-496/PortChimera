@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { MotionConfig } from 'framer-motion';
 import { Toaster } from 'sonner';
 import App from './App.jsx';
+import ErrorBoundary from './components/ErrorBoundary.jsx';
 import { ThemeProvider, useTheme } from './components/ThemeProvider.jsx';
 import './index.css';
 
@@ -15,13 +16,15 @@ function ThemedToaster() {
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <ThemeProvider>
-      <MotionConfig reducedMotion="user">
-        <BrowserRouter>
-          <App />
-        </BrowserRouter>
-        <ThemedToaster />
-      </MotionConfig>
-    </ThemeProvider>
+    <ErrorBoundary variant="root">
+      <ThemeProvider>
+        <MotionConfig reducedMotion="user">
+          <BrowserRouter>
+            <App />
+          </BrowserRouter>
+          <ThemedToaster />
+        </MotionConfig>
+      </ThemeProvider>
+    </ErrorBoundary>
   </StrictMode>,
 );

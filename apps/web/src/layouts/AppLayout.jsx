@@ -17,6 +17,7 @@ import {
   X,
 } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext.jsx';
+import ErrorBoundary from '../components/ErrorBoundary.jsx';
 import Logo from '../components/Logo.jsx';
 import ThemeToggle from '../components/ThemeToggle.jsx';
 import { useCommandPalette } from '../components/CommandPalette.jsx';
@@ -315,7 +316,10 @@ export default function AppLayout() {
             </div>
           </header>
           <main id="main" className="mx-auto w-full max-w-6xl flex-1 p-4 md:p-6">
-            <Outlet />
+            {/* A crash inside a page shows a fallback here; the sidebar and header keep working. */}
+            <ErrorBoundary variant="page" resetKey={pathname}>
+              <Outlet />
+            </ErrorBoundary>
           </main>
         </div>
       </div>

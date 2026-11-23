@@ -14,6 +14,17 @@ describe('overviewStats', () => {
     assert.equal(r.needsReview, 1);
     assert.equal(r.portCount, 3);
   });
+  it('per-status counts equal a direct count and add up to the total', () => {
+    const statuses = ['submitted', 'ai_processing', 'requires_review', 'ai_pre_cleared'];
+    const list = [0, 1, 1, 2, 2, 2, 3].map((i) => ({ status: statuses[i] }));
+    const r = summarizeShipments(list);
+    for (const s of statuses)
+      assert.equal(r.byStatus[s], list.filter((x) => x.status === s).length);
+    assert.equal(
+      Object.values(r.byStatus).reduce((a, b) => a + b, 0),
+      r.total,
+    );
+  });
   it('handles empty input', () => {
     assert.equal(summarizeShipments(undefined).total, 0);
   });

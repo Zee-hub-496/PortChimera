@@ -42,7 +42,7 @@ describe('mountProtectedRoutes', () => {
 
   it('throws when a router is missing or unknown, so nothing is mounted unprotected', () => {
     const app = { use() {} };
-    const { ports, ...missing } = factories();
+    const { ports: _ports, ...missing } = factories();
     assert.throws(() => mountProtectedRoutes(app, () => {}, missing), /ports/);
     assert.throws(
       () => mountProtectedRoutes(app, () => {}, { ...factories(), extra: () => 1 }),

@@ -98,39 +98,39 @@ Authoritative detail is in `.kiro/steering/security.md`. Sprint-specific additio
 
 ## 6. Verified state of audit findings (2026-11-22)
 
-| Finding                                                       | Status after code check                                                                               | Planned day |
-| ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ----------- |
-| Shipment status never updated                                 | **[checked] confirmed.** No status write in `modules/shipments/service.js`                            | 1           |
-| Dashboard counts misleading                                   | [unverified] depends on status; `Dashboard.jsx` and `overviewStats.js` to review                      | 1           |
-| Gemini schema fix unverified on real API                      | [unverified] `responseSchema` sent in `geminiProvider.js`; no real-call evidence in repo              | 1           |
-| Not deployed                                                  | [checked] no `.github/`, no Vercel/Render config in repo                                              | 2           |
-| Crisis simulation has no API/UI                               | **[checked] confirmed.** Core has `simulate.js`, `disruptions.js`; no scenario module in API or web   | 3, 4        |
-| Evidence check only tests quote existence                     | [unverified] see `ai/evidence.js`                                                                     | 5           |
-| Freight charges cause false high discrepancies                | [unverified]                                                                                          | 5           |
-| Split duplicate product lines                                 | [unverified]                                                                                          | 5           |
-| Ambiguous number formats                                      | [unverified]                                                                                          | 5           |
-| Germany vs Deutschland                                        | [unverified]                                                                                          | 5           |
-| Invoice date not compared                                     | [unverified]                                                                                          | 5           |
-| Direct Supabase REST writes bypass validation                 | **[checked] confirmed** for shipments (see section 5)                                                 | 1 design, 6 |
-| In-memory job set                                             | **[checked] confirmed.** `activeJobs = new Set()` in `documents/handlers.js`                          | 2           |
-| Documents cannot be deleted or replaced                       | **[checked] confirmed.** No delete route in `documents/routes.js`                                     | 6           |
-| Stale cross-check after approval changes                      | [unverified]                                                                                          | 5, 6        |
-| No React error boundary                                       | **[checked] confirmed.** No match in `apps/web/src`                                                   | 1           |
-| Rate limit behind Render proxy                                | **[checked] `trust proxy` not set**                                                                   | 2           |
-| Alerts and Documents pages incomplete                         | [unverified] `AlertsHub.jsx`, `DocumentsHub.jsx` exist                                                | 7           |
-| No CI or deploy config                                        | **[checked] confirmed**                                                                               | 2           |
+| Finding                                        | Status after code check                                                                             | Planned day |
+| ---------------------------------------------- | --------------------------------------------------------------------------------------------------- | ----------- |
+| Shipment status never updated                  | **[checked] confirmed.** No status write in `modules/shipments/service.js`                          | 1           |
+| Dashboard counts misleading                    | [unverified] depends on status; `Dashboard.jsx` and `overviewStats.js` to review                    | 1           |
+| Gemini schema fix unverified on real API       | [unverified] `responseSchema` sent in `geminiProvider.js`; no real-call evidence in repo            | 1           |
+| Not deployed                                   | [checked] no `.github/`, no Vercel/Render config in repo                                            | 2           |
+| Crisis simulation has no API/UI                | **[checked] confirmed.** Core has `simulate.js`, `disruptions.js`; no scenario module in API or web | 3, 4        |
+| Evidence check only tests quote existence      | [unverified] see `ai/evidence.js`                                                                   | 5           |
+| Freight charges cause false high discrepancies | [unverified]                                                                                        | 5           |
+| Split duplicate product lines                  | [unverified]                                                                                        | 5           |
+| Ambiguous number formats                       | [unverified]                                                                                        | 5           |
+| Germany vs Deutschland                         | [unverified]                                                                                        | 5           |
+| Invoice date not compared                      | [unverified]                                                                                        | 5           |
+| Direct Supabase REST writes bypass validation  | **[checked] confirmed** for shipments (see section 5)                                               | 1 design, 6 |
+| In-memory job set                              | **[checked] confirmed.** `activeJobs = new Set()` in `documents/handlers.js`                        | 2           |
+| Documents cannot be deleted or replaced        | **[checked] confirmed.** No delete route in `documents/routes.js`                                   | 6           |
+| Stale cross-check after approval changes       | [unverified]                                                                                        | 5, 6        |
+| No React error boundary                        | **[checked] confirmed.** No match in `apps/web/src`                                                 | 1           |
+| Rate limit behind Render proxy                 | **[checked] `trust proxy` not set**                                                                 | 2           |
+| Alerts and Documents pages incomplete          | [unverified] `AlertsHub.jsx`, `DocumentsHub.jsx` exist                                              | 7           |
+| No CI or deploy config                         | **[checked] confirmed**                                                                             | 2           |
 
 ### Additional findings from the HQ review (not in the audit)
 
-| Finding                                                                                                                                                                      | Why it matters                                                  | Planned day |
-| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- | ----------- |
-| **No `LICENSE` file** in the repo [checked]. **Fixed in PR #19:** MIT license added (copyright holder `Zee-hub-496`)                                                           | The 2025 Kiroween rules asked for a public repo with an OSI-approved license. The 2026 rules page could not be opened by the assistant, so the owner must confirm on the Devpost rules page | Done in PR #19; confirm GitHub shows "MIT License" after merge |
-| `.kiro/steering/ai-integration.md` says Gemini 2.5 requests start being rerouted on 2026-12-01                                                                              | Demo and judging happen Dec 1-4. Model must be verified Day 1   | 1           |
-| Migrations 0001 and 0002 were described in the README as "not yet run". Confirm they are applied to the real Supabase project                                                | Everything depends on it                                        | 1           |
-| README "Current status" table is stale (says tests were run on Windows with Node 24, UI "NOT run")                                                                           | Judges read the README                                          | Dec 1       |
-| `.kiro/settings/permissions.json` and `.yaml` at the workspace level are empty files                                                                                         | Harmless; leave alone                                           | none        |
-| Steering `product.md` still says "17-day MVP", "seven pages", and lists a crisis page as out of scope, which now conflicts with the crisis-simulation plan                    | Conflicting instructions confuse future sessions                | Day 1 (docs only, ask owner) |
-| Steering `architecture.md` lists `controller.js` / `repo.js` which do not exist in the code                                                                                 | Same                                                            | Day 1 (docs only) |
+| Finding                                                                                                                                                    | Why it matters                                                                                                                                                                              | Planned day                                                    |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| **No `LICENSE` file** in the repo [checked]. **Fixed in PR #19:** MIT license added (copyright holder `Zee-hub-496`)                                       | The 2025 Kiroween rules asked for a public repo with an OSI-approved license. The 2026 rules page could not be opened by the assistant, so the owner must confirm on the Devpost rules page | Done in PR #19; confirm GitHub shows "MIT License" after merge |
+| `.kiro/steering/ai-integration.md` says Gemini 2.5 requests start being rerouted on 2026-12-01                                                             | Demo and judging happen Dec 1-4. Model must be verified Day 1                                                                                                                               | 1                                                              |
+| Migrations 0001 and 0002 were described in the README as "not yet run". Confirm they are applied to the real Supabase project                              | Everything depends on it                                                                                                                                                                    | 1                                                              |
+| README "Current status" table is stale (says tests were run on Windows with Node 24, UI "NOT run")                                                         | Judges read the README                                                                                                                                                                      | Dec 1                                                          |
+| `.kiro/settings/permissions.json` and `.yaml` at the workspace level are empty files                                                                       | Harmless; leave alone                                                                                                                                                                       | none                                                           |
+| Steering `product.md` still says "17-day MVP", "seven pages", and lists a crisis page as out of scope, which now conflicts with the crisis-simulation plan | Conflicting instructions confuse future sessions                                                                                                                                            | Day 1 (docs only, ask owner)                                   |
+| Steering `architecture.md` lists `controller.js` / `repo.js` which do not exist in the code                                                                | Same                                                                                                                                                                                        | Day 1 (docs only)                                              |
 
 The test count (about 540) comes from the audit. The baseline must be re-measured on Day 1 after `npm install`; record the real number in `DAILY_PROGRESS.md`.
 
@@ -283,11 +283,11 @@ About 4,000 credits were allocated and about 250 used (owner's figure). Track re
 
 ## 12. Risks to watch
 
-| Risk                                                       | Mitigation                                                                   |
-| ---------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| Gemini model retirement or free-tier limits during judging | Pin a supported model, cache by SHA-256, keep a recorded-fixture demo path    |
-| Render free tier cold starts during judging                | Health ping before demo; mention in README; consider a paid/always-on tier    |
-| Tighter RLS breaks the app                                 | Day 6 changes land with two-user tests and the full flow test                 |
-| Schedule slip                                              | Cut order in section 7; feature freeze after Day 8                            |
-| Real API key leak                                          | `npm run scan:secrets`; keys only in dashboards                               |
-| README claims more than exists                             | Dec 1 honest rewrite; claims only for verified items                          |
+| Risk                                                       | Mitigation                                                                 |
+| ---------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Gemini model retirement or free-tier limits during judging | Pin a supported model, cache by SHA-256, keep a recorded-fixture demo path |
+| Render free tier cold starts during judging                | Health ping before demo; mention in README; consider a paid/always-on tier |
+| Tighter RLS breaks the app                                 | Day 6 changes land with two-user tests and the full flow test              |
+| Schedule slip                                              | Cut order in section 7; feature freeze after Day 8                         |
+| Real API key leak                                          | `npm run scan:secrets`; keys only in dashboards                            |
+| README claims more than exists                             | Dec 1 honest rewrite; claims only for verified items                       |
