@@ -126,7 +126,9 @@ After changes:
 - **Real end-to-end status flow (owner, local app, real Gemini, real Supabase, new user, demo PDFs):** shipment `DEMO-001` (CNSHA to PKKHI) went Submitted -> AI processing -> Requires review -> (3 approvals) -> Requires review -> cross-check -> Requires review (1 High finding: gross weight 500 kg vs 650 kg, 23.1%) -> Resolve -> **AI pre-cleared**. Dashboard: Total 1, Requires review 0, AI pre-cleared 1, badges match. Checked at desktop and at iPhone 16 width (393 px): layout fine. Screenshots shared in chat, not saved to the repo.
 - **AI reading error seen:** Gemini returned wrong net weights on the demo invoice and packing list. The owner corrected them in review to the printed values (200 kg and 250 kg per line). After that, net weight was compared with no finding (invoice has no printed total net, so the line sum 450 kg was compared with the packing list total 450 kg). Exact AI values not yet recorded. Input for Day 5 (evidence must support the value).
 - **Console error seen:** `Uncaught TypeError: Cannot read properties of undefined (reading 'save')` from `leaflet.js`, shown while on the Dashboard after using the device toolbar. Dashboard has no map, so it most likely comes from a Leaflet canvas map (`MaritimeMap.jsx`, unchanged by Day 1) being removed or resized during an animation. Not reproduced yet; no visible effect. Open issue.
-- Not yet done by the owner: error boundary crash test (Part D), Supabase RLS queries, AI Studio model names, GitHub license, Devpost rules.
+- **Error boundary (owner, local browser, iPhone 16 width 393 px):** a temporary `throw new Error('test crash')` in `Settings.jsx` showed the page-level fallback card ("This page hit an unexpected problem", Try again, Go to dashboard) with the header still usable, not a white screen. Console showed React handing the error to `ErrorBoundary` and the `ui_crash` log with name and message only. The test line was not committed.
+- The Leaflet `reading 'save'` console error appeared 3 more times during this session. Still open.
+- Not yet done by the owner: Supabase RLS queries, AI Studio model names, GitHub license, Devpost rules.
 
 ### Unresolved bugs
 
