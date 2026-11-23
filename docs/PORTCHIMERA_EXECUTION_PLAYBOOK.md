@@ -98,27 +98,27 @@ Authoritative detail is in `.kiro/steering/security.md`. Sprint-specific additio
 
 ## 6. Verified state of audit findings (2026-11-22)
 
-| Finding                                        | Status after code check                                                                             | Planned day |
-| ---------------------------------------------- | --------------------------------------------------------------------------------------------------- | ----------- |
-| Shipment status never updated                  | **[checked] confirmed.** No status write in `modules/shipments/service.js`                          | 1           |
-| Dashboard counts misleading                    | [unverified] depends on status; `Dashboard.jsx` and `overviewStats.js` to review                    | 1           |
-| Gemini schema fix unverified on real API       | [unverified] `responseSchema` sent in `geminiProvider.js`; no real-call evidence in repo            | 1           |
-| Not deployed                                   | [checked] no `.github/`, no Vercel/Render config in repo                                            | 2           |
-| Crisis simulation has no API/UI                | **[checked] confirmed.** Core has `simulate.js`, `disruptions.js`; no scenario module in API or web | 3, 4        |
-| Evidence check only tests quote existence      | [unverified] see `ai/evidence.js`                                                                   | 5           |
-| Freight charges cause false high discrepancies | [unverified]                                                                                        | 5           |
-| Split duplicate product lines                  | [unverified]                                                                                        | 5           |
-| Ambiguous number formats                       | [unverified]                                                                                        | 5           |
-| Germany vs Deutschland                         | [unverified]                                                                                        | 5           |
-| Invoice date not compared                      | [unverified]                                                                                        | 5           |
-| Direct Supabase REST writes bypass validation  | **[checked] confirmed** for shipments (see section 5)                                               | 1 design, 6 |
-| In-memory job set                              | **[checked] confirmed.** `activeJobs = new Set()` in `documents/handlers.js`                        | 2           |
-| Documents cannot be deleted or replaced        | **[checked] confirmed.** No delete route in `documents/routes.js`                                   | 6           |
-| Stale cross-check after approval changes       | [unverified]                                                                                        | 5, 6        |
-| No React error boundary                        | **[checked] confirmed.** No match in `apps/web/src`                                                 | 1           |
-| Rate limit behind Render proxy                 | **[checked] `trust proxy` not set**                                                                 | 2           |
-| Alerts and Documents pages incomplete          | [unverified] `AlertsHub.jsx`, `DocumentsHub.jsx` exist                                              | 7           |
-| No CI or deploy config                         | **[checked] confirmed**                                                                             | 2           |
+| Finding                                        | Status after code check                                                                                                                | Planned day |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
+| Shipment status never updated                  | **Fixed Day 1 (PR #21).** Derived by `deriveShipmentStatus` in core, synced by the API; owner verified with real data                  | 1           |
+| Dashboard counts misleading                    | **Fixed Day 1 (PR #21).** Counts come from derived status; "Cleared" tile replaced by "AI pre-cleared"; owner verified                 | 1           |
+| Gemini schema fix unverified on real API       | **Owner verified Day 1:** all three demo PDFs extracted with the real API. Gemini misread net weights (corrected in review); see Day 5 | 1           |
+| Not deployed                                   | [checked] no `.github/`, no Vercel/Render config in repo                                                                               | 2           |
+| Crisis simulation has no API/UI                | **[checked] confirmed.** Core has `simulate.js`, `disruptions.js`; no scenario module in API or web                                    | 3, 4        |
+| Evidence check only tests quote existence      | [unverified] see `ai/evidence.js`                                                                                                      | 5           |
+| Freight charges cause false high discrepancies | [unverified]                                                                                                                           | 5           |
+| Split duplicate product lines                  | [unverified]                                                                                                                           | 5           |
+| Ambiguous number formats                       | [unverified]                                                                                                                           | 5           |
+| Germany vs Deutschland                         | [unverified]                                                                                                                           | 5           |
+| Invoice date not compared                      | [unverified]                                                                                                                           | 5           |
+| Direct Supabase REST writes bypass validation  | **[checked] confirmed** for shipments (see section 5)                                                                                  | 1 design, 6 |
+| In-memory job set                              | **[checked] confirmed.** `activeJobs = new Set()` in `documents/handlers.js`                                                           | 2           |
+| Documents cannot be deleted or replaced        | **[checked] confirmed.** No delete route in `documents/routes.js`                                                                      | 6           |
+| Stale cross-check after approval changes       | [unverified]                                                                                                                           | 5, 6        |
+| No React error boundary                        | **Fixed Day 1 (PR #21).** Root and page boundaries; owner verified in browser                                                          | 1           |
+| Rate limit behind Render proxy                 | **[checked] `trust proxy` not set**                                                                                                    | 2           |
+| Alerts and Documents pages incomplete          | [unverified] `AlertsHub.jsx`, `DocumentsHub.jsx` exist                                                                                 | 7           |
+| No CI or deploy config                         | **[checked] confirmed**                                                                                                                | 2           |
 
 ### Additional findings from the HQ review (not in the audit)
 
@@ -130,7 +130,7 @@ Authoritative detail is in `.kiro/steering/security.md`. Sprint-specific additio
 | README "Current status" table is stale (says tests were run on Windows with Node 24, UI "NOT run")                                                         | Judges read the README                                                                                                                                                                      | Dec 1                                                          |
 | `.kiro/settings/permissions.json` and `.yaml` at the workspace level are empty files                                                                       | Harmless; leave alone                                                                                                                                                                       | none                                                           |
 | Steering `product.md` still says "17-day MVP", "seven pages", and lists a crisis page as out of scope, which now conflicts with the crisis-simulation plan | Conflicting instructions confuse future sessions                                                                                                                                            | Day 1 (docs only, ask owner)                                   |
-| Steering `architecture.md` lists `controller.js` / `repo.js` which do not exist in the code                                                                | Same                                                                                                                                                                                        | Day 1 (docs only)                                              |
+| Steering `architecture.md` lists `controller.js` / `repo.js` which do not exist in the code                                                                | Same. **Fixed Day 1 (PR #21).**                                                                                                                                                             | Day 1 (docs only)                                              |
 
 The test count (about 540) comes from the audit. The baseline must be re-measured on Day 1 after `npm install`; record the real number in `DAILY_PROGRESS.md`.
 
