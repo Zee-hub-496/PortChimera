@@ -1,6 +1,6 @@
 # Design: protecting `shipments.status` in the database
 
-Status: **proposal, not implemented. Needs the owner's decision.** Planned to ship on Day 6 (Nov 28).
+Status: **Option A approved by the owner on 2026-11-23. Not implemented yet.** Planned to ship on Day 6 (Nov 28).
 Written on Day 1 (2026-11-22 session).
 
 ## The problem
@@ -45,6 +45,6 @@ Plan:
 
 ## Decision needed
 
-- [ ] Option A (service-role key used for the status write only)
+- [x] Option A (service-role key used for the status write only). Approved by the owner, 2026-11-23
 - [ ] Option D (rules in SQL, no service-role key)
 - [ ] Other:

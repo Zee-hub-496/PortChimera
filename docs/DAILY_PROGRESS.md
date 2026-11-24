@@ -145,19 +145,19 @@ After changes:
 ### Day 1 close-out (PR #21 merged 2026-11-23 14:12 UTC as `c8b9bc9`)
 
 - Day 1 acceptance criteria met and verified by the owner: tests green (615/615), status moves through every state with real data, dashboard counts match, error boundary shows a recoverable fallback.
-- **Owner decisions still open** (ask at the start of Day 2, do not assume):
-  1. Status protection: Option A or D in `docs/DESIGN_STATUS_PROTECTION.md` (needed by Day 6).
-  2. Exact `GEMINI_MODEL` code from the owner's AI Studio page (needed before deployment on Day 2; set in Render, never in code).
-  3. `product.md` steering: update or leave.
-  4. ESLint React plugins (`eslint-plugin-react`, `eslint-plugin-react-hooks`): yes or later. **Needed for a green lint step in Day 2 CI**; without it CI must skip or allow lint failures.
-  5. Optional: require a short note when a High or Critical finding is decided (today one click clears it).
+- **Owner decisions (2026-11-23):**
+  1. Status protection: **Option A approved** (service-role key on the server only, for the single status write). Ships Day 6. `docs/DESIGN_STATUS_PROTECTION.md` updated.
+  2. `GEMINI_MODEL`: owner's working local value is **`gemini-3.5-flash-lite`** (the model that extracted the three demo PDFs). Use the same value in Render on Day 2. Not yet confirmed against Google's official deprecation page; Day 2 should re-check it with a web search.
+  3. `product.md` steering: **updated** (sprint scope, crisis simulation in scope on the route page, HS-code module out of scope, real page list).
+  4. ESLint React plugins: **not answered yet**. Ask at the start of Day 2; CI lint depends on it.
+  5. Optional note on High/Critical decisions: not answered yet.
 - **Owner checks still open:** Supabase RLS queries (tables with RLS off; `shipments` policies), GitHub "MIT license" detection, Devpost 2026 rules, the exact wrong net weights Gemini returned.
 - **Safety note:** during testing the owner edited `apps/web/src/pages/Login.jsx` to show a personal login and password. This was not committed and was restored. Never commit real credentials; a demo account is a Dec 3 decision.
 
 ### Next session's starting point
 
 1. Start from an updated `main` (Day 1 PR #21 and this close-out PR merged).
-2. Ask the owner the open decisions above, especially `GEMINI_MODEL` and the ESLint plugins, because Day 2 needs both.
+2. Ask the owner about the ESLint plugins (needed for CI lint) and the optional decision note. `GEMINI_MODEL` and status protection are decided.
 3. Day 2 tasks from the playbook: GitHub Actions CI; `app.set('trust proxy', 1)` with a rate-limit test (check Render's proxy hop count); `/api/health` smoke test; startup sweep for documents stuck in `processing` (additive migration for `processing_started_at`, needs owner approval); Vercel (`vercel.json` SPA rewrite) and Render (`render.yaml` or documented settings); env vars in dashboards only; CORS set to the Vercel URL.
 4. Deployment steps happen in the owner's Vercel, Render and Supabase dashboards. Give click-by-click instructions; never ask for secrets in chat.
 
