@@ -49,10 +49,12 @@ Plan reference: `docs/PORTCHIMERA_EXECUTION_PLAYBOOK.md`.
 - `scripts/smoke-test.mjs` for the deployed API. `/api/health` already existed and is covered by `app.test.js`.
 - `GEMINI_MODEL`: web search found no shutdown date for `gemini-3.5-flash-lite` (deprecations page snippets and third-party trackers say "no shutdown date announced"). Google's pages returned 403 to the fetch tool, so this is not read from the official page directly.
 
+- ESLint React plugins added after CI failed on 205 false "unused" errors (PR #24 merged, CI green, 618 tests pass locally).
+- Stuck documents (PR from `feat/day2-stuck-documents`): migration `0003_documents_processing_started_at.sql`; `markProcessing` stamps it; `failStaleDocuments` marks a document `failed` when it is read while `processing`, not running in this process, and older than 2 minutes (or has no timestamp). It uses the caller's own client, so no service-role key. This replaces the playbook's "startup sweep", which would need the service-role key at boot (approved only for the Day 6 status write). Tradeoff: a stuck document is fixed when someone opens it, not at boot.
+
 ### Not done
 
-- Stuck-`processing` sweep: waiting for approval of the `processing_started_at` migration.
-- ESLint React plugins: waiting for the owner's answer.
+- Deployment: on hold (no card for Render or Vercel). The hackathon needs a live URL, so a card-free host is still to be chosen.
 - Render's proxy hop count could not be confirmed from Render's docs (403). 1 is assumed; verification steps are in `docs/DEPLOYMENT.md`.
 
 ### Tests performed

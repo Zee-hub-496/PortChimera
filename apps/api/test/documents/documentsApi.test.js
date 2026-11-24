@@ -402,6 +402,80 @@ describe('process', () => {
     assert.equal((await docRow(ctx, doc.id)).processing_status, 'extracted');
   });
 
+  it('records when processing started', async () => {
+    const ctx = setup({ provider: createFakeProvider({ response: goodInvoice() }) });
+    const { doc } = await uploaded(ctx);
+    await ctx.h.process({ ...ctx.asAlice(), params: { id: doc.id } }, fakeRes());
+    assert.ok(!Number.isNaN(Date.parse(docRowSync(ctx, doc.id).processing_started_at)));
+    await Promise.all(ctx.jobs);
+  });
+
+  describe('a document stuck in processing after a restart', () => {
+    const OLD = '2020-01-01T00:00:00.000Z';
+    const stick = (ctx, id, startedAt) => {
+      const row = docRowSync(ctx, id);
+      row.processing_status = 'processing';
+      row.processing_started_at = startedAt;
+    };
+
+    it('is marked failed when listed, with an audit entry, and can then be processed', async () => {
+      const ctx = setup({ provider: createFakeProvider({ response: goodInvoice() }) });
+      const { doc, shipmentId } = await uploaded(ctx);
+      stick(ctx, doc.id, OLD);
+      const res = fakeRes();
+      await ctx.h.list({ ...ctx.asAlice(), params: { shipmentId } }, res);
+      const listed = res.body.data.find((d) => d.id === doc.id);
+      assert.equal(listed.processingStatus, 'failed');
+      assert.match(listed.errorMessage, /interrupted/i);
+      assert.equal((await docRow(ctx, doc.id)).processing_status, 'failed');
+      assert.ok(ctx.tables.audit_logs.some((a) => a.action === 'document.processing_interrupted'));
+      await ctx.h.process({ ...ctx.asAlice(), params: { id: doc.id } }, fakeRes());
+      await Promise.all(ctx.jobs);
+      assert.equal((await docRow(ctx, doc.id)).processing_status, 'extracted');
+    });
+
+    it('is marked failed when opened, and a row with no timestamp counts as stuck', async () => {
+      const ctx = setup();
+      const { doc } = await uploaded(ctx);
+      stick(ctx, doc.id, null);
+      const res = fakeRes();
+      await ctx.h.get({ ...ctx.asAlice(), params: { id: doc.id } }, res);
+      assert.equal(res.body.data.processingStatus, 'failed');
+    });
+
+    it('is left alone when it started recently', async () => {
+      const ctx = setup();
+      const { doc } = await uploaded(ctx);
+      stick(ctx, doc.id, new Date().toISOString());
+      const res = fakeRes();
+      await ctx.h.get({ ...ctx.asAlice(), params: { id: doc.id } }, res);
+      assert.equal(res.body.data.processingStatus, 'processing');
+      assert.equal(ctx.tables.audit_logs.filter((a) => a.action.includes('interrupted')).length, 0);
+    });
+
+    it('is left alone while a job for it is running in this process', async () => {
+      const ctx = setup({ runJobImpl: () => new Promise(() => {}) });
+      const { doc } = await uploaded(ctx);
+      await ctx.h.process({ ...ctx.asAlice(), params: { id: doc.id } }, fakeRes());
+      docRowSync(ctx, doc.id).processing_started_at = OLD;
+      const res = fakeRes();
+      await ctx.h.get({ ...ctx.asAlice(), params: { id: doc.id } }, res);
+      assert.equal(res.body.data.processingStatus, 'processing');
+    });
+
+    it("never touches another user's document", async () => {
+      const ctx = setup();
+      const { doc } = await uploaded(ctx);
+      stick(ctx, doc.id, OLD);
+      await rejects(
+        ctx.h.get({ ...ctx.asBob(), params: { id: doc.id } }, fakeRes()),
+        404,
+        'DOCUMENT_NOT_FOUND',
+      );
+      assert.equal(docRowSync(ctx, doc.id).processing_status, 'processing');
+    });
+  });
+
   it('answers DOCUMENT_BUSY when the status changes between the read and the update', async () => {
     const ctx = setup({ provider: createFakeProvider({ response: goodInvoice() }) });
     const { doc } = await uploaded(ctx);

@@ -116,7 +116,73 @@ export async function uploadDocument(
   return toDocumentView(row);
 }
 
-export async function listDocuments(db, userId, shipmentId) {
+/** A document that says "processing" with no live job in this process, for longer than this. */
+export const STALE_PROCESSING_MS = 120_000;
+export const INTERRUPTED_MESSAGE = 'Processing was interrupted. Please try again.';
+
+function isStale(row, now) {
+  const started = Date.parse(row.processing_started_at ?? '');
+  // No timestamp (a row from before this column existed) counts as stale.
+  return Number.isNaN(started) || now - started > STALE_PROCESSING_MS;
+}
+
+/**
+ * Marks documents stuck in 'processing' as failed, so the user can run them again.
+ *
+ * "Stuck" means: status is processing, no job for it is running in THIS process (`isActive`),
+ * and it started more than STALE_PROCESSING_MS ago. That is what an API restart mid-job leaves
+ * behind. It runs when documents are read, with the caller's own database client, so it needs
+ * no admin key. The update only applies while the status is still 'processing'.
+ *
+ * Returns the rows with any recovered ones updated. Never throws for database problems.
+ */
+export async function failStaleDocuments(
+  db,
+  userId,
+  rows,
+  { isActive, now = Date.now(), logger = console } = {},
+) {
+  if (typeof isActive !== 'function') return rows;
+  const out = [];
+  const shipments = new Set();
+  for (const row of rows) {
+    if (row.processing_status !== 'processing' || isActive(row.id) || !isStale(row, now)) {
+      out.push(row);
+      continue;
+    }
+    const { data, error } = await db
+      .from('documents')
+      .update({ processing_status: 'failed', error_message: INTERRUPTED_MESSAGE })
+      .eq('id', row.id)
+      .eq('processing_status', 'processing')
+      .select();
+    if (error) {
+      logger.error('document_stale_update_failed', { documentId: row.id, reason: error.message });
+      out.push(row);
+      continue;
+    }
+    if (!data || data.length === 0) {
+      out.push(row); // someone else changed it first
+      continue;
+    }
+    await auditSafely(
+      db,
+      {
+        userId,
+        shipmentId: row.shipment_id,
+        action: 'document.processing_interrupted',
+        details: { documentId: row.id },
+      },
+      logger,
+    );
+    shipments.add(row.shipment_id);
+    out.push({ ...row, processing_status: 'failed', error_message: INTERRUPTED_MESSAGE });
+  }
+  for (const shipmentId of shipments) await syncShipmentStatus(db, userId, shipmentId, logger);
+  return out;
+}
+
+export async function listDocuments(db, userId, shipmentId, recovery) {
   await requireShipment(db, userId, shipmentId);
   const { data, error } = await db
     .from('documents')
@@ -124,11 +190,14 @@ export async function listDocuments(db, userId, shipmentId) {
     .eq('shipment_id', shipmentId)
     .order('created_at', { ascending: true });
   if (error) throw new AppError(500, 'DOCUMENT_LIST_FAILED', 'Could not load documents');
-  return (data ?? []).map(toDocumentView);
+  const rows = await failStaleDocuments(db, userId, data ?? [], recovery);
+  return rows.map(toDocumentView);
 }
 
-export async function getDocumentDetail(db, userId, id) {
-  const row = await getDocumentRow(db, userId, id);
+/** `recovery` is optional: { isActive, logger }. Without it, stuck documents are left alone. */
+export async function getDocumentDetail(db, userId, id, recovery) {
+  const found = await getDocumentRow(db, userId, id);
+  const [row] = await failStaleDocuments(db, userId, [found], recovery);
   return toDocumentDetailView(row, await getExtraction(db, id));
 }
 
@@ -155,7 +224,11 @@ export async function markProcessing(db, userId, id, logger = console) {
   }
   const { data, error } = await db
     .from('documents')
-    .update({ processing_status: 'processing', error_message: null })
+    .update({
+      processing_status: 'processing',
+      error_message: null,
+      processing_started_at: new Date().toISOString(),
+    })
     .eq('id', id)
     .eq('processing_status', row.processing_status)
     .select();

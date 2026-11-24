@@ -10,6 +10,10 @@ Secrets go in the Vercel, Render and Supabase dashboards only. Never put them in
 4. Add both URLs to Supabase Auth settings.
 5. Run the smoke test.
 
+## 0. Database migration (before the API goes live)
+
+Run `supabase/migrations/0003_documents_processing_started_at.sql` in Supabase > SQL Editor. It adds one nullable column and is safe to run twice. The API writes this column when a document starts processing, so deploy the API only after this has run.
+
 ## 1. Render (API)
 
 1. Render dashboard > **New** > **Blueprint** > pick the `PortChimera` repo. Render reads `render.yaml` at the repo root.
