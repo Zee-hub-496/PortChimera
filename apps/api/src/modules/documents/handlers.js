@@ -62,6 +62,8 @@ export function documentHandlers({
   // Documents with a job running in this process. A document that says "processing" but is not
   // in here (the API restarted mid-job) can be processed again.
   const activeJobs = new Set();
+  // Lets reads mark a document stuck after a restart as failed (see failStaleDocuments).
+  const recovery = { isActive: (id) => activeJobs.has(id), logger };
 
   return {
     async upload(req, res) {
@@ -84,11 +86,11 @@ export function documentHandlers({
     },
     async list(req, res) {
       const shipmentId = parseId(req.params.shipmentId);
-      res.json({ data: await listDocuments(req.db, req.auth.userId, shipmentId) });
+      res.json({ data: await listDocuments(req.db, req.auth.userId, shipmentId, recovery) });
     },
     async get(req, res) {
       const id = parseId(req.params.id);
-      res.json({ data: await getDocumentDetail(req.db, req.auth.userId, id) });
+      res.json({ data: await getDocumentDetail(req.db, req.auth.userId, id, recovery) });
     },
     async download(req, res) {
       const id = parseId(req.params.id);
