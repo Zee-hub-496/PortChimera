@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: portchimera-api
+    runtime: node
+    plan: free
+    buildCommand: npm ci
+    startCommand: npm run start -w @portchimera/api
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: NODE_ENV
+        value: production
+      - key: TRUST_PROXY_HOPS
+        value: 1
+      # Set these in the Render dashboard only. sync: false keeps values out of Git.
+      - key: CORS_ORIGIN
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        sync: false

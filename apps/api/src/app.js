@@ -20,12 +20,18 @@ import { discrepanciesRouter, shipmentCrossCheckRouter } from './modules/crossch
  *
  * @param {ReturnType<import('./config/env.js').loadEnv>} env
  * @param {object} [deps]
+ * @param {number} [deps.rateLimitMax] requests per minute per client IP on /api (tests lower it)
  * @param {{verifyToken: Function, createDb: Function} | null} [deps.auth] how to check sign-ins
  *   and build per-user database clients. When it is missing, NO protected routes are mounted
  *   (the app cannot accidentally serve them without a sign-in check).
  */
-export function createApp(env, { logger = console, auth = null } = {}) {
+export function createApp(env, { logger = console, auth = null, rateLimitMax = 120 } = {}) {
   const app = express();
+
+  // Behind Render (and Vercel rewrites) the socket address is the proxy, so without this every
+  // user would share one rate-limit bucket. Trust exactly N hops, never `true`, so a client
+  // cannot choose its own IP by sending an X-Forwarded-For header.
+  app.set('trust proxy', env.TRUST_PROXY_HOPS);
 
   app.disable('x-powered-by');
   app.use(helmet());
@@ -37,7 +43,7 @@ export function createApp(env, { logger = console, auth = null } = {}) {
     '/api',
     rateLimit({
       windowMs: 60_000,
-      limit: 120,
+      limit: rateLimitMax,
       standardHeaders: 'draft-7',
       legacyHeaders: false,
       message: { error: { code: 'RATE_LIMITED', message: 'Too many requests, slow down' } },

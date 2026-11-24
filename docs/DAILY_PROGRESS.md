@@ -39,6 +39,26 @@ Plan reference: `docs/PORTCHIMERA_EXECUTION_PLAYBOOK.md`.
 
 ---
 
+## Day 2: 2026-11-24, Deployment and reliability (in progress)
+
+### Completed (code written, not run)
+
+- `app.set('trust proxy', TRUST_PROXY_HOPS)`, default 1; `createApp` takes `rateLimitMax` so tests can lower the limit. Tests added in `apps/api/test/app.test.js` for per-client rate-limit keys and for spoofed `X-Forwarded-For` prefixes.
+- `.github/workflows/ci.yml`: secret scan, lint, format check, test, web build.
+- `apps/web/vercel.json` (SPA rewrite), `render.yaml`, `docs/DEPLOYMENT.md` (click-by-click steps).
+- `scripts/smoke-test.mjs` for the deployed API. `/api/health` already existed and is covered by `app.test.js`.
+- `GEMINI_MODEL`: web search found no shutdown date for `gemini-3.5-flash-lite` (deprecations page snippets and third-party trackers say "no shutdown date announced"). Google's pages returned 403 to the fetch tool, so this is not read from the official page directly.
+
+### Not done
+
+- Stuck-`processing` sweep: waiting for approval of the `processing_started_at` migration.
+- ESLint React plugins: waiting for the owner's answer.
+- Render's proxy hop count could not be confirmed from Render's docs (403). 1 is assumed; verification steps are in `docs/DEPLOYMENT.md`.
+
+### Tests performed
+
+- None. `node_modules` is not installed in this sandbox. Owner to run `npm ci && npm test && npm run lint && npm run format:check`; CI will do it on the PR.
+
 ## Day 1: 2026-11-22 (session run on Nov 22 for the Nov 23 plan), core correctness
 
 Branch: `feat/day1-core-correctness`. Started from `main` at `c761043` (PRs #19 and #20 merged, working tree clean, level with `origin/main`).
