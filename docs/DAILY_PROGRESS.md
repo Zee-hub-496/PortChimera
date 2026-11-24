@@ -140,14 +140,26 @@ After changes:
 
 ### Blockers
 
-- Network-restricted sandbox (see top). The owner (or CI on Day 2) must run: `npm install`, `npm test`, `npm run lint`, `npm run format:check`, `npm run build -w @portchimera/web`.
+- None for Day 2 code. The Kiro Web sandbox cannot install npm packages or reach Gemini/Supabase, so every install, lint, build, browser and real-API check is run by the owner on Windows (`D:\KIRO\PortChimera`). Day 2 CI will take over the install/test/lint/build part.
+
+### Day 1 close-out (PR #21 merged 2026-11-23 14:12 UTC as `c8b9bc9`)
+
+- Day 1 acceptance criteria met and verified by the owner: tests green (615/615), status moves through every state with real data, dashboard counts match, error boundary shows a recoverable fallback.
+- **Owner decisions still open** (ask at the start of Day 2, do not assume):
+  1. Status protection: Option A or D in `docs/DESIGN_STATUS_PROTECTION.md` (needed by Day 6).
+  2. Exact `GEMINI_MODEL` code from the owner's AI Studio page (needed before deployment on Day 2; set in Render, never in code).
+  3. `product.md` steering: update or leave.
+  4. ESLint React plugins (`eslint-plugin-react`, `eslint-plugin-react-hooks`): yes or later. **Needed for a green lint step in Day 2 CI**; without it CI must skip or allow lint failures.
+  5. Optional: require a short note when a High or Critical finding is decided (today one click clears it).
+- **Owner checks still open:** Supabase RLS queries (tables with RLS off; `shipments` policies), GitHub "MIT license" detection, Devpost 2026 rules, the exact wrong net weights Gemini returned.
+- **Safety note:** during testing the owner edited `apps/web/src/pages/Login.jsx` to show a personal login and password. This was not committed and was restored. Never commit real credentials; a demo account is a Dec 3 decision.
 
 ### Next session's starting point
 
-1. Owner reviews and merges the Day 1 PR, runs `npm install && npm test && npm run lint` locally and reports the numbers (expect 582 tests, 0 failures).
-2. Owner answers: Option A or D in `docs/DESIGN_STATUS_PROTECTION.md`; the exact `GEMINI_MODEL` code; whether to update `product.md`.
-3. Owner runs the RLS query in the Supabase SQL Editor and the real Gemini extraction of the three PDFs, and shares results (no keys).
-4. Then Day 2: deployment, `trust proxy`, CI, stuck-processing recovery.
+1. Start from an updated `main` (Day 1 PR #21 and this close-out PR merged).
+2. Ask the owner the open decisions above, especially `GEMINI_MODEL` and the ESLint plugins, because Day 2 needs both.
+3. Day 2 tasks from the playbook: GitHub Actions CI; `app.set('trust proxy', 1)` with a rate-limit test (check Render's proxy hop count); `/api/health` smoke test; startup sweep for documents stuck in `processing` (additive migration for `processing_started_at`, needs owner approval); Vercel (`vercel.json` SPA rewrite) and Render (`render.yaml` or documented settings); env vars in dashboards only; CORS set to the Vercel URL.
+4. Deployment steps happen in the owner's Vercel, Render and Supabase dashboards. Give click-by-click instructions; never ask for secrets in chat.
 
 ---
 
