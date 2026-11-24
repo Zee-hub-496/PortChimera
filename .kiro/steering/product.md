@@ -20,15 +20,24 @@ category). The "chimera" is three different kinds of technology working as one s
 - "AI Pre-Cleared" is an internal status. It must never imply government customs approval.
 - Say "possible inconsistency" and "requires manual verification". Never say "fraud".
 
-## MVP scope (17-day, solo build)
+## Scope for the Kiroween sprint (deadline Dec 4, 2026, 2:00 PM PT)
 
-Must: login, shipments, upload 3 documents, Gemini extraction with review, cross-check,
-A* routing (fastest/cheapest/lowest-risk), per-user disruption scenarios, Kanban + shipment detail.
-Should: HS suggestion and duty estimate for ~20 curated Pakistan codes, audit log.
-Out of scope: OCR (Tesseract), live shipping data, other customs jurisdictions, multiple
-alternative routes, a separate crisis analytics page.
+The day-by-day plan is `docs/PORTCHIMERA_EXECUTION_PLAYBOOK.md`. If this file and the playbook
+disagree, the playbook wins.
 
-Seven pages: Landing, Login, Dashboard, Shipments (Kanban), Shipment detail, New shipment/upload, Route simulator.
+In scope: login, shipments, upload of the 3 documents, Gemini extraction with human review,
+deterministic cross-check, shipment status derived from documents and discrepancies, audit log,
+A* routing (fastest/cheapest/lowest-risk), and **crisis simulation**: per-user disruption scenarios
+(close or reopen a port or lane) shown on the shipment route page with before/after routes.
+Feature freeze after Nov 30.
+
+Out of scope for this sprint: the customs / HS-code and duty module
+(`.kiro/specs/03-customs-classification`), OCR (Tesseract), live shipping data, other customs
+jurisdictions, real freight quotes, and a separate crisis analytics page.
+
+Pages today: Landing, Login, Register, Dashboard, Shipments, Shipment detail (Overview, Documents,
+Cross-check, Route tabs), Global Map, Documents, Alerts, Settings. Do not add pages without the
+owner's approval.
 
 ## Working agreement
 
