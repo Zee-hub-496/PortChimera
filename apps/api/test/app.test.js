@@ -24,6 +24,12 @@ describe('loadEnv', () => {
     );
   });
 
+  it('defaults TRUST_PROXY_HOPS to 1 and rejects bad values', () => {
+    assert.equal(loadEnv({}).TRUST_PROXY_HOPS, 1);
+    assert.equal(loadEnv({ TRUST_PROXY_HOPS: '2' }).TRUST_PROXY_HOPS, 2);
+    assert.throws(() => loadEnv({ TRUST_PROXY_HOPS: '-1' }), /TRUST_PROXY_HOPS/);
+  });
+
   it('returns a frozen object', () => {
     assert.ok(Object.isFrozen(loadEnv({})));
   });
@@ -71,5 +77,40 @@ describe('API foundation', () => {
     const text = await res.text();
     assert.match(text, /INVALID_JSON/);
     assert.doesNotMatch(text, /node_modules|\.js:\d+/);
+  });
+});
+
+describe('rate limit keys behind a proxy', () => {
+  let server;
+  let base;
+
+  before(async () => {
+    const app = createApp(loadEnv({ NODE_ENV: 'test', TRUST_PROXY_HOPS: '1' }), {
+      logger: { error: mock.fn() },
+      rateLimitMax: 2,
+    });
+    await new Promise((resolve) => {
+      server = app.listen(0, '127.0.0.1', resolve);
+    });
+    base = `http://127.0.0.1:${server.address().port}`;
+  });
+
+  after(() => new Promise((resolve) => server.close(resolve)));
+
+  const hit = (xff) => fetch(`${base}/api/health`, { headers: { 'X-Forwarded-For': xff } });
+
+  it('gives each client IP its own bucket', async () => {
+    assert.equal((await hit('203.0.113.1')).status, 200);
+    assert.equal((await hit('203.0.113.1')).status, 200);
+    assert.equal((await hit('203.0.113.1')).status, 429);
+    // A different client is not affected by the first one being limited.
+    assert.equal((await hit('203.0.113.2')).status, 200);
+  });
+
+  it('ignores extra addresses a client puts at the front of X-Forwarded-For', async () => {
+    // With one trusted hop, only the rightmost entry (added by the proxy) is the key.
+    assert.equal((await hit('1.1.1.1, 203.0.113.3')).status, 200);
+    assert.equal((await hit('2.2.2.2, 203.0.113.3')).status, 200);
+    assert.equal((await hit('3.3.3.3, 203.0.113.3')).status, 429);
   });
 });

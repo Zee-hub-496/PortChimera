@@ -6,6 +6,9 @@ const schema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().min(1).max(65535).default(4000),
   CORS_ORIGIN: z.string().url().default('http://localhost:5173'),
+  // Number of reverse proxies in front of the API (0 = none, for local dev). Express uses it to
+  // find the real client IP in X-Forwarded-For, which is the rate-limit key.
+  TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(5).default(1),
 
   // Optional for now; the foundation spec (task 3) makes them required once auth is wired in.
   SUPABASE_URL: z.string().url().optional(),
