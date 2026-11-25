@@ -5,7 +5,8 @@ import { getShipmentRow } from './service.js';
 /** Statuses a person set. The derivation never overwrites them. */
 const HUMAN_STATUSES = ['cleared'];
 
-async function loadFacts(db, shipmentId) {
+/** The documents and findings that decide a shipment's status. Throws on a database error. */
+export async function loadFacts(db, shipmentId) {
   const { data: docs, error: docError } = await db
     .from('documents')
     .select('id, document_type, processing_status')

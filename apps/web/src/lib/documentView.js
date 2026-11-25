@@ -41,6 +41,10 @@ export const FIELD_LABELS = Object.freeze({
   incoterm: 'Incoterm',
   total_net_weight: 'Total net weight (kg)',
   total_gross_weight: 'Total gross weight (kg)',
+  freight_charges: 'Freight charges',
+  insurance_charges: 'Insurance charges',
+  tax_amount: 'Tax amount',
+  discount_amount: 'Discount amount',
   goods_description: 'Goods description',
   quantity: 'Quantity',
   weight: 'Weight',
@@ -104,14 +108,21 @@ export function canReview(status) {
   return status === 'extracted' || status === 'reviewed';
 }
 
+/** The quote is in the document but does not show the value (see apps/api/src/ai/evidence.js). */
+const UNSUPPORTED = 'unsupported_value';
+
 /**
  * How trustworthy the quoted evidence is, in words.
- * true: quote found in the document text. false: not found. null: could not be checked.
+ * true: quote found in the document text and it shows the value. 'unsupported_value': quote
+ * found, but it does not show the value. false: quote not found. null: could not be checked.
  */
 export function evidenceLabel(field) {
   if (field?.edited === true) return 'Edited by you';
   if (field?.status === 'missing') return 'Not found in the document';
   if (field?.evidence_verified === true) return 'Found in the document';
+  if (field?.evidence_verified === UNSUPPORTED) {
+    return 'The quote is in the document but does not show this value: AI suggestion';
+  }
   if (field?.evidence_verified === false) return 'Evidence not found: AI suggestion';
   return 'Not verifiable (no readable text): AI suggestion';
 }
@@ -138,7 +149,9 @@ export function fieldRows(payload) {
     evidenceLabel: evidenceLabel(field),
     needsAttention:
       field?.edited !== true &&
-      (field?.status !== 'extracted' || field?.evidence_verified === false),
+      (field?.status !== 'extracted' ||
+        field?.evidence_verified === false ||
+        field?.evidence_verified === UNSUPPORTED),
   }));
 }
 

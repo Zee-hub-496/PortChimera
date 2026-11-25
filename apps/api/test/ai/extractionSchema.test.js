@@ -81,3 +81,24 @@ test('still rejects an unknown invoice key and names it in the error', () => {
     message: /fields: unrecognized_keys \(total_volume\)/,
   });
 });
+
+test('accepts the version 3 optional fields, and payloads that leave them out', () => {
+  const inv = emptyExtraction('commercial_invoice');
+  inv.fields.freight_charges = field('400.00');
+  inv.fields.discount_amount = field('50');
+  const out = parseExtraction('commercial_invoice', inv);
+  assert.equal(out.fields.freight_charges.value, '400.00');
+  delete inv.fields.freight_charges;
+  delete inv.fields.discount_amount;
+  assert.doesNotThrow(() => parseExtraction('commercial_invoice', inv));
+
+  const pl = emptyExtraction('packing_list');
+  pl.fields.invoice_date = field('2025-04-02');
+  assert.equal(parseExtraction('packing_list', pl).fields.invoice_date.value, '2025-04-02');
+  const co = emptyExtraction('certificate_of_origin');
+  co.fields.invoice_date = field('2025-04-02');
+  assert.equal(
+    parseExtraction('certificate_of_origin', co).fields.invoice_date.value,
+    '2025-04-02',
+  );
+});

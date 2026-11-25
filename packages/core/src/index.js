@@ -11,6 +11,16 @@ export { simulateDisruption } from './routing/simulate.js';
 export { crossCheck } from './crosscheck/crossCheck.js';
 export { CrossCheckInputError } from './crosscheck/errors.js';
 export { DOCUMENT_TYPES } from './crosscheck/compare.js';
+export {
+  normalizeCountry,
+  normalizeCurrency,
+  numberReadings,
+  readDates,
+} from './crosscheck/normalize.js';
 export { THRESHOLDS as CROSSCHECK_THRESHOLDS } from './crosscheck/severity.js';
 
-export { REQUIRED_DOCUMENT_TYPES, deriveShipmentStatus } from './shipment/status.js';
+export {
+  REQUIRED_DOCUMENT_TYPES,
+  deriveShipmentStatus,
+  isCrossCheckStale,
+} from './shipment/status.js';

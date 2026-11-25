@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { buildResponseSchema, fieldResponseSchema } from '../../src/ai/responseSchema.js';
-import { DOCUMENT_FIELDS, FIELD_STATUSES } from '../../src/ai/fieldNames.js';
+import { DOCUMENT_FIELDS, FIELD_STATUSES, SCHEMA_VERSION } from '../../src/ai/fieldNames.js';
 import { describeIssue } from '../../src/ai/validationIssue.js';
 
 const types = Object.keys(DOCUMENT_FIELDS);
@@ -74,4 +74,18 @@ test('describeIssue gives path and code, and never a value', () => {
   });
   assert.equal(odd, 'fields: unrecognized_keys');
   assert.equal(describeIssue(undefined), 'root: invalid');
+});
+
+test('version 3 adds optional invoice charges and an optional invoice date on the other documents', () => {
+  assert.equal(SCHEMA_VERSION, 3); // a new version stops the cache reusing results that never looked for them
+  const invoice = buildResponseSchema('commercial_invoice').properties.fields;
+  for (const name of ['freight_charges', 'insurance_charges', 'tax_amount', 'discount_amount']) {
+    assert.ok(name in invoice.properties, name);
+    assert.ok(!invoice.required.includes(name), `${name} is optional`);
+  }
+  for (const type of ['packing_list', 'certificate_of_origin']) {
+    const f = buildResponseSchema(type).properties.fields;
+    assert.ok('invoice_date' in f.properties, type);
+    assert.ok(!f.required.includes('invoice_date'), `${type} invoice_date is optional`);
+  }
 });

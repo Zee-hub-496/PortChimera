@@ -34,8 +34,14 @@ const MAPPERS = {
       ['exporter', valueOf(f.exporter)],
       ['importer', valueOf(f.importer)],
       ['invoiceNumber', valueOf(f.invoice_number)],
+      ['invoiceDate', valueOf(f.invoice_date)],
       ['currency', valueOf(f.currency)],
       ['totalValue', valueOf(f.total_value)],
+      // Optional itemized charges (version 3 payloads). Older payloads do not have them.
+      ['freightCharges', valueOf(f.freight_charges)],
+      ['insuranceCharges', valueOf(f.insurance_charges)],
+      ['taxAmount', valueOf(f.tax_amount)],
+      ['discountAmount', valueOf(f.discount_amount)],
       ['originCountry', valueOf(f.origin_country)],
       // Optional totals stated on the invoice. Older payloads do not have them.
       ['grossWeight', valueOf(f.total_gross_weight)],
@@ -58,6 +64,7 @@ const MAPPERS = {
       ['exporter', valueOf(f.exporter)],
       ['importer', valueOf(f.importer)],
       ['invoiceNumber', valueOf(f.invoice_number)],
+      ['invoiceDate', valueOf(f.invoice_date)],
       ['grossWeight', valueOf(f.total_gross_weight)],
       ['netWeight', valueOf(f.total_net_weight)],
     ]);
@@ -79,6 +86,7 @@ const MAPPERS = {
       ['exporter', valueOf(f.exporter)],
       ['importer', valueOf(f.importer)],
       ['invoiceNumber', valueOf(f.invoice_number)],
+      ['invoiceDate', valueOf(f.invoice_date)],
       ['originCountry', valueOf(f.origin_country)],
     ]);
     const goods = valueOf(f.goods_description);
