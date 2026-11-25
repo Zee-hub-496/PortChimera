@@ -1,11 +1,12 @@
 import { CrossCheckInputError } from './errors.js';
-import { matchLines } from './lines.js';
+import { matchLines, mergeDuplicateLines } from './lines.js';
 import {
   DOCUMENT_TYPES,
   DOC_LABEL,
   compareCertificateGoods,
   compareCountry,
   compareCurrency,
+  compareDates,
   compareDescription,
   compareInvoiceNumber,
   compareNumeric,
@@ -22,8 +23,10 @@ import {
   normalizeCountry,
   normalizeCurrency,
   normalizeUnit,
+  numberReadings,
   parseNumber,
   parseWeight,
+  readDates,
 } from './normalize.js';
 import { THRESHOLDS, percentDifference, severityRank } from './severity.js';
 
@@ -33,6 +36,32 @@ const isPresent = (v) => v !== null && v !== undefined && v !== '';
 // ---------------------------------------------------------------------------
 // Reading a document's values
 // ---------------------------------------------------------------------------
+
+/**
+ * Numbers such as "1.234" can be read two ways. Instead of guessing, each document's number takes
+ * the reading that agrees best with the others. If even the best readings differ, the caller still
+ * reports it, but marks it `ambiguous` (never "high") so the reader knows the format is in doubt.
+ *
+ * @param {Record<string, number>} values default reading per document
+ * @param {Record<string, number[]>} readings every reading per document
+ * @returns {{chosen: Record<string, number>, ambiguous: boolean}}
+ */
+function pickClosest(values, readings) {
+  const chosen = { ...values };
+  let ambiguous = false;
+  for (const doc of Object.keys(values)) {
+    const options = readings[doc];
+    if (!options || options.length < 2) continue;
+    ambiguous = true;
+    const others = Object.entries(chosen)
+      .filter(([d]) => d !== doc)
+      .map(([, v]) => v);
+    if (others.length === 0) continue;
+    const gap = (n) => Math.max(...others.map((o) => percentDifference(n, o)));
+    chosen[doc] = options.reduce((best, n) => (gap(n) < gap(best) ? n : best));
+  }
+  return { chosen, ambiguous };
+}
 
 /** Document-level origin, or the single origin shared by all of its lines. */
 function effectiveOrigin(doc) {
@@ -73,6 +102,7 @@ function effectiveWeight(doc, field) {
 // If another document provides it but an expected one does not, that is reported as an information gap.
 const FIELDS = [
   { field: 'invoiceNumber', label: 'invoice number', kind: 'invoiceNumber', expected: ['commercial_invoice'], get: (d) => d.invoiceNumber },
+  { field: 'invoiceDate', label: 'invoice date', kind: 'date', expected: ['commercial_invoice'], get: (d) => d.invoiceDate },
   { field: 'exporter', label: 'exporter', kind: 'party', expected: DOCUMENT_TYPES, get: (d) => d.exporter },
   { field: 'importer', label: 'importer', kind: 'party', expected: ['commercial_invoice', 'packing_list'], get: (d) => d.importer },
   { field: 'currency', label: 'currency', kind: 'currency', expected: ['commercial_invoice'], get: (d) => d.currency },
@@ -192,13 +222,20 @@ export function crossCheck(
           continue;
         }
         const code = normalizeCurrency(Object.values(currencies)[0] ?? '') ?? '';
+        const { chosen, ambiguous } = pickClosest(
+          values,
+          Object.fromEntries(
+            docsWithValue.map((t) => [t, numberReadings(documents[t].totalValue)]),
+          ),
+        );
         finding = compareNumeric({
           field: spec.field,
           category: 'value',
           label: spec.label,
           unit: code,
-          values,
+          values: chosen,
           tolerancePercent,
+          ambiguous,
         });
         break;
       }
@@ -216,14 +253,44 @@ export function crossCheck(
           });
           continue;
         }
+        const { chosen, ambiguous } = pickClosest(
+          usable,
+          Object.fromEntries(
+            Object.keys(usable).map((t) => [t, values[t].kgReadings ?? [usable[t]]]),
+          ),
+        );
         finding = compareNumeric({
           field: spec.field,
           category: 'weight',
           label: spec.label,
           unit: 'kg',
-          values: usable,
+          values: chosen,
           tolerancePercent,
+          ambiguous,
         });
+        break;
+      }
+      case 'date': {
+        const readings = {};
+        for (const [t, raw] of Object.entries(values)) {
+          const found = readDates(String(raw));
+          if (found.length === 0) {
+            notCompared.push({
+              field: spec.field,
+              reason: `the ${DOC_LABEL[t]} date "${raw}" could not be read as a date`,
+            });
+          } else readings[t] = found;
+        }
+        const readable = Object.keys(readings);
+        if (readable.length < 2) continue;
+        // Equal when one reading is shared by every document ("03/04/2026" can be 3 April).
+        const shared = readings[readable[0]].filter((d) =>
+          readable.every((t) => readings[t].includes(d)),
+        );
+        finding =
+          shared.length > 0
+            ? null
+            : compareDates({ values: Object.fromEntries(readable.map((t) => [t, values[t]])) });
         break;
       }
       default:
@@ -234,26 +301,55 @@ export function crossCheck(
   }
 
   // --- The invoice against itself -----------------------------------------------------------
+  // The stated total should equal the sum of the lines plus freight, insurance and tax, minus any
+  // discount, for those the invoice itemizes.
   const invoice = documents.commercial_invoice;
   if (invoice) {
-    const stated = parseNumber(invoice.totalValue);
+    const statedReadings = numberReadings(invoice.totalValue);
     const lines = Array.isArray(invoice.lines) ? invoice.lines : [];
     const lineTotals = lines.map((l) => parseNumber(l?.lineTotal));
-    if (stated !== null && lines.length > 0 && lineTotals.every((n) => n !== null)) {
+    if (statedReadings.length > 0 && lines.length > 0 && lineTotals.every((n) => n !== null)) {
       const summed = round6(lineTotals.reduce((a, b) => a + b, 0));
-      const percent = percentDifference(stated, summed);
+      const itemized = [
+        ['freight', invoice.freightCharges, 1],
+        ['insurance', invoice.insuranceCharges, 1],
+        ['tax', invoice.taxAmount, 1],
+        ['discount', invoice.discountAmount, -1],
+      ]
+        .map(([name, raw, sign]) => [name, parseNumber(raw), sign])
+        .filter(([, amount]) => amount !== null);
+      const expected = round6(
+        summed + itemized.reduce((sum, [, amount, sign]) => sum + sign * Math.abs(amount), 0),
+      );
+      const stated = statedReadings.reduce((best, n) =>
+        percentDifference(n, expected) < percentDifference(best, expected) ? n : best,
+      );
+      const percent = percentDifference(stated, expected);
       comparedFields.push('invoiceTotalVsLines');
       if (percent > THRESHOLDS.invoiceTotalVsLinesPercent) {
-        add(invoiceTotalFinding({ statedTotal: stated, summedTotal: summed, percent }));
+        add(
+          invoiceTotalFinding({
+            statedTotal: stated,
+            summedTotal: summed,
+            expectedTotal: expected,
+            percent,
+            charges:
+              itemized.length > 0
+                ? Object.fromEntries(itemized.map(([name, amount]) => [name, Math.abs(amount)]))
+                : null,
+            ambiguous: statedReadings.length > 1,
+          }),
+        );
       }
     }
   }
 
   // --- Product lines ------------------------------------------------------------------------
   const [refDoc, ...otherDocs] = present;
-  const refLines = Array.isArray(documents[refDoc].lines) ? documents[refDoc].lines : [];
+  // One product listed on several lines is added up first, so a split is not a missing line.
+  const refLines = mergeDuplicateLines(documents[refDoc].lines);
   for (const otherDoc of otherDocs) {
-    const otherLines = Array.isArray(documents[otherDoc].lines) ? documents[otherDoc].lines : [];
+    const otherLines = mergeDuplicateLines(documents[otherDoc].lines);
     if (refLines.length === 0 || otherLines.length === 0) {
       if (refLines.length + otherLines.length > 0) {
         notCompared.push({
@@ -323,15 +419,20 @@ export function crossCheck(
           }),
         );
       } else {
+        const { chosen, ambiguous } = pickClosest(
+          { [refDoc]: qtyA, [otherDoc]: qtyB },
+          { [refDoc]: numberReadings(a?.quantity), [otherDoc]: numberReadings(b?.quantity) },
+        );
         add(
           compareNumeric({
             field: 'quantity',
             category: 'quantity',
             label: `quantity of line ${lineNumber} ("${a?.description ?? ''}")`,
             unit: displayUnit(unitA ?? unitB),
-            values: { [refDoc]: qtyA, [otherDoc]: qtyB },
+            values: chosen,
             tolerancePercent,
             keySuffix: `line ${lineNumber}`,
+            ambiguous,
           }),
         );
       }

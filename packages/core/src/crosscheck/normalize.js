@@ -42,6 +42,33 @@ export function parseNumber(input) {
   return Number.isFinite(n) ? n : null;
 }
 
+/**
+ * True for text such as "1.234" or "1,234": one separator followed by exactly three digits. It can
+ * mean 1234 (thousands separator) or 1.234 (decimal point), and no rule can know which. Numbers
+ * (not text), numbers with both separators and numbers starting with 0 are not ambiguous.
+ */
+export function isAmbiguousNumber(input) {
+  return typeof input === 'string' && /^-?[1-9]\d{0,2}[.,]\d{3}$/.test(input.trim());
+}
+
+/**
+ * Every plausible value of a number written as text, smallest first. An ambiguous number has
+ * two ("1.234" is 1.234 or 1234); a clear number has one; text that is not a number has none.
+ * Callers compare under each reading and only report when none of them agree.
+ */
+export function numberReadings(input) {
+  if (isAmbiguousNumber(input)) {
+    const s = input.trim();
+    const sign = s.startsWith('-') ? -1 : 1;
+    const body = s.replace('-', '');
+    const asThousands = sign * Number(body.replace(/[.,]/g, ''));
+    const asDecimal = sign * Number(body.replace(',', '.'));
+    return [...new Set([asThousands, asDecimal])].sort((a, b) => a - b);
+  }
+  const n = parseNumber(input);
+  return n === null ? [] : [n];
+}
+
 // ---------------------------------------------------------------------------
 // Weights
 // ---------------------------------------------------------------------------
@@ -117,7 +144,13 @@ export function parseWeight(input) {
   if (parseNumber(valueRaw) === null) return { kg: null, raw, reason: 'unreadable' };
   if (!unitRaw) return { kg: null, raw, reason: 'missing_unit' };
   const kg = toKg(valueRaw, unitRaw);
-  return kg === null ? { kg: null, raw, reason: 'unrecognized_unit' } : { kg, raw };
+  if (kg === null) return { kg: null, raw, reason: 'unrecognized_unit' };
+  if (isAmbiguousNumber(valueRaw)) {
+    const factor = weightUnitFactor(unitRaw);
+    const kgReadings = numberReadings(valueRaw).map((n) => round6(n * factor));
+    return { kg, raw, ambiguous: true, kgReadings };
+  }
+  return { kg, raw };
 }
 
 // ---------------------------------------------------------------------------
@@ -241,25 +274,25 @@ const COUNTRY_NAMES = {
   BH: ['bahrain'],
   BR: ['brazil'],
   CA: ['canada'],
-  CN: ['china', 'prc', 'peoples republic of china', 'mainland china'],
-  DE: ['germany'],
+  CN: ['china', 'prc', 'pr china', 'peoples republic of china', 'mainland china'],
+  DE: ['germany', 'deutschland', 'federal republic of germany', 'bundesrepublik deutschland'],
   DJ: ['djibouti'],
   EG: ['egypt'],
-  ES: ['spain'],
+  ES: ['spain', 'espana'],
   FR: ['france'],
   GB: ['uk', 'united kingdom', 'great britain', 'britain', 'england'],
   GR: ['greece'],
   HK: ['hong kong', 'hongkong'],
   ID: ['indonesia'],
   IN: ['india'],
-  IT: ['italy'],
+  IT: ['italy', 'italia'],
   JP: ['japan'],
   KR: ['south korea', 'korea', 'republic of korea', 'korea republic of'],
   KW: ['kuwait'],
   LK: ['sri lanka'],
   MX: ['mexico'],
   MY: ['malaysia'],
-  NL: ['netherlands', 'holland', 'the netherlands'],
+  NL: ['netherlands', 'holland', 'the netherlands', 'nederland'],
   OM: ['oman'],
   PK: ['pakistan'],
   QA: ['qatar'],
@@ -288,6 +321,8 @@ for (const [code, names] of Object.entries(COUNTRY_NAMES)) {
 export function normalizeCountry(value) {
   if (typeof value !== 'string') return null;
   const text = value
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '') // "España" and "Türkiye" lose their accents, so they match "espana"
     .toLowerCase()
     .replace(/^(made in|product of|produce of|country of origin:?|origin:?)\s+/, '')
     .replace(/['’.]/g, '')
@@ -346,4 +381,16 @@ export function normalizeDate(input, { dayFirst = true } = {}) {
     return isoDate(Number(m[3]), MONTHS[m[1].toLowerCase()], Number(m[2]));
 
   return null;
+}
+
+/**
+ * Every date a text can mean, as "YYYY-MM-DD". Usually one. A numeric date such as 03/04/2026 can
+ * be 3 April or 4 March, so it gives both. Text that is not a real date gives none.
+ */
+export function readDates(input) {
+  const readings = [
+    normalizeDate(input, { dayFirst: true }),
+    normalizeDate(input, { dayFirst: false }),
+  ];
+  return [...new Set(readings.filter(Boolean))].sort();
 }

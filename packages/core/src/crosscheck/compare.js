@@ -28,6 +28,11 @@ const ACTION = Object.freeze({
   low: 'Review when convenient. This is likely a wording or formatting difference.',
 });
 
+// Added when a number can be read two ways. Documents are only compared when NO reading makes
+// them match, so this is a note for the reviewer, not a reason to lower the severity.
+const AMBIGUOUS_NOTE =
+  'One of these numbers can be read two ways (for example 1.234 is 1,234 or 1.234) and no reading makes the documents match; the closest reading is shown.';
+
 const round3 = (n) => Math.round(n * 1000) / 1000;
 const fmt = (n) => String(round3(n));
 
@@ -75,6 +80,7 @@ export function compareNumeric({
   values,
   tolerancePercent,
   keySuffix = '',
+  ambiguous = false,
 }) {
   const entries = Object.entries(values);
   if (entries.length < 2) return null;
@@ -101,7 +107,8 @@ export function compareNumeric({
         entries.map(([d, v]) => [d, fmt(v)]),
         unitText,
       )}. ` +
-      `The difference is ${fmt(absolute)}${unitText} (${percent.toFixed(1)}% of the larger value).`,
+      `The difference is ${fmt(absolute)}${unitText} (${percent.toFixed(1)}% of the larger value).` +
+      (ambiguous ? ` ${AMBIGUOUS_NOTE}` : ''),
   });
 }
 
@@ -319,23 +326,64 @@ export function weightProblemFinding({ field, label, doc, weight }) {
   });
 }
 
-/** The invoice's stated total does not match the sum of its own lines. */
-export function invoiceTotalFinding({ statedTotal, summedTotal, percent }) {
+/**
+ * The invoice's stated total does not match its lines plus any itemized charges.
+ *
+ * `charges` holds the freight, insurance, tax and discount amounts that were found (or null). With
+ * itemized charges the arithmetic is exact, so a gap is high. With none, the gap may simply be
+ * freight, insurance, tax or a discount that was not extracted, so it is medium and says so.
+ */
+export function invoiceTotalFinding({
+  statedTotal,
+  summedTotal,
+  expectedTotal,
+  percent,
+  charges = null,
+  ambiguous = false,
+}) {
+  const itemized = charges !== null;
+  const severity = itemized ? 'high' : 'medium';
+  const parts = itemized
+    ? Object.entries(charges).map(
+        ([name, amount]) => `${name === 'discount' ? 'minus' : 'plus'} ${name} ${fmt(amount)}`,
+      )
+    : [];
+  const arithmetic = itemized
+    ? `lines add up to ${fmt(summedTotal)} ${parts.join(' ')} = ${fmt(expectedTotal)}`
+    : `lines add up to ${fmt(summedTotal)}`;
   return makeFinding({
     field: 'invoiceTotalVsLines',
     category: 'value',
-    severity: 'high',
+    severity,
     documents: ['commercial_invoice'],
-    values: {
-      commercial_invoice: `stated ${fmt(statedTotal)}, lines add up to ${fmt(summedTotal)}`,
-    },
+    values: { commercial_invoice: `stated ${fmt(statedTotal)}, ${arithmetic}` },
     difference: {
-      absolute: round3(Math.abs(statedTotal - summedTotal)),
+      absolute: round3(Math.abs(statedTotal - expectedTotal)),
       percent: round3(percent),
       unit: '',
     },
     explanation:
-      `Possible inconsistency within the commercial invoice: the stated total ${fmt(statedTotal)} differs from the sum of ` +
-      `its line totals ${fmt(summedTotal)} by ${percent.toFixed(1)}%.`,
+      `Possible inconsistency within the commercial invoice: the stated total ${fmt(statedTotal)} differs from ` +
+      (itemized
+        ? `its line totals plus the freight, insurance, tax and discount it lists (${fmt(expectedTotal)}) `
+        : `the sum of its line totals ${fmt(summedTotal)} `) +
+      `by ${percent.toFixed(1)}%.` +
+      (itemized
+        ? ''
+        : ' The difference may be freight, insurance, tax or a discount that is not itemized on the invoice.') +
+      (ambiguous ? ` ${AMBIGUOUS_NOTE}` : ''),
+  });
+}
+
+/** Dates that no common reading can make equal. `values` maps document type to the text as written. */
+export function compareDates({ values }) {
+  const entries = Object.entries(values);
+  return makeFinding({
+    field: 'invoiceDate',
+    category: 'date',
+    severity: 'medium',
+    documents: entries.map(([d]) => d),
+    values: Object.fromEntries(entries.map(([d, raw]) => [d, String(raw)])),
+    explanation: `Possible inconsistency in the invoice date: ${describeValues(entries.map(([d, raw]) => [d, `"${raw}"`]))}.`,
   });
 }

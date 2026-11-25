@@ -342,7 +342,9 @@ describe('crossCheck: currency and value', () => {
     const docs = baseDocs();
     docs.commercial_invoice.totalValue = 7000; // lines add up to 6000
     const f = findingFor(crossCheck(docs), 'invoiceTotalVsLines');
-    assert.equal(f.severity, 'high');
+    // Nothing itemizes freight, insurance, tax or a discount, so this is medium (Day 5: it used
+    // to be high, which wrongly flagged every invoice with freight on it).
+    assert.equal(f.severity, 'medium');
     assert.deepEqual(f.documents, ['commercial_invoice']);
     assert.equal(f.difference.absolute, 1000);
   });
@@ -475,7 +477,8 @@ describe('crossCheck: severity and wording rules', () => {
     const docs = baseDocs();
     docs.certificate_of_origin.originCountry = 'Pakistan'; // origin: high
     docs.packing_list.lines[0].quantity = 500; // quantity: high (50%)
-    docs.commercial_invoice.totalValue = 7000; // value: high
+    docs.commercial_invoice.freightCharges = 100; // itemized, so the total below is a real gap:
+    docs.commercial_invoice.totalValue = 7000; // 6000 + 100 freight = 6100, not 7000. value: high
     docs.packing_list.grossWeight = '650 kg'; // weight: high
     docs.packing_list.exporter = 'Northern Steel Works'; // party: medium
     return docs;
@@ -500,6 +503,7 @@ describe('crossCheck: severity and wording rules', () => {
     );
 
     const docs = planted();
+    delete docs.commercial_invoice.freightCharges;
     docs.commercial_invoice.totalValue = 6000; // value no longer high
     const two = crossCheck(docs);
     assert.equal(two.summary.overall, 'high');
