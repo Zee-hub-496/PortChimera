@@ -1,5 +1,7 @@
 # Milestone: web login, shipments and route page
 
+> **Historical note.** This guide was written during the sandbox sprint (Nov 17 to 21, 2026), before the first real runs of this part of the app. Its "not run" statements may be out of date. For current status see `docs/DAILY_PROGRESS.md` and `docs/E2E_CHECKLIST.md`.
+
 This milestone adds a login page, a shipments page and a route page. The code is written but the pages have **not been run yet**. These steps check it.
 
 ## What was not verified before you start

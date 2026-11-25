@@ -1,5 +1,7 @@
 # Milestone: UI redesign
 
+> **Historical note.** This guide was written during the sandbox sprint (Nov 17 to 21, 2026), before the first real runs of this part of the app. Its "not run" statements may be out of date. For current status see `docs/DAILY_PROGRESS.md` and `docs/E2E_CHECKLIST.md`.
+
 This milestone changes only how the web app looks and is organised. The API, the database, sign in, document upload, AI extraction and the cross-check logic were not changed.
 
 **Important:** the agent that wrote this code could not run `npm install`, `npm run dev:web` or the build (no `node_modules`, the package registry was blocked). Nothing was rendered in a browser. The pure logic is tested, but the pages, the map and the new packages are **untested**. If anything below fails, copy the full error text and send it back.
