@@ -1,69 +1,92 @@
 # PortChimera
 
-Customs intelligence and crisis-aware logistics, built for **Kiroween 2026 (Frankenstein category)**.
+Customs document checking and crisis-aware sea routing, built with Kiro for **Kiroween 2026 (Frankenstein category)**. Started on 2026-11-17.
 
-The "chimera" is three technologies stitched into one system:
+A shipment needs an invoice, a packing list and a certificate of origin, and these often disagree with each other. PortChimera reads the three documents, lets a person approve what was read, finds the differences between them, and plans the sea route for the shipment, including a re-route when a port or lane is closed.
 
-1. **AI (Gemini)** reads shipping documents and suggests classifications. It is never treated as a source of truth.
-2. **Deterministic code** validates, compares and calculates. It makes the decisions.
-3. **A\* search** chooses shipping routes and re-plans them when a port is disrupted.
+The "chimera" is three kinds of technology joined into one system:
 
-## Current status
+1. **AI (Gemini)** reads the documents. Its output is a suggestion, shown with the quoted evidence, and a person approves it.
+2. **Deterministic code** compares the approved values and decides what is a possible inconsistency. The same inputs always give the same result.
+3. **A\* search** picks the fastest, cheapest or lowest-risk route over a graph of ports and lanes, and plans again when a port or lane is closed.
 
-This project is under active development. Nothing below should be read as a finished feature.
+## Try it
 
-| Area                                                            | Status                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Monorepo, config, error handling, secret scanner                | Built. 120 of 120 tests passed on Windows with Node 24 (before the cross-checker was added); API and web dev servers start.                                                                                                                                                                                                                                                                                                |
-| A* routing, disruption overlay and comparison (`packages/core`) | Built with 20-port demo seed data; 194 non-network tests pass in the sandbox (all core, seed and error-handler tests). No API or UI yet.                                                                                                                                                                                                                                                                                   |
-| Cross-document checker (`packages/core`)                        | Built: compares invoice, packing list and certificate of origin. Tested on synthetic fixtures.                                                                                                                                                                                                                                                                                                                             |
-| Database migration                                              | Written, **not yet run** against Postgres                                                                                                                                                                                                                                                                                                                                                                                  |
-| API login protection (`apps/api`)                               | Token middleware, `/api/auth/me` handler and audit helper tested with fakes. Route wiring and env rules written, **not yet run**. Not tried against a real Supabase project. See `docs/SETUP_SUPABASE.md`.                                                                                                                                                                                                                 |
-| Shipments and route API (`apps/api`)                            | Create, list, get shipments, `GET /api/ports` and `POST /api/routes/calculate` written. Logic tested with fakes in the sandbox; Express and zod wiring **not yet run**.                                                                                                                                                                                                                                                    |
-| Web login, shipments page, route page (`apps/web`)              | Written. Pure helpers (API envelope, form validation, route formatting, map projection) tested. Pages, Vite build and real Supabase sign in **not yet run**. Steps: `docs/MILESTONE_LOGIN_SHIPMENTS.md`.                                                                                                                                                                                                                   |
-| Document upload and AI extraction (`apps/api`, `apps/web`)      | Written. File checks, PDF text reader, evidence check, Gemini REST provider (fake fetch) and document service tested in the sandbox. Express routes, zod schemas, React page, real Supabase and the **real Gemini API have not been run**. Steps: `docs/MILESTONE_DOCUMENTS.md`, notes: `docs/AI_NOTES.md`.                                                                                                                |
-| Cross-check in the app (`apps/api`, `apps/web`)                 | Written: reviewed documents are mapped, checked, stored in `discrepancies` (migration 0002, **not yet run**), with accept, resolve and dismiss decisions and a web page. Logic and handlers tested with fakes in the sandbox; Express, zod, React and real Supabase **not yet run**. Steps: `docs/MILESTONE_CROSSCHECK.md`. AI explanations are not built.                                                                 |
-| UI redesign (`apps/web`)                                        | Written: light, dark and system theme, landing page, split-screen login and register, app shell with sidebar and Ctrl+K search, shipment tabs, and a Leaflet map with a bundled Natural Earth basemap (public domain), hand-drawn sea-lane routes and chokepoints. Pure logic tested in the sandbox. `npm install`, the build, rendering, the new dependencies and the map are **NOT run**. Steps: `docs/MILESTONE_UI.md`. |
-| Customs and duty, scenario API and UI, dashboard                | Specified in `.kiro/specs/`, **not built yet**                                                                                                                                                                                                                                                                                                                                                                             |
+- **Deployed web app:** https://port-chimera.vercel.app. **Only the web app is hosted.** The API is not deployed yet (no host chosen), so on the deployed site you can see the landing page but upload, AI reading, the cross-check and routing do not work.
+- **Everything works locally.** See "Run it". The demo documents are in `fixtures/documents/` (`demo-invoice.pdf`, `demo-packing-list.pdf`, `demo-certificate-of-origin.pdf`). They agree on everything except gross weight: 500 kg on the invoice, 650 kg on the packing list. The cross-check reports that one difference.
 
-Progress is tracked in the task lists under `.kiro/specs/*/tasks.md`.
+## What works
+
+Verified by the author with a real Supabase project, real Gemini and a browser on a local run, using `docs/E2E_CHECKLIST.md` (the author reported the whole app checklist passed; the individual results were not written down). Tests also run in GitHub Actions on every pull request.
+
+| Area                     | What it does                                                                                                                                                                                                                                                                                                     |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Accounts and shipments   | Supabase sign-in. Each user sees only their own shipments (Row Level Security plus checks in the API).                                                                                                                                                                                                           |
+| Documents and AI reading | Upload PDF, JPEG or PNG (type checked by content, 5 MB). Gemini extracts fields. Every value shows its evidence quote. Values the quote does not support are flagged. A person edits and approves.                                                                                                               |
+| Cross-check              | Compares weights, values, parties, goods, dates and countries across the approved documents. Handles country aliases, `1.234` vs `1,234`, split product lines, and invoice freight and tax. Findings are accepted, resolved or dismissed by a person. A warning shows when approvals changed after the last run. |
+| Shipment status          | Derived from the documents and findings (Submitted, AI processing, Requires review, AI pre-cleared). "AI pre-cleared" is an internal label, not a customs decision.                                                                                                                                              |
+| Routing and crisis       | A\* over 20 seeded ports and 60 lanes. Close a port or lane on the route page and see the re-routed path with time, cost and risk before and after. Scenarios are per user.                                                                                                                                      |
+| Alerts, Documents, Map   | Lists across all shipments with search, filters and pagination. A global map of ports and chokepoints.                                                                                                                                                                                                           |
+| Audit log                | Each state-changing action writes an entry that the user cannot edit or delete.                                                                                                                                                                                                                                  |
+
+## Known gaps
+
+Read these before trusting the project with anything real.
+
+- **Database hardening is not applied yet.** Migration `0004_protect_shipment_status.sql` and the service-role key setup are written and merged but have not been run on the author's Supabase project. Until then a signed-in user can change their own shipment's `status` by calling the Supabase REST API directly. Even after it, the same user can still edit their own document and finding status through REST, because the API writes those as the signed-in user. Steps and a decision: `docs/DAY6_SECURITY_TEST.md`, `docs/DAILY_PROGRESS.md`.
+- **No hosted API.** See "Try it".
+- **No customs, HS-code or duty module.** It is specified in `.kiro/specs/03-customs-classification` and was left out of scope.
+- **AI reads can be wrong.** For example Gemini misread net weights on the demo invoice once; the review step exists for this. A unit change by the AI (0.45 tonnes written as 450 kg) is flagged as unsupported on purpose.
+- Document delete exists in the API only (`DELETE /api/documents/:id`), with no button in the web app. Replacing a document is not built.
+- A console error from Leaflet (`reading 'save'`) appeared in some sessions. It has no visible effect and is not explained.
+- Accessibility and bundle size work was not measured (no Lighthouse score recorded).
+
+## Limitations that will stay true
+
+- Port and lane data is **illustrative**, not live or quoted. Costs and risk scores are made up.
+- Results are possible inconsistencies that need manual verification. They are not legal or customs advice.
+- Demo documents are synthetic. Do not upload real customer documents: uploaded documents are sent to Google's Gemini API for reading.
+
+## Run it
+
+Requires Node 22 or newer, a Supabase project and a Google AI Studio key.
+
+```bash
+npm ci
+cp .env.example apps/api/.env      # fill in the API section
+cp .env.example apps/web/.env      # keep the VITE_ lines only
+```
+
+1. In Supabase, run the files in `supabase/migrations/` in order (`0001` to `0003`). Setup notes: `docs/SETUP_SUPABASE.md`. To also apply `0004`, follow `docs/DAY6_SECURITY_TEST.md` (it needs `SUPABASE_SERVICE_ROLE_KEY` in `apps/api/.env` first).
+2. Set `GEMINI_API_KEY` and `GEMINI_MODEL` in `apps/api/.env`. Model names get retired; use one from your AI Studio page.
+3. Start both servers in two terminals:
+
+```bash
+npm run dev:api     # http://localhost:4000
+npm run dev:web     # http://localhost:5173
+```
+
+Other commands: `npm test`, `npm run lint`, `npm run format:check`, `npm run scan:secrets`. Never commit `.env` files; keys belong in untracked `.env` files and in host dashboards.
 
 ## Repository layout
 
 ```
-apps/web         React + Vite + Tailwind frontend
-apps/api         Express API
-packages/core    Framework-independent logic (routing, cross-check, customs math)
-supabase/        SQL migrations and seed data
-fixtures/        Synthetic documents only (never real customer data)
-docs/            Database design, algorithms, Kiro usage, demo script
-.kiro/           Steering files and specs used to build this with Kiro
+apps/web         React, Vite, Tailwind, Leaflet
+apps/api         Express API (zod validation, Supabase client, Gemini REST provider)
+packages/core    Framework-free logic: routing, disruption overlay, cross-check, status
+supabase/        SQL migrations, seed data, security check script
+fixtures/        Synthetic documents only
+docs/            Setup, deployment, API notes, security test, E2E checklist, Kiro usage
+.kiro/           Specs and steering files used to build this with Kiro
 ```
 
-## Run it
+## How Kiro was used
 
-Requires Node 22 or newer.
+- **Specs** in `.kiro/specs/` (requirements, design, tasks) for each area, with task lists kept in step with what was built.
+- **Steering** in `.kiro/steering/`: product rules (no accusations, AI is a suggestion, illustrative data is labelled), security, API, database and testing conventions.
+- **A day-by-day plan and a progress log** (`docs/PORTCHIMERA_EXECUTION_PLAYBOOK.md`, `docs/DAILY_PROGRESS.md`) that carried context between sessions and record what was not verified.
+- Details and examples, including what Kiro could not run: `docs/KIRO_USAGE.md`.
 
-```bash
-npm install
-cp .env.example apps/api/.env      # then fill in values; never commit this file
-npm test                            # all tests
-npm run dev:api                     # API on http://localhost:4000
-npm run dev:web                     # web on http://localhost:5173
-```
+## License
 
-Real keys stay in untracked `.env` files and in the Render, Vercel and Supabase dashboards.
-Run `npm run scan:secrets` before committing.
-
-## Limitations (planned to stay true)
-
-- Port and lane data is **illustrative**, not live or quoted.
-- Tariff estimates cover a small curated set of Pakistan codes and are **estimates, not customs declarations**.
-- "AI Pre-Cleared" and "Cleared" are internal statuses, not customs authority decisions.
-- Demo documents are synthetic.
-
-## Documentation
-
-- `docs/DATABASE.md`: schema and how the tables relate
-- `docs/KIRO_USAGE.md`: how Kiro specs, steering and workflows were used
-- `.kiro/steering/`: project rules Kiro follows in every session
+MIT. See `LICENSE`.

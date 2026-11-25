@@ -1,5 +1,7 @@
 # Milestone: document upload and AI extraction
 
+> **Historical note.** This guide was written during the sandbox sprint (Nov 17 to 21, 2026), before the first real runs of this part of the app. Its "not run" statements may be out of date. For current status see `docs/DAILY_PROGRESS.md` and `docs/E2E_CHECKLIST.md`.
+
 The code for this milestone is written and its plain-logic tests pass in the authoring sandbox. The sandbox could not run Express, zod, React, Vite, a browser, Supabase or the Gemini API, so **none of those have been run**. These steps check them on your Windows machine.
 
 No SQL is needed. `supabase/migrations/0001_initial_schema.sql` already has the tables and the `documents` storage bucket.
