@@ -113,3 +113,20 @@ export async function getShipment(db, userId, id) {
   const ports = await loadPortsByIds(db, [row.origin_port_id, row.destination_port_id]);
   return toShipmentView(row, ports);
 }
+
+/** Upper bound for the "all my ..." lists, so one account cannot make a huge response. */
+export const LIST_LIMIT = 500;
+
+/**
+ * The caller's shipments as id -> shipment number, for the "all documents" and "all findings"
+ * lists. Filtered by user_id in code as well as by Row Level Security.
+ * @returns {Promise<Map<string, string>>}
+ */
+export async function loadShipmentNumbers(db, userId) {
+  const { data, error } = await db
+    .from('shipments')
+    .select('id, shipment_number')
+    .eq('user_id', userId);
+  if (error) throw new AppError(500, 'SHIPMENT_LOOKUP_FAILED', 'Could not load shipments');
+  return new Map((data ?? []).map((s) => [s.id, s.shipment_number]));
+}

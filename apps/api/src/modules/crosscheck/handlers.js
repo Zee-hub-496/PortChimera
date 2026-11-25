@@ -1,4 +1,9 @@
-import { decideDiscrepancy, listDiscrepancies, runCrossCheck } from './service.js';
+import {
+  decideDiscrepancy,
+  listAllDiscrepancies,
+  listDiscrepancies,
+  runCrossCheck,
+} from './service.js';
 
 /**
  * Handlers for the cross-check endpoints. Parsers are injected (routes.js passes zod-based
@@ -17,6 +22,9 @@ export function crossCheckHandlers({ parseId, parseDecision, engine, logger = co
       res.json({
         data: await listDiscrepancies(req.db, req.auth.userId, shipmentId, engine, logger),
       });
+    },
+    async listAll(req, res) {
+      res.json({ data: await listAllDiscrepancies(req.db, req.auth.userId) });
     },
     async decide(req, res) {
       const id = parseId(req.params.id);

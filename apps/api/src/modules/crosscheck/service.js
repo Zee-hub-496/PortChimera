@@ -1,6 +1,6 @@
 import { AppError } from '../../middleware/errorHandler.js';
 import { auditSafely } from '../documents/service.js';
-import { getShipmentRow } from '../shipments/service.js';
+import { LIST_LIMIT, getShipmentRow, loadShipmentNumbers } from '../shipments/service.js';
 import { loadFacts, syncShipmentStatus } from '../shipments/statusSync.js';
 import { findingToRow, planRerun, toDiscrepancyView } from './discrepancyView.js';
 import { mapReviewedPayloads } from './mapPayloads.js';
@@ -160,6 +160,25 @@ export async function runCrossCheck(db, userId, shipmentId, engine, logger = con
 
 export async function listDiscrepancies(db, userId, shipmentId, engine, logger = console) {
   return view(db, await requireShipment(db, userId, shipmentId), engine, logger);
+}
+
+/**
+ * Every stored finding of every shipment the caller owns, newest first, each with its shipment
+ * number. A plain read of what the last cross-check stored; it does not re-run anything.
+ */
+export async function listAllDiscrepancies(db, userId) {
+  const numbers = await loadShipmentNumbers(db, userId);
+  if (numbers.size === 0) return [];
+  const { data, error } = await db
+    .from('discrepancies')
+    .select('*')
+    .in('shipment_id', [...numbers.keys()])
+    .order('created_at', { ascending: false });
+  if (error) throw new AppError(500, 'DISCREPANCY_LIST_FAILED', 'Could not load the findings');
+  return (data ?? []).slice(0, LIST_LIMIT).map((row) => ({
+    ...toDiscrepancyView(row),
+    shipmentNumber: numbers.get(row.shipment_id),
+  }));
 }
 
 /** Records the user's decision on one discrepancy. */

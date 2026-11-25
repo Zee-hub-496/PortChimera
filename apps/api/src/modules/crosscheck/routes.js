@@ -27,6 +27,7 @@ export function shipmentCrossCheckRouter({ logger = console } = {}) {
 export function discrepanciesRouter({ logger = console } = {}) {
   const h = buildHandlers(logger);
   const router = Router();
+  router.get('/', h.listAll);
   router.patch('/:id', h.decide);
   return router;
 }

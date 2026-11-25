@@ -66,6 +66,7 @@ export function shipmentDocumentsRouter({ env, logger = console } = {}) {
 export function documentsRouter({ env, logger = console } = {}) {
   const h = buildHandlers({ env, logger });
   const router = Router();
+  router.get('/', h.listAll);
   router.get('/:id', h.get);
   router.get('/:id/download', h.download);
   router.post('/:id/process', strictLimiter(), h.process);
