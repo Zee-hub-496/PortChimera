@@ -61,7 +61,7 @@ export default function ShipmentLayout() {
       <div className="sticky top-14 z-10 -mx-4 border-b border-line bg-canvas/95 px-4 pt-2 backdrop-blur md:-mx-6 md:px-6">
         {shipment ? (
           <div className="flex flex-wrap items-center gap-3 py-2">
-            <p className="text-lg font-extrabold text-fg">
+            <p className="text-lg font-semibold text-fg">
               <span className="font-mono">{shipment.shipmentNumber}</span>
               <span aria-hidden="true"> &bull; </span>
               <span className="sr-only">, </span>
