@@ -39,6 +39,20 @@ Plan reference: `docs/PORTCHIMERA_EXECUTION_PLAYBOOK.md`.
 
 ---
 
+## Day 3: 2026-11-24 (started early), Crisis simulation backend (in progress)
+
+### Completed (PR from `feat/day3-scenarios`)
+
+- New module `apps/api/src/modules/scenarios/` (schemas, view, service, handlers, routes), mounted at `/api/scenarios` behind sign-in. Endpoints and result shape: `docs/API_SCENARIOS.md`.
+- No migration needed: `disruption_scenarios`, `scenario_effects` and `route_results` from 0001 are enough. Limit: `route_results` cannot hold a "no route" outcome (its totals are NOT NULL), so those outcomes are returned and audit-logged, not stored.
+- Uses core's `simulateDisruption` unchanged. Unknown ports and lanes give 422. Deleting a scenario first deletes its route results, because the foreign key would otherwise turn them into baseline rows.
+- 27 tests in `apps/api/test/scenarios.test.js` (pass in the sandbox), plus schema and router tests in `scenarioSchemas.test.js` (need zod; not run here).
+
+### Not done
+
+- Full suite, lint and CI not run here (no zod, express or eslint in the sandbox). CI will run them.
+- Frontend is Day 4.
+
 ## Day 2: 2026-11-24, Deployment and reliability (in progress)
 
 ### Completed (code written, not run)

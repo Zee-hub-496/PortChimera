@@ -4,6 +4,8 @@ export const PROTECTED_PREFIXES = Object.freeze({
   shipments: '/api/shipments',
   ports: '/api/ports',
   routes: '/api/routes',
+  // Crisis simulation: a user's own disruption scenarios and their simulations.
+  scenarios: '/api/scenarios',
   // Nested under shipments: upload and list. Mounted after `shipments`, which never matches it.
   shipmentDocuments: '/api/shipments/:shipmentId/documents',
   documents: '/api/documents',
