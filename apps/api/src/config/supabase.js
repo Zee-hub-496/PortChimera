@@ -15,13 +15,21 @@ export function createAnonClient(env) {
  * A client that acts AS the signed-in user: it sends their token with every query, so Postgres
  * applies Row Level Security for them. All user data access goes through this.
  *
- * There is deliberately no helper for the service-role key here. That key skips Row Level Security
- * and is only needed for signing storage URLs; it will be added with the upload feature, in its own
- * clearly named function, so it cannot be used for user data by accident.
+ * The only exception is `createStatusWriterClient` below.
  */
 export function createUserClient(env, token) {
   return createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
     auth: NO_SESSION,
     global: { headers: { Authorization: `Bearer ${token}` } },
   });
+}
+
+/**
+ * A client with the service-role key. It SKIPS Row Level Security, so it is used for exactly one
+ * thing: writing `shipments.status` (migration 0004 blocks that column for signed-in users).
+ * `syncShipmentStatus` checks that the shipment is the caller's with the user's own client first.
+ * Never use it to read or write anything else, never send the key to the browser, never log it.
+ */
+export function createStatusWriterClient(env) {
+  return createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, { auth: NO_SESSION });
 }
