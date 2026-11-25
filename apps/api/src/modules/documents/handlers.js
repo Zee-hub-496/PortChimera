@@ -5,6 +5,7 @@ import {
   createDownloadUrl,
   deleteDocument,
   getDocumentDetail,
+  listAllDocuments,
   listDocuments,
   markProcessing,
   saveReview,
@@ -88,6 +89,9 @@ export function documentHandlers({
     async list(req, res) {
       const shipmentId = parseId(req.params.shipmentId);
       res.json({ data: await listDocuments(req.db, req.auth.userId, shipmentId, recovery) });
+    },
+    async listAll(req, res) {
+      res.json({ data: await listAllDocuments(req.db, req.auth.userId) });
     },
     async get(req, res) {
       const id = parseId(req.params.id);

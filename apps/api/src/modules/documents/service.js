@@ -1,6 +1,6 @@
 import { AppError } from '../../middleware/errorHandler.js';
 import { recordAudit } from '../audit/service.js';
-import { getShipmentRow } from '../shipments/service.js';
+import { LIST_LIMIT, getShipmentRow, loadShipmentNumbers } from '../shipments/service.js';
 import { syncShipmentStatus } from '../shipments/statusSync.js';
 import { buildStoragePath, sanitizeFilename, validateUpload } from './fileValidation.js';
 import { buildLineItemRows, toDocumentDetailView, toDocumentView } from './documentView.js';
@@ -268,6 +268,24 @@ export async function listDocuments(db, userId, shipmentId, recovery) {
   if (error) throw new AppError(500, 'DOCUMENT_LIST_FAILED', 'Could not load documents');
   const rows = await failStaleDocuments(db, userId, data ?? [], recovery);
   return rows.map(toDocumentView);
+}
+
+/**
+ * Every document of every shipment the caller owns, newest first, each with its shipment number.
+ * Read-only (no stuck-document recovery here; opening the document does that).
+ */
+export async function listAllDocuments(db, userId) {
+  const numbers = await loadShipmentNumbers(db, userId);
+  if (numbers.size === 0) return [];
+  const { data, error } = await db
+    .from('documents')
+    .select('*')
+    .in('shipment_id', [...numbers.keys()])
+    .order('created_at', { ascending: false });
+  if (error) throw new AppError(500, 'DOCUMENT_LIST_FAILED', 'Could not load documents');
+  return (data ?? [])
+    .slice(0, LIST_LIMIT)
+    .map((row) => ({ ...toDocumentView(row), shipmentNumber: numbers.get(row.shipment_id) }));
 }
 
 /** `recovery` is optional: { isActive, logger }. Without it, stuck documents are left alone. */

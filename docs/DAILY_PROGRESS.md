@@ -39,7 +39,39 @@ Plan reference: `docs/PORTCHIMERA_EXECUTION_PLAYBOOK.md`.
 
 ---
 
-## Day 6: 2026-11-25 (started early), Database security and document lifecycle (in progress)
+## Pending (owner decided to do these later)
+
+Tracked here so they are not lost. Do not treat the sprint as finished until each is done or consciously dropped.
+
+1. **Day 6 database security, owner steps.** PR #31 and #32 are merged, but migration `0004_protect_shipment_status.sql` is NOT applied and `SUPABASE_SERVICE_ROLE_KEY` is not set. Until then a signed-in user can still set `shipments.status` by REST. To finish: follow `docs/DAY6_SECURITY_TEST.md` (key first, then migration, then `supabase/checks/day6_security_checks.sql`, then the REST/Storage/delete checks) and record the real results here. Also decide the open question below. If dropped, list the gap in the README limitations.
+2. **Render (API deployment).** No card, so the API is not deployed; only the web app is live (https://port-chimera.vercel.app). A card-free host is still to be chosen (`docs/DEPLOYMENT.md`). Needed before the video and the Day 8 deployed end-to-end test. In production the API requires `SUPABASE_SERVICE_ROLE_KEY`.
+3. Day 6 leftovers: document replace (optional), a delete button in the web app.
+
+## Day 7: 2026-11-25 (started early), Frontend and product completeness (in progress)
+
+Branch `docs/day6-pending-day7-start` (also carries the pending-items note above).
+
+### Completed (code written; not rendered in a browser)
+
+- Alerts page is now real: all findings across the user's shipments, with search (shipment, field, document), severity and decision filters, severity-first order, pagination (10 per page), loading, error with "Try again", empty and "no match" states. Each row opens that shipment's cross-check.
+- Documents page is now real: all documents with search, status and type filters, pagination and the same states. Each row opens that shipment's documents.
+- New read-only API endpoints `GET /api/discrepancies` and `GET /api/documents` (own shipments only, newest first, capped at 500, no storage paths).
+- Pure helpers in `apps/web/src/lib/hubView.js`. Removed the unused `ShipmentHubList` component.
+
+### Tests performed
+
+- `apps/web/test/hubView.test.js` (8) and `apps/api/test/listAll.test.js` (3, including another user's rows never returned): pass. All other test files that load in the sandbox still pass. `prettier --check` and `scan:secrets` pass.
+- NOT run: eslint, `vite build`, a browser at 1280px and 390px, Lighthouse, the zod/express suites.
+
+### Not done (rest of Day 7)
+
+- Browser check of the two new pages, Playwright pass on all pages at desktop and mobile.
+- Badge contrast (WCAG AA), button sizes, keyboard and screen-reader pass, Lighthouse accessibility score, bundle size before/after (the `index` chunk was 828 kB on Day 1).
+- Search, sort and pagination on the Shipments page.
+
+---
+
+## Day 6: 2026-11-25 (started early), Database security and document lifecycle (code merged, owner checks pending)
 
 Branch `feat/day6-db-security`. Nothing here has run against a real Supabase project yet.
 
