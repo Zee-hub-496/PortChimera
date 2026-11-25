@@ -39,7 +39,15 @@ Plan reference: `docs/PORTCHIMERA_EXECUTION_PLAYBOOK.md`.
 
 ---
 
-## Day 6: 2026-11-25 (started early), Database security and document lifecycle (in progress)
+## Pending (owner decided to do these later)
+
+Tracked here so they are not lost. Do not treat the sprint as finished until each is done or consciously dropped.
+
+1. **Day 6 database security, owner steps.** PR #31 and #32 are merged, but migration `0004_protect_shipment_status.sql` is NOT applied and `SUPABASE_SERVICE_ROLE_KEY` is not set. Until then a signed-in user can still set `shipments.status` by REST. To finish: follow `docs/DAY6_SECURITY_TEST.md` (key first, then migration, then `supabase/checks/day6_security_checks.sql`, then the REST/Storage/delete checks) and record the real results here. Also decide the open question below. If dropped, list the gap in the README limitations.
+2. **Render (API deployment).** No card, so the API is not deployed; only the web app is live (https://port-chimera.vercel.app). A card-free host is still to be chosen (`docs/DEPLOYMENT.md`). Needed before the video and the Day 8 deployed end-to-end test. In production the API requires `SUPABASE_SERVICE_ROLE_KEY`.
+3. Day 6 leftovers: document replace (optional), a delete button in the web app.
+
+## Day 6: 2026-11-25 (started early), Database security and document lifecycle (code merged, owner checks pending)
 
 Branch `feat/day6-db-security`. Nothing here has run against a real Supabase project yet.
 
