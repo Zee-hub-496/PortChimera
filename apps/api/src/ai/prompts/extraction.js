@@ -21,6 +21,15 @@ export function buildSystemPrompt() {
   ].join('\n');
 }
 
+// Short meanings for the optional fields that are easy to confuse. Shown next to the field name.
+const FIELD_HINTS = Object.freeze({
+  freight_charges: 'freight or shipping charge shown separately from the goods',
+  insurance_charges: 'insurance charge shown separately from the goods',
+  tax_amount: 'VAT, GST or sales tax amount shown separately, not the rate',
+  discount_amount: 'a discount taken off the total, as a positive amount',
+  invoice_date: 'the date of the commercial invoice this document refers to',
+});
+
 /** Describes the exact JSON shape wanted for a document type. */
 export function describeShape(documentType) {
   const def = DOCUMENT_FIELDS[documentType];
@@ -31,7 +40,10 @@ export function describeShape(documentType) {
   lines.push(`"fields": an object with these keys, each one ${field}:`);
   lines.push(
     def.fields
-      .map((f) => `  - ${f}${def.optional.includes(f) ? ' (omit if absent)' : ''}`)
+      .map((f) => {
+        const hint = FIELD_HINTS[f] ? `: ${FIELD_HINTS[f]}` : '';
+        return `  - ${f}${hint}${def.optional.includes(f) ? ' (omit if absent)' : ''}`;
+      })
       .join('\n'),
   );
   if (def.lineFields.length > 0) {

@@ -245,7 +245,12 @@ describe('GET /shipments/:id/discrepancies', () => {
     const t = setup();
     const id = await shipmentWithDocs(t.alice, 'user-alice', demoRows());
     const res = await list(t, t.asAlice(), id);
-    assert.deepEqual(res.body.data, { discrepancies: [], summary: null, checkedAt: null });
+    assert.deepEqual(res.body.data, {
+      discrepancies: [],
+      summary: null,
+      checkedAt: null,
+      stale: false,
+    });
   });
 });
 
@@ -294,5 +299,63 @@ describe('PATCH /discrepancies/:id', () => {
   it('gives 404 for an unknown id', async () => {
     const { t } = await withFinding();
     await assert.rejects(decide(t, t.asAlice(), 'nope', 'accepted'), (e) => e.status === 404);
+  });
+});
+
+describe('a cross-check goes stale when approvals change', () => {
+  // The fake rows need the statuses and times the real database has after a review.
+  const markReviewed = (t, at) => {
+    for (const d of t.tables.documents) d.processing_status = 'reviewed';
+    for (const e of t.tables.document_extractions) e.reviewed_at = at;
+  };
+
+  it('is fresh right after a run', async () => {
+    const t = setup();
+    const id = await shipmentWithDocs(t.alice, 'user-alice', demoRows());
+    markReviewed(t, '2000-01-01T00:00:00.000Z');
+    const res = await run(t, t.asAlice(), id);
+    assert.equal(res.body.data.stale, false);
+    assert.equal((await list(t, t.asAlice(), id)).body.data.stale, false);
+  });
+
+  it('is stale when a document is reviewed again after the run', async () => {
+    const t = setup();
+    const id = await shipmentWithDocs(t.alice, 'user-alice', demoRows());
+    markReviewed(t, '2000-01-01T00:00:00.000Z');
+    await run(t, t.asAlice(), id);
+    t.tables.document_extractions[0].reviewed_at = new Date(Date.now() + 60_000).toISOString();
+    assert.equal((await list(t, t.asAlice(), id)).body.data.stale, true);
+  });
+
+  it('is stale when an approval is taken back after the run', async () => {
+    const t = setup();
+    const id = await shipmentWithDocs(t.alice, 'user-alice', demoRows());
+    markReviewed(t, '2000-01-01T00:00:00.000Z');
+    await run(t, t.asAlice(), id);
+    t.tables.documents[2].processing_status = 'extracted';
+    assert.equal((await list(t, t.asAlice(), id)).body.data.stale, true);
+  });
+
+  it('is not stale before any run', async () => {
+    const t = setup();
+    const id = await shipmentWithDocs(t.alice, 'user-alice', demoRows());
+    markReviewed(t, '2000-01-01T00:00:00.000Z');
+    assert.equal((await list(t, t.asAlice(), id)).body.data.stale, false);
+  });
+
+  it('running again clears it, and keeps the decisions already made', async () => {
+    const t = setup();
+    const id = await shipmentWithDocs(t.alice, 'user-alice', demoRows({ packingGross: '650 kg' }));
+    markReviewed(t, '2000-01-01T00:00:00.000Z');
+    const first = await run(t, t.asAlice(), id);
+    await decide(t, t.asAlice(), first.body.data.discrepancies[0].id, 'accepted');
+    t.tables.document_extractions[0].reviewed_at = new Date(Date.now() + 60_000).toISOString();
+    assert.equal((await list(t, t.asAlice(), id)).body.data.stale, true);
+    // The run stamps its own time, which is later than the review above only in real life; the
+    // fake clock cannot go backwards, so move the review into the past to model "reviewed, then run".
+    t.tables.document_extractions[0].reviewed_at = '2000-01-02T00:00:00.000Z';
+    const again = await run(t, t.asAlice(), id);
+    assert.equal(again.body.data.stale, false);
+    assert.equal(again.body.data.discrepancies[0].reviewStatus, 'accepted');
   });
 });

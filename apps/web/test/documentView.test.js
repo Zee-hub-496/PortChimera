@@ -104,6 +104,61 @@ describe('evidenceLabel', () => {
   });
 });
 
+describe('evidence that does not show the value', () => {
+  const unsupported = {
+    value: 'INV-9',
+    confidence: 0.5,
+    status: 'uncertain',
+    evidence: 'Invoice No: INV-1',
+    evidence_verified: 'unsupported_value',
+  };
+
+  it('is labelled honestly, apart from "not found"', () => {
+    assert.match(evidenceLabel(unsupported), /does not show this value/i);
+    assert.doesNotMatch(evidenceLabel(unsupported), /Evidence not found/);
+  });
+
+  it('needs attention even if its status still says extracted', () => {
+    const rows = fieldRows({ fields: { invoice_number: { ...unsupported, status: 'extracted' } } });
+    assert.equal(rows[0].needsAttention, true);
+    assert.match(rows[0].evidenceLabel, /does not show this value/i);
+  });
+
+  it('a person editing the field replaces the label', () => {
+    assert.equal(evidenceLabel({ ...unsupported, edited: true }), 'Edited by you');
+  });
+
+  it('has a label for the new optional invoice fields', () => {
+    const rows = fieldRows({
+      fields: {
+        freight_charges: {
+          value: 400,
+          confidence: 0.9,
+          status: 'extracted',
+          evidence_verified: true,
+        },
+        insurance_charges: {
+          value: 1,
+          confidence: 0.9,
+          status: 'extracted',
+          evidence_verified: true,
+        },
+        tax_amount: { value: 1, confidence: 0.9, status: 'extracted', evidence_verified: true },
+        discount_amount: {
+          value: 1,
+          confidence: 0.9,
+          status: 'extracted',
+          evidence_verified: true,
+        },
+      },
+    });
+    assert.deepEqual(
+      rows.map((r) => r.label),
+      ['Freight charges', 'Insurance charges', 'Tax amount', 'Discount amount'],
+    );
+  });
+});
+
 describe('fieldRows', () => {
   const rows = fieldRows(payload);
   it('shows value, percent, label and evidence', () => {

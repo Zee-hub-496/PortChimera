@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { REQUIRED_DOCUMENT_TYPES, deriveShipmentStatus } from '../src/index.js';
+import { REQUIRED_DOCUMENT_TYPES, deriveShipmentStatus, isCrossCheckStale } from '../src/index.js';
 
 const T0 = '2026-11-23T10:00:00.000Z';
 const T1 = '2026-11-23T11:00:00.000Z';
@@ -138,5 +138,39 @@ describe('deriveShipmentStatus: never claims clearance and validates input', () 
     const before = JSON.stringify([docs, found]);
     derive(docs, found, T1);
     assert.equal(JSON.stringify([docs, found]), before);
+  });
+});
+
+describe('isCrossCheckStale', () => {
+  const TYPES = [...REQUIRED_DOCUMENT_TYPES];
+  const stale = (documents, crossCheckedAt, comparedTypes) =>
+    isCrossCheckStale({ documents, crossCheckedAt, comparedTypes });
+
+  it('is not stale when nothing changed since the check', () => {
+    assert.equal(stale(allReviewed(T0), T1, TYPES), false);
+  });
+
+  it('is stale when a review was saved after the check', () => {
+    const docs = allReviewed(T0);
+    docs[1] = doc('packing_list', 'reviewed', T2);
+    assert.equal(stale(docs, T1, TYPES), true);
+  });
+
+  it('is stale when a compared document is no longer approved', () => {
+    const docs = allReviewed(T0);
+    docs[2] = doc('certificate_of_origin', 'extracted', null);
+    assert.equal(stale(docs, T1, TYPES), true);
+  });
+
+  it('is stale when a document was approved that the check did not include', () => {
+    assert.equal(stale(allReviewed(T0), T1, ['commercial_invoice', 'packing_list']), true);
+  });
+
+  it('is not stale before any check ran (that is "not run", a different message)', () => {
+    assert.equal(stale(allReviewed(T0), null, null), false);
+  });
+
+  it('ignores the compared list when it is not given', () => {
+    assert.equal(stale(allReviewed(T0), T1), false);
   });
 });

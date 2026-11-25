@@ -156,3 +156,12 @@ export function summaryView(summary, findings) {
     multipleRiskIndicators: Boolean(summary.multipleRiskIndicators),
   };
 }
+
+/**
+ * A warning for when the stored check no longer matches the approved documents, or '' when it
+ * does, was never run, or the server could not tell (`stale: null`).
+ */
+export function staleNotice(data) {
+  if (!data?.summary || data.stale !== true) return '';
+  return 'The documents changed after this check ran, so its results may be out of date. Run the check again.';
+}

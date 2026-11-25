@@ -15,6 +15,7 @@ import {
   differenceText,
   fieldLabel,
   sortFindings,
+  staleNotice,
   summaryView,
   valueRows,
 } from '../lib/crosscheckView.js';
@@ -185,6 +186,11 @@ export default function CrossCheck() {
       />
       <p className="rounded-lg bg-warn-soft p-3 text-sm text-warn">{DISCLAIMER}</p>
       {error && <ErrorState message={error} />}
+      {staleNotice(data) && (
+        <p role="status" className="rounded-lg bg-warn-soft p-3 text-sm font-medium text-warn">
+          {staleNotice(data)}
+        </p>
+      )}
       {data === null && !error && (
         <div className="flex flex-col gap-3" aria-busy="true">
           <Skeleton className="h-28" />

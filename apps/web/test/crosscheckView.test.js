@@ -14,6 +14,7 @@ import {
   describeCrossCheckError,
   differenceText,
   sortFindings,
+  staleNotice,
   summaryView,
   valueRows,
 } from '../src/lib/crosscheckView.js';
@@ -120,5 +121,20 @@ describe('theme tokens', () => {
       assert.ok(SEVERITY_TONES[severity]);
     }
     for (const status of Object.keys(STATUS_LABELS)) assert.ok(REVIEW_TONES[status]);
+  });
+});
+
+describe('staleNotice', () => {
+  it('asks for a new run when the documents changed after the check', () => {
+    const notice = staleNotice({ summary: { overall: 'high' }, stale: true });
+    assert.match(notice, /changed after/i);
+    assert.match(notice, /run the check again/i);
+  });
+
+  it('says nothing when the check is current, was never run, or staleness is unknown', () => {
+    assert.equal(staleNotice({ summary: { overall: 'high' }, stale: false }), '');
+    assert.equal(staleNotice({ summary: null, stale: false }), '');
+    assert.equal(staleNotice({ summary: { overall: 'high' }, stale: null }), '');
+    assert.equal(staleNotice(null), '');
   });
 });
