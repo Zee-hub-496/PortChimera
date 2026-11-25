@@ -21,7 +21,7 @@ export default function Logo({ size = 28, showWordmark = true, className = '' })
         <circle cx="47.5" cy="16.5" r="4" fill="#22d3ee" stroke="#0b1f3a" strokeWidth="1.5" />
       </svg>
       {showWordmark ? (
-        <span className="text-lg font-extrabold tracking-tight text-fg">PortChimera</span>
+        <span className="text-lg font-bold tracking-tight text-fg">PortChimera</span>
       ) : (
         <span className="sr-only">PortChimera</span>
       )}

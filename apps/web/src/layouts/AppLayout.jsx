@@ -62,7 +62,7 @@ function SidebarNav({ collapsed, onNavigate }) {
           title={collapsed ? label : undefined}
           aria-label={collapsed ? label : undefined}
           className={({ isActive }) =>
-            `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
+            `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
               isActive
                 ? 'bg-accent-soft text-accent'
                 : 'text-muted hover:bg-surface-2 hover:text-fg'

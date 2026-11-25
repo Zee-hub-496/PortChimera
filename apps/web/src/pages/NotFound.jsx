@@ -33,7 +33,7 @@ export default function NotFound() {
         <circle cx="60" cy="60" r="4" fill="var(--surface)" />
       </svg>
       <p className="mt-6 font-mono text-sm text-muted">404</p>
-      <h1 className="mt-1 text-3xl font-extrabold tracking-tight text-fg">Off the chart</h1>
+      <h1 className="mt-1 text-3xl font-semibold tracking-tight text-fg">Off the chart</h1>
       <p className="mt-2 text-muted">This page does not exist. Check the address or head back.</p>
       <div className="mt-6 flex flex-wrap justify-center gap-3">
         <LinkButton to="/">Home</LinkButton>

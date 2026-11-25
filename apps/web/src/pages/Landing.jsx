@@ -37,8 +37,8 @@ function Reveal({ children, delay = 0, className = '' }) {
 function SectionHeading({ eyebrow, title, children }) {
   return (
     <div className="mx-auto mb-10 max-w-2xl text-center">
-      <p className="text-xs font-bold uppercase tracking-widest text-accent">{eyebrow}</p>
-      <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-fg">{title}</h2>
+      <p className="text-xs font-semibold uppercase tracking-wider text-accent">{eyebrow}</p>
+      <h2 className="mt-2 text-3xl font-semibold tracking-tight text-fg">{title}</h2>
       {children && <p className="mt-3 text-muted">{children}</p>}
     </div>
   );
@@ -61,7 +61,7 @@ function Hero({ signedIn }) {
       <div className="relative mx-auto grid max-w-6xl items-center gap-10 px-4 py-16 lg:grid-cols-2 lg:py-24">
         <div>
           <Badge tone="info">Student project</Badge>
-          <h1 className="mt-4 text-4xl font-extrabold leading-tight tracking-tight text-fg sm:text-5xl">
+          <h1 className="mt-4 text-4xl font-semibold leading-tight tracking-tight text-fg sm:text-5xl">
             Cross-check trade documents. Plan the sea route.
           </h1>
           <p className="mt-4 max-w-xl text-lg text-muted">
@@ -160,8 +160,8 @@ function DocumentAiBand() {
     <section id="document-ai" className="scroll-mt-20 border-y border-line bg-surface">
       <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-20 lg:grid-cols-2">
         <Reveal>
-          <p className="text-xs font-bold uppercase tracking-widest text-accent">Document AI</p>
-          <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-fg">
+          <p className="text-xs font-semibold uppercase tracking-wider text-accent">Document AI</p>
+          <h2 className="mt-2 text-3xl font-semibold tracking-tight text-fg">
             See where every value came from
           </h2>
           <p className="mt-3 text-muted">
@@ -214,10 +214,10 @@ function RouteIntelligenceBand() {
     <section id="route-intelligence" className="scroll-mt-20 mx-auto max-w-6xl px-4 py-20">
       <div className="grid items-center gap-10 lg:grid-cols-2">
         <Reveal className="lg:order-2">
-          <p className="text-xs font-bold uppercase tracking-widest text-accent">
+          <p className="text-xs font-semibold uppercase tracking-wider text-accent">
             Route intelligence
           </p>
-          <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-fg">
+          <h2 className="mt-2 text-3xl font-semibold tracking-tight text-fg">
             Compare sea routes between ports
           </h2>
           <p className="mt-3 text-muted">
@@ -335,7 +335,7 @@ function ClosingCta({ signedIn }) {
   return (
     <section className="mx-auto max-w-6xl px-4 pb-20">
       <div className="rounded-2xl bg-brand px-6 py-12 text-center text-brand-fg">
-        <h2 className="text-3xl font-extrabold tracking-tight">Try it on a sample shipment</h2>
+        <h2 className="text-3xl font-semibold tracking-tight">Try it on a sample shipment</h2>
         <p className="mx-auto mt-3 max-w-xl opacity-80">
           Create an account, add a shipment and upload a document to see the cross-check.
         </p>

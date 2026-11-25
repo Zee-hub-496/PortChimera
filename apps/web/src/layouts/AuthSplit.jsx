@@ -30,7 +30,7 @@ export default function AuthSplit({ title, subtitle, children, footer }) {
           <polygon points="88,100 112,100 100,180" fill="currentColor" opacity="0.5" />
         </svg>
         <div className="relative">
-          <h2 className="max-w-md text-3xl font-extrabold tracking-tight">
+          <h2 className="max-w-md text-3xl font-semibold tracking-tight">
             Trade documents, checked. Sea routes, compared.
           </h2>
           <ul className="mt-8 max-w-md space-y-4">
@@ -51,7 +51,7 @@ export default function AuthSplit({ title, subtitle, children, footer }) {
           <Link to="/" aria-label="PortChimera home" className="mb-8 inline-block lg:hidden">
             <Logo />
           </Link>
-          <h1 className="text-3xl font-extrabold tracking-tight text-fg">{title}</h1>
+          <h1 className="text-3xl font-semibold tracking-tight text-fg">{title}</h1>
           {subtitle && <p className="mt-2 text-sm text-muted">{subtitle}</p>}
           <div className="mt-6">{children}</div>
           {footer && <div className="mt-6 text-sm text-muted">{footer}</div>}

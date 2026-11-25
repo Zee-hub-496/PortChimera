@@ -3,13 +3,14 @@ import { Link } from 'react-router-dom';
 import { AlertTriangle, Loader2 } from 'lucide-react';
 
 const BUTTON_BASE =
-  'inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50';
+  'inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50';
 
 export const BUTTON_VARIANTS = {
-  primary: 'bg-accent text-accent-fg hover:brightness-110',
-  secondary: 'border border-line bg-surface text-fg hover:bg-surface-2',
+  primary:
+    'bg-accent text-accent-fg shadow-sm hover:bg-[color-mix(in_srgb,var(--accent)_88%,black)]',
+  secondary: 'border border-line bg-surface text-fg shadow-sm hover:bg-surface-2',
   ghost: 'text-muted hover:bg-surface-2 hover:text-fg',
-  danger: 'bg-danger text-brand-fg hover:brightness-110',
+  danger: 'bg-danger text-brand-fg shadow-sm hover:brightness-110',
 };
 
 /** Class string shared by Button and LinkButton. */
@@ -46,7 +47,7 @@ export const BADGE_TONES = {
 export function Badge({ tone = 'neutral', className = '', ...rest }) {
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+      className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium ${
         BADGE_TONES[tone] ?? BADGE_TONES.neutral
       } ${className}`}
       {...rest}
@@ -58,7 +59,7 @@ export function PageHeader({ title, description, actions, className = '' }) {
   return (
     <div className={`mb-6 flex flex-wrap items-start justify-between gap-4 ${className}`}>
       <div>
-        <h1 className="text-2xl font-extrabold tracking-tight text-fg">{title}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-fg">{title}</h1>
         {description && <p className="mt-1 max-w-2xl text-sm text-muted">{description}</p>}
       </div>
       {actions && <div className="flex items-center gap-2">{actions}</div>}

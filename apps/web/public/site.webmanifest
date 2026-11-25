@@ -4,7 +4,7 @@
   "description": "Trade document checks and sea route planning",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#f6f4ef",
+  "background_color": "#f7f8fa",
   "theme_color": "#0b1f3a",
   "icons": [
     { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
