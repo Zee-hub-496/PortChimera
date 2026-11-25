@@ -47,6 +47,29 @@ Tracked here so they are not lost. Do not treat the sprint as finished until eac
 2. **Render (API deployment).** No card, so the API is not deployed; only the web app is live (https://port-chimera.vercel.app). A card-free host is still to be chosen (`docs/DEPLOYMENT.md`). Needed before the video and the Day 8 deployed end-to-end test. In production the API requires `SUPABASE_SERVICE_ROLE_KEY`.
 3. Day 6 leftovers: document replace (optional), a delete button in the web app.
 
+## Day 8: 2026-11-25 (started early), Integration and release readiness (in progress)
+
+### Completed
+
+- CI on `main` (GitHub Actions: secret scan, lint, format check, all tests, web build) is green at PR #33. This is the first full-suite evidence since Day 2; the sandbox cannot run it.
+- Spec task lists updated from evidence (`.kiro/specs` 06, 07, 08): scenario endpoints, scenario authorization tests, scenario UI, status derivation and sync, and CI are checked off with notes on what was and was not verified. Crisis dashboard impact cards stay open.
+- `docs/KIRO_USAGE.md`: added the Day 1 to 7 sprint entry (how the work ran, real examples, what Kiro could not verify).
+- `docs/E2E_CHECKLIST.md`: step-by-step pass/fail checklist (16 app steps, 6 two-user security steps) for the owner to fill in, locally and later on the deployed app.
+
+### Not done (blocked on the owner or on pending items)
+
+- Fresh-user end-to-end run on the deployed app: there is no deployed API yet (Render pending).
+- Two-user security test online: Day 6 owner steps pending (migration 0004, service-role key, SQL checks).
+- Release candidate tag: not created. Tag after the owner has filled in `docs/E2E_CHECKLIST.md` locally with no P0 or P1 failure.
+- Feature freeze: from the moment the checklist passes, only bug fixes. Remaining open items are listed under "Pending".
+- Open bug: Leaflet `Cannot read properties of undefined (reading 'save')` in the console (not reproduced; no visible effect).
+
+### Next session's starting point
+
+Owner runs `docs/E2E_CHECKLIST.md` locally and reports failures. Fix P0 and P1 failures only. Then do the pending Day 6 steps and the host for the API, tag the release candidate, and start the Dec 1 packaging plan.
+
+---
+
 ## Day 7: 2026-11-25 (started early), Frontend and product completeness (in progress)
 
 Branch `docs/day6-pending-day7-start` (also carries the pending-items note above).

@@ -1,7 +1,8 @@
 # Spec 08 tasks
 
 - [x] 1. Secret scanner script (verified against a planted key)
-- [ ] 2. GitHub Actions CI workflow (R5)
+- [x] 2. GitHub Actions CI workflow (R5)
+  - Day 2: `.github/workflows/ci.yml` runs secret scan, lint, format check, tests and the web build. Green on `main` at PR #33.
 - [ ] 3. Authorization test helper with fake validator and in-memory repo; route-coverage test (R1.1)
 - [ ] 4. Upload hardening tests (R2.2)
 - [ ] 5. Stricter rate limits on upload and AI routes + tests (R4.1)
