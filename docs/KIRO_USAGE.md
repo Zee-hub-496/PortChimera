@@ -172,3 +172,21 @@ made between 1 and 12 tests fail.
 - A failed validation now logs the path and issue code (for example `fields: unrecognized_keys (total_gross_weight)`), never document values.
 
 **Not verified:** no real Gemini call was made. The zod tests need `node_modules`, so they were written but not run in the sandbox. Run `npm test` after pulling, then press "Read again with AI" on the demo invoice.
+
+## 2026-11-22 to 2026-11-25: the Day 1 to Day 7 sprint (Kiro Web)
+
+**How the work was run.** One written plan (`docs/PORTCHIMERA_EXECUTION_PLAYBOOK.md`) and one log (`docs/DAILY_PROGRESS.md`) carried the context between sessions. Each session started by reading the log, worked one day of the plan, and ended by updating it. Steering file `.kiro/steering/09-kiroween-execution.md` holds the sprint rules (honest status, no claims without a run, secrets only in dashboards). The log records what was not run, so the next session did not assume it.
+
+**Where Kiro could not run things, and what was done about it.** The Kiro Web sandbox cannot install npm packages or reach Gemini or Supabase. Kiro wrote code and tests that run with fakes (`node --test`, a fake database that emulates Row Level Security), and the owner ran everything real on Windows: `npm test`, lint, the build, real Gemini extraction, the browser. GitHub Actions (Day 2) now runs install, lint, format check, tests and the web build on every PR.
+
+**Concrete examples**
+
+- **Day 1, shipment status.** The pure function `deriveShipmentStatus` (core) has a table-driven test for every rule. The owner then ran the real flow with three demo PDFs and the status moved through each state. The same session found that the dashboard's "Cleared" tile could never be non-zero and replaced it with "AI pre-cleared".
+- **Day 1, a design that needed a human decision.** `docs/DESIGN_STATUS_PROTECTION.md` compared four ways to stop users from editing their own status through the Supabase REST API. The owner picked Option A, which needs the service-role key for one write. It was built on Day 6.
+- **Day 2, CI false positives.** The first CI run failed with 205 "unused variable" errors because ESLint had no React rules. Adding the React plugins fixed it. This was a tooling gap, not 205 real bugs.
+- **Day 3 and 4, crisis simulation.** Backend first (scenario CRUD, simulate endpoint, 27 tests with Alice and Bob), then the route-page UI. The core simulator from Nov 17 was reused unchanged.
+- **Day 5, cross-check accuracy.** Each false positive (country aliases, `1.234` vs `1,234`, split product lines, freight on the invoice total, evidence that exists but does not contain the value) got a failing test before the fix. The real weight mismatch on the demo still produces its finding.
+- **Day 6, database security.** A SQL script (`supabase/checks/day6_security_checks.sql`) and a PowerShell guide let the owner prove the rules on the real project. Those owner runs are still pending (see `docs/DAILY_PROGRESS.md`).
+- **Day 7, Alerts and Documents pages.** They were placeholders that only listed shipments. Now they list all findings and documents with search, filters and pagination, backed by two read-only endpoints.
+
+**Not verified by Kiro.** The browser rendering of most pages, Lighthouse, real Supabase isolation checks, and anything on a deployed server. Those are tracked in `docs/DAILY_PROGRESS.md` and `docs/E2E_CHECKLIST.md`.
