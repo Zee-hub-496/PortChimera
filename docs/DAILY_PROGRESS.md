@@ -39,6 +39,22 @@ Plan reference: `docs/PORTCHIMERA_EXECUTION_PLAYBOOK.md`.
 
 ---
 
+## Day 4: 2026-11-24 (started early), Crisis simulation frontend (in progress)
+
+### Completed (PR from `feat/day4-scenario-ui`)
+
+- Route page (`/shipments/:id/route`): new "What if?" panel (`ScenarioPanel.jsx`) to close a port or a lane, reopen it, switch between saved scenarios, delete one, or reset to the original route. Every change re-runs `POST /api/scenarios/:id/simulate`.
+- `SimulationSummary.jsx`: status banner, the API's deterministic explanation, original and rerouted path, before/after cards for time, cost and risk with the change, and the illustrative label. Handled states: rerouted, unaffected, no alternative, origin closed, destination closed, no original route; loading, saving and error with "Try again".
+- Map shows the original route, the rerouted route, closed lanes as blocked legs and closed ports as warning rings.
+- New read-only `GET /api/ports/network` (ports and lanes with ids), because the UI needs ids to name what it closes. No migration.
+- Pure logic in `lib/scenarioView.js` with 20 tests (pass); 3 API tests for the network endpoint (pass).
+
+### Not done
+
+- The Playwright run at 1280px and 390px with saved screenshots is NOT done: React and Vite cannot be installed in this sandbox and the app needs Supabase sign-in. Needs to be run on the owner's machine.
+- The UI itself has not been rendered or clicked through anywhere yet. Syntax and the lint rules that can run here pass; CI runs the build.
+- A lane effect closes one direction only; there is no "both directions" shortcut.
+
 ## Day 3: 2026-11-24 (started early), Crisis simulation backend (in progress)
 
 ### Completed (PR from `feat/day3-scenarios`)

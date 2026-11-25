@@ -26,3 +26,7 @@ A route is saved to `route_results` only when one exists (`rerouted`, `unaffecte
 Audit actions: `scenario.created`, `scenario.updated`, `scenario.deleted`, `scenario.effect_added`, `scenario.effect_removed`, `scenario.simulated`.
 
 `isActive` is stored for the UI. Simulating does not depend on it.
+
+## Choosing what to close: `GET /api/ports/network`
+
+Read only. Returns `{ ports, lanes }` with database ids, which the scenario routes need. `ports` is `[{ id, code, name, country, lat, lon }]`. `lanes` is `[{ id, from, to, distanceKm, transitDays, freightCostUsd, riskScore }]`, where `from` and `to` are port codes. Lanes are directed, so a two-way connection appears twice.
