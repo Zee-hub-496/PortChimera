@@ -1,6 +1,6 @@
 # Design: protecting `shipments.status` in the database
 
-Status: **Option A approved by the owner on 2026-11-23. Not implemented yet.** Planned to ship on Day 6 (Nov 28).
+Status: **Option A approved by the owner on 2026-11-23. Implemented on Day 6 (migration `0004_protect_shipment_status.sql`), pending the owner's real-database checks.**
 Written on Day 1 (2026-11-22 session).
 
 ## The problem

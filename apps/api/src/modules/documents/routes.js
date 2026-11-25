@@ -70,5 +70,6 @@ export function documentsRouter({ env, logger = console } = {}) {
   router.get('/:id/download', h.download);
   router.post('/:id/process', strictLimiter(), h.process);
   router.put('/:id/review', h.review);
+  router.delete('/:id', h.remove);
   return router;
 }

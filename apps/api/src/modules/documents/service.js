@@ -116,6 +116,82 @@ export async function uploadDocument(
   return toDocumentView(row);
 }
 
+/**
+ * Deletes a document and everything built from it: the stored file, its extraction, its line
+ * items, and the cross-check findings that compare it. The shipment's cross-check summary is
+ * cleared (the saved check no longer matches), and the status is derived again.
+ *
+ * Order: file first, then rows, so no file is left without a row. If a later step fails the
+ * request errors and can simply be repeated: every step is safe to run twice (removing a missing
+ * file is not an error). The audit entry is written last, after the document is gone.
+ *
+ * Findings are removed whatever their review state, because a decision about a document that no
+ * longer exists cannot be acted on; the audit log keeps the history.
+ *
+ * @param {boolean} isActive true when an extraction job for this document runs in this process
+ */
+export async function deleteDocument(db, userId, id, { isActive = false, logger = console } = {}) {
+  const row = await getDocumentRow(db, userId, id);
+  if (isActive || row.processing_status === 'processing') {
+    throw new AppError(
+      409,
+      'DOCUMENT_BUSY',
+      'This document is being read right now. Wait for it to finish, then delete it.',
+    );
+  }
+  const fail = (code) => new AppError(500, code, 'Could not delete the document');
+
+  const { error: fileError } = await db.storage.from(BUCKET).remove([row.storage_path]);
+  if (fileError) throw fail('DOCUMENT_FILE_DELETE_FAILED');
+
+  const { error: itemError } = await db
+    .from('line_items')
+    .delete()
+    .eq('shipment_id', row.shipment_id)
+    .eq('source_document_id', id);
+  if (itemError) throw fail('DOCUMENT_DELETE_FAILED');
+
+  const { data: findings, error: findingError } = await db
+    .from('discrepancies')
+    .select('id, document_values')
+    .eq('shipment_id', row.shipment_id);
+  if (findingError) throw fail('DOCUMENT_DELETE_FAILED');
+  const staleIds = (findings ?? [])
+    .filter((f) => Object.keys(f.document_values ?? {}).includes(row.document_type))
+    .map((f) => f.id);
+  if (staleIds.length > 0) {
+    const { error } = await db.from('discrepancies').delete().in('id', staleIds);
+    if (error) throw fail('DOCUMENT_DELETE_FAILED');
+  }
+
+  const { error: summaryError } = await db
+    .from('shipments')
+    .update({ cross_check_summary: null, cross_checked_at: null })
+    .eq('id', row.shipment_id);
+  if (summaryError) throw fail('DOCUMENT_DELETE_FAILED');
+
+  // The extraction row goes with it (on delete cascade).
+  const { error: docError } = await db.from('documents').delete().eq('id', id);
+  if (docError) throw fail('DOCUMENT_DELETE_FAILED');
+
+  await auditSafely(
+    db,
+    {
+      userId,
+      shipmentId: row.shipment_id,
+      action: 'document.deleted',
+      details: {
+        documentId: id,
+        documentType: row.document_type,
+        findingsRemoved: staleIds.length,
+      },
+    },
+    logger,
+  );
+  await syncShipmentStatus(db, userId, row.shipment_id, logger);
+  return { id };
+}
+
 /** A document that says "processing" with no live job in this process, for longer than this. */
 export const STALE_PROCESSING_MS = 120_000;
 export const INTERRUPTED_MESSAGE = 'Processing was interrupted. Please try again.';

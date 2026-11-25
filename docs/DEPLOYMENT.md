@@ -22,7 +22,7 @@ Run `supabase/migrations/0003_documents_processing_started_at.sql` in Supabase >
    - `SUPABASE_URL`, `SUPABASE_ANON_KEY` (Supabase > Project Settings > API).
    - `GEMINI_API_KEY` and `GEMINI_MODEL` (use `gemini-3.5-flash-lite`).
    - `CORS_ORIGIN`: put a placeholder such as `http://localhost:5173` now, change it in step 3.
-3. Do not set `SUPABASE_SERVICE_ROLE_KEY` yet. It is only needed from Day 6 (status protection).
+3. Set `SUPABASE_SERVICE_ROLE_KEY` (Supabase, Project Settings, API, `service_role`). The API refuses to start in production without it, because shipment status is written with it (migration 0004). Server only: never in Vercel, never in a `VITE_` variable.
 4. Deploy. The API refuses to start in production if `SUPABASE_URL`, `SUPABASE_ANON_KEY` or `CORS_ORIGIN` is missing; the deploy log names the variable.
 5. Note the service URL, for example `https://portchimera-api.onrender.com`.
 

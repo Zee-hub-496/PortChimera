@@ -5,6 +5,13 @@ import { getShipmentRow } from './service.js';
 /** Statuses a person set. The derivation never overwrites them. */
 const HUMAN_STATUSES = ['cleared'];
 
+// The client that may write `shipments.status` (service role, set once at startup by server.js).
+// When none is set (tests, local runs before migration 0004) the caller's own client is used.
+let statusWriter = null;
+export function setStatusWriter(client) {
+  statusWriter = client ?? null;
+}
+
 /** The documents and findings that decide a shipment's status. Throws on a database error. */
 export async function loadFacts(db, shipmentId) {
   const { data: docs, error: docError } = await db
@@ -66,7 +73,8 @@ export async function syncShipmentStatus(db, userId, shipmentId, logger = consol
     });
     if (next === shipment.status) return next;
 
-    const { error } = await db
+    // Ownership was checked above with the user's own client; only this one write is elevated.
+    const { error } = await (statusWriter ?? db)
       .from('shipments')
       .update({ status: next })
       .eq('id', shipmentId)

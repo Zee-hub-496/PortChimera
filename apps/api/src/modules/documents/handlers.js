@@ -3,6 +3,7 @@ import { runJob as defaultRunJob } from './processJob.js';
 import {
   BUCKET,
   createDownloadUrl,
+  deleteDocument,
   getDocumentDetail,
   listDocuments,
   markProcessing,
@@ -133,6 +134,11 @@ export function documentHandlers({
         .catch((err) => logger.error('document_job_crashed', { reason: err?.message }))
         .finally(() => activeJobs.delete(id));
       res.status(202).json({ data: { id: doc.id, processingStatus: 'processing' } });
+    },
+    async remove(req, res) {
+      const id = parseId(req.params.id);
+      const isActive = activeJobs.has(id);
+      res.json({ data: await deleteDocument(req.db, req.auth.userId, id, { isActive, logger }) });
     },
     async review(req, res) {
       const id = parseId(req.params.id);

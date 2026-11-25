@@ -39,6 +39,38 @@ Plan reference: `docs/PORTCHIMERA_EXECUTION_PLAYBOOK.md`.
 
 ---
 
+## Day 6: 2026-11-25 (started early), Database security and document lifecycle (in progress)
+
+Branch `feat/day6-db-security`. Nothing here has run against a real Supabase project yet.
+
+### Completed (code written; sandbox tests only)
+
+- Migration `0004_protect_shipment_status.sql`: trigger `shipments_protect_status` rejects a change of `status` (and an insert with a status other than `submitted`) when the session role is `authenticated` or `anon`. `service_role` and the SQL Editor (`postgres`) are allowed. Rollback is in the file.
+- API: `createStatusWriterClient` (service-role key) in `config/supabase.js`, used only by `syncShipmentStatus` for the single `update({ status })`; ownership is still checked first with the user's client. `server.js` sets it at startup. In production the API now refuses to start without `SUPABASE_SERVICE_ROLE_KEY`.
+- `DELETE /api/documents/:id`: removes the stored file first, then line items from that document (the foreign key would only null them), the findings that compare that document type (any review state), clears the shipment's cross-check summary, deletes the document (extraction cascades), audits `document.deleted`, re-derives status. 409 while the document is being read. Safe to repeat after a failure.
+- `supabase/checks/day6_security_checks.sql` (database checks, PASS/FAIL lines) and `docs/DAY6_SECURITY_TEST.md` (REST, Storage and app checks with two accounts, PowerShell).
+
+### Tests performed
+
+- `apps/api/test/documentDelete.test.js`: 8 tests, pass (delete cascade, other user gets 404 and nothing changes, busy document, storage failure keeps the row, repeat after failure, status written through the writer and never by the signed-in client, no writer call for someone else's shipment).
+- Existing status sync (10), documents API (53), cross-check API (23), audit (5) still pass. `prettier --check` and `scan:secrets` pass.
+- NOT run: suites that need zod/express (including the new `envProduction` test for the service key), eslint, a browser, and anything against a real database. The trigger SQL and the SQL checks are unexecuted.
+
+### Open decision (needs the owner)
+
+Option A only protects `status`. The API writes every other table as the signed-in user, so a user can still, through REST, set `documents.processing_status`, `discrepancies.review_status`, `shipments.cross_checked_at` and insert any `audit_logs` row of their own. Closing that means moving those writes to the service-role client (or SQL functions), which widens the service-key use beyond the approved "status only". Options: (1) accept for the hackathon and document it; (2) move cross-check, decision and review writes server-side. Not done.
+
+### Not done
+
+- Replace document (optional in the plan). No web button for delete yet (API only).
+- Tighter policies on `documents`, `document_extractions`, `discrepancies`, `audit_logs` (see open decision).
+
+### Next session's starting point
+
+Owner runs `docs/DAY6_SECURITY_TEST.md` and reports the output; then decide the open question above.
+
+---
+
 ## Day 5: 2026-11-24 (started early), Document intelligence and cross-checking
 
 Two PRs. Each fix started with a failing test.
