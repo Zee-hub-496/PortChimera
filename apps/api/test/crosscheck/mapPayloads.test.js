@@ -4,6 +4,7 @@ import { crossCheck } from '../../../../packages/core/src/index.js';
 import { mapReviewedPayloads } from '../../src/modules/crosscheck/mapPayloads.js';
 import { planRerun, findingToRow } from '../../src/modules/crosscheck/discrepancyView.js';
 import { demoRows } from '../helpers/crosscheckPayloads.js';
+import { field } from '../helpers/plainParser.js';
 
 describe('mapReviewedPayloads', () => {
   it('turns the consistent demo set into zero findings', () => {
@@ -129,5 +130,49 @@ describe('planRerun', () => {
     assert.equal('netWeight' in doc, false);
     const { findings } = crossCheck(mapReviewedPayloads(rows));
     assert.deepEqual(findings, []);
+  });
+
+  it('maps the invoice date and itemized charges, and the invoice date on the other documents', () => {
+    const rows = demoRows();
+    const inv = rows.find((r) => r.document_type === 'commercial_invoice').reviewed_payload;
+    inv.fields.freight_charges = field('400.00');
+    inv.fields.insurance_charges = field('100.00');
+    inv.fields.tax_amount = field('0');
+    inv.fields.discount_amount = field('50');
+    const pl = rows.find((r) => r.document_type === 'packing_list').reviewed_payload;
+    pl.fields.invoice_date = field('2025-04-02');
+    const co = rows.find((r) => r.document_type === 'certificate_of_origin').reviewed_payload;
+    co.fields.invoice_date = field('2 April 2025');
+    const docs = mapReviewedPayloads(rows);
+    assert.equal(docs.commercial_invoice.invoiceDate, '2025-04-02');
+    assert.equal(docs.commercial_invoice.freightCharges, '400.00');
+    assert.equal(docs.commercial_invoice.insuranceCharges, '100.00');
+    assert.equal(docs.commercial_invoice.taxAmount, '0');
+    assert.equal(docs.commercial_invoice.discountAmount, '50');
+    assert.equal(docs.packing_list.invoiceDate, '2025-04-02');
+    assert.equal(docs.certificate_of_origin.invoiceDate, '2 April 2025');
+  });
+
+  it('accepts an invoice total that is the lines plus the itemized charges (no false finding)', () => {
+    const rows = demoRows();
+    const inv = rows.find((r) => r.document_type === 'commercial_invoice').reviewed_payload;
+    inv.fields.freight_charges = field('400.00');
+    inv.fields.insurance_charges = field('100.00');
+    inv.fields.total_value = field('11000.00'); // 10500 in lines + 400 + 100
+    const { findings } = crossCheck(mapReviewedPayloads(rows));
+    assert.equal(
+      findings.find((f) => f.field === 'invoiceTotalVsLines'),
+      undefined,
+    );
+  });
+
+  it('flags a date that differs between the invoice and the packing list', () => {
+    const rows = demoRows();
+    rows.find((r) => r.document_type === 'packing_list').reviewed_payload.fields.invoice_date =
+      field('2025-04-09');
+    const { findings } = crossCheck(mapReviewedPayloads(rows));
+    const f = findings.find((x) => x.field === 'invoiceDate');
+    assert.ok(f);
+    assert.equal(f.severity, 'medium');
   });
 });

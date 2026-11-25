@@ -1,7 +1,7 @@
 import { AppError } from '../../middleware/errorHandler.js';
 import { auditSafely } from '../documents/service.js';
 import { getShipmentRow } from '../shipments/service.js';
-import { syncShipmentStatus } from '../shipments/statusSync.js';
+import { loadFacts, syncShipmentStatus } from '../shipments/statusSync.js';
 import { findingToRow, planRerun, toDiscrepancyView } from './discrepancyView.js';
 import { mapReviewedPayloads } from './mapPayloads.js';
 
@@ -62,11 +62,35 @@ function storedSummary(shipment) {
   return shipment.cross_check_summary ?? null;
 }
 
-async function view(db, shipment) {
+/**
+ * Is the stored check out of date (a review changed after it ran)? `null` when that could not be
+ * worked out; the findings are still shown. `engine` is `{ isCrossCheckStale }` from core.
+ */
+async function staleness(db, shipment, engine, logger) {
+  const summary = storedSummary(shipment);
+  if (!summary) return false;
+  try {
+    const { documents } = await loadFacts(db, shipment.id);
+    return engine.isCrossCheckStale({
+      documents,
+      crossCheckedAt: shipment.cross_checked_at ?? null,
+      comparedTypes: summary.documentsCompared ?? null,
+    });
+  } catch (err) {
+    logger.error('crosscheck_stale_check_failed', {
+      shipmentId: shipment.id,
+      reason: err?.message,
+    });
+    return null;
+  }
+}
+
+async function view(db, shipment, engine, logger) {
   return {
     discrepancies: (await loadStored(db, shipment.id)).map(toDiscrepancyView),
     summary: storedSummary(shipment),
     checkedAt: shipment.cross_checked_at ?? null,
+    stale: await staleness(db, shipment, engine, logger),
   };
 }
 
@@ -126,11 +150,16 @@ export async function runCrossCheck(db, userId, shipmentId, engine, logger = con
     logger,
   );
   await syncShipmentStatus(db, userId, shipmentId, logger);
-  return view(db, { ...shipment, cross_check_summary: summary, cross_checked_at: checkedAt });
+  return view(
+    db,
+    { ...shipment, cross_check_summary: summary, cross_checked_at: checkedAt },
+    engine,
+    logger,
+  );
 }
 
-export async function listDiscrepancies(db, userId, shipmentId) {
-  return view(db, await requireShipment(db, userId, shipmentId));
+export async function listDiscrepancies(db, userId, shipmentId, engine, logger = console) {
+  return view(db, await requireShipment(db, userId, shipmentId), engine, logger);
 }
 
 /** Records the user's decision on one discrepancy. */

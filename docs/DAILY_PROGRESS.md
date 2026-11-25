@@ -39,6 +39,37 @@ Plan reference: `docs/PORTCHIMERA_EXECUTION_PLAYBOOK.md`.
 
 ---
 
+## Day 5: 2026-11-24 (started early), Document intelligence and cross-checking
+
+Two PRs. Each fix started with a failing test.
+
+### Completed
+
+PR 1 (core, #28): cross-checker false positives.
+
+- Country aliases (Deutschland, Italia, Espana, Nederland, P.R. China; accents folded). Different countries still high.
+- Ambiguous numbers (1.234 vs 1,234): compared under every reading; no finding when any reading agrees, a high finding with a note when none do. `500,000 g` vs `500 kg` still matches.
+- One product listed on several lines of one document is added up before comparing. A real quantity gap is still found.
+- Invoice total = lines + itemized freight, insurance, tax - discount. Without itemized charges a gap is medium and says it may be freight etc. (it was high). With itemized charges it stays high.
+- Invoice date compared across documents (numeric dates read both ways).
+
+PR 2 (this branch): extraction fields, evidence, UI, stale check.
+
+- Schema version 3: optional `freight_charges`, `insurance_charges`, `tax_amount`, `discount_amount` on the invoice, optional `invoice_date` on the packing list and certificate. Mapped into the cross-check. Prompt gives a one-line meaning for each.
+- Evidence now has to show the value, not just exist: `evidence_verified: 'unsupported_value'` when the quote is in the document but does not contain the value (formatting, dates, countries and currencies are tolerated). Status becomes uncertain, confidence at most 0.5. The review screen says "The quote is in the document but does not show this value".
+- Stale cross-check: `GET /shipments/:id/discrepancies` and the run response return `stale`. True when a review was saved after the run or the approved set changed. The Cross-check page shows a warning and the run button. `isCrossCheckStale` is in core.
+
+### Behaviour changes to know about
+
+- `invoiceTotalVsLines` without itemized charges is medium, not high.
+- Documents extracted before this change have schema version 2; they still work, the cache just will not reuse them (a re-run reads the new fields).
+
+### Not done
+
+- The review screen shows no totals arithmetic hint.
+- A lane/weight unit conversion by the AI (for example 0.45 tonnes written as 450 kg) is flagged as unsupported, on purpose.
+- Not run here: zod and Express based tests (no packages in the sandbox), full lint, the UI in a browser. CI runs them.
+
 ## Day 4: 2026-11-24 (started early), Crisis simulation frontend (in progress)
 
 ### Completed (PR from `feat/day4-scenario-ui`)

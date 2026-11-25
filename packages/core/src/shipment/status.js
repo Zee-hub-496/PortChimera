@@ -80,3 +80,26 @@ export function deriveShipmentStatus({ documents, discrepancies, crossCheckedAt 
   if (discrepancies.some((f) => f.reviewStatus === 'open')) return 'requires_review';
   return 'ai_pre_cleared';
 }
+
+/**
+ * Is the stored cross-check out of date? True when a review was saved after the check ran, or
+ * when the set of approved documents is no longer the set the check compared (one approval was
+ * taken back, or a new document was approved). False before any check ran: that is "not run".
+ *
+ * @param {object} input
+ * @param {Array<{documentType: string, processingStatus: string, reviewedAt?: string|null}>} input.documents
+ * @param {string|null} input.crossCheckedAt ISO time of the latest cross-check, or null
+ * @param {string[]|null} [input.comparedTypes] document types the check compared; null skips that test
+ */
+export function isCrossCheckStale({ documents, crossCheckedAt, comparedTypes = null }) {
+  const checkedAt = toTime(crossCheckedAt);
+  if (checkedAt === null || !Array.isArray(documents)) return false;
+  const reviewed = documents.filter((d) => d?.processingStatus === 'reviewed');
+  if (reviewed.some((d) => (toTime(d.reviewedAt) ?? 0) > checkedAt)) return true;
+  if (Array.isArray(comparedTypes)) {
+    const now = new Set(reviewed.map((d) => d.documentType));
+    if (comparedTypes.some((t) => !now.has(t))) return true;
+    if ([...now].some((t) => !comparedTypes.includes(t))) return true;
+  }
+  return false;
+}
