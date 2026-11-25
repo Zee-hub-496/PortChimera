@@ -34,8 +34,8 @@ export const CAPABILITIES = Object.freeze([
     id: 'crisis',
     icon: 'ShieldAlert',
     title: 'Crisis rerouting',
-    body: 'Rerouting around a port strike is built in the routing core. The screen for it is not in the app yet.',
-    status: 'coming soon',
+    body: "Close a port or a shipping lane on a shipment's route page and see the rerouted path, with time, cost and risk before and after.",
+    status: 'available',
   },
   {
     id: 'security',
@@ -66,7 +66,7 @@ export const HOW_IT_WORKS = Object.freeze([
     icon: 'Ship',
     title: 'Reroute around port strikes',
     body: 'Plan another sea route when a port is disrupted.',
-    note: 'UI coming soon',
+    note: null,
   },
 ]);
 

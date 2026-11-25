@@ -35,8 +35,6 @@ const NAV_ITEMS = [
   { to: '/settings', label: 'Settings', Icon: Settings },
 ];
 
-const COMING_SOON = ['Crisis simulation', 'Customs estimates'];
-
 // Shipment pages report their number here so breadcrumbs can show it instead of the id.
 const ShipmentNamesContext = createContext({ names: {}, remember: () => {} });
 
@@ -75,24 +73,6 @@ function SidebarNav({ collapsed, onNavigate }) {
           {!collapsed && <span>{label}</span>}
         </NavLink>
       ))}
-      {!collapsed && (
-        <div className="mt-4 border-t border-line pt-3">
-          <p className="px-3 pb-1 text-xs font-bold uppercase tracking-wide text-muted">
-            Coming soon
-          </p>
-          <ul>
-            {COMING_SOON.map((label) => (
-              <li
-                key={label}
-                aria-disabled="true"
-                className="cursor-not-allowed px-3 py-1.5 text-sm text-muted opacity-60"
-              >
-                {label}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
     </nav>
   );
 }
