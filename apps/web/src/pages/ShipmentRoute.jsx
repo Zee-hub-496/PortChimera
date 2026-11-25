@@ -3,10 +3,14 @@ import { useOutletContext, useParams } from 'react-router-dom';
 import { Clock, DollarSign, ShieldAlert } from 'lucide-react';
 import { apiGet, apiPost } from '../lib/api.js';
 import { formatRoute, ILLUSTRATIVE_NOTICE, OBJECTIVE_LABELS } from '../lib/routeView.js';
+import { indexNetwork, overlayFor } from '../lib/scenarioView.js';
 import MaritimeMapLazy from '../components/MaritimeMapLazy.jsx';
+import ScenarioPanel from '../components/ScenarioPanel.jsx';
+import SimulationSummary from '../components/SimulationSummary.jsx';
 import { Card, ErrorState, PageHeader, Skeleton } from '../components/ui.jsx';
 
 const STAT_ICONS = { days: Clock, cost: DollarSign, risk: ShieldAlert };
+const NO_SCENARIO = { simulation: null, effects: [], simulating: false };
 
 // The API sends lat and lon for each stop. Fall back to the port list by code if one is missing.
 function stopsWithCoordinates(path, ports) {
@@ -27,15 +31,17 @@ function stopsWithCoordinates(path, ports) {
 export default function ShipmentRoute() {
   const { id } = useParams();
   const { shipment } = useOutletContext(); // loaded once by ShipmentLayout
-  const [ports, setPorts] = useState([]);
+  const [network, setNetwork] = useState(null);
   const [objective, setObjective] = useState('fastest');
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  // Filled in by the scenario panel: the latest simulation and the closures behind it.
+  const [scenario, setScenario] = useState(NO_SCENARIO);
 
   useEffect(() => {
-    apiGet('/api/ports')
-      .then(setPorts)
+    apiGet('/api/ports/network')
+      .then(setNetwork)
       .catch((err) => setError(err.message));
   }, []);
 
@@ -53,12 +59,23 @@ export default function ShipmentRoute() {
     };
   }, [shipment, id, objective]);
 
+  const ports = useMemo(() => network?.ports ?? [], [network]);
+  const index = useMemo(() => indexNetwork(network), [network]);
   const stops = useMemo(() => stopsWithCoordinates(result?.path ?? [], ports), [result, ports]);
   const view = result ? formatRoute(result) : null;
+  const overlay = useMemo(
+    () => overlayFor(scenario.simulation, scenario.effects, index),
+    [scenario, index],
+  );
+  const pathCodes = useMemo(() => (result?.path ?? []).map((p) => p.code), [result]);
+  const simulating = scenario.simulation !== null;
 
   return (
     <div className="flex max-w-4xl flex-col gap-6">
-      <PageHeader title="Route" description="An illustrative route between the two ports." />
+      <PageHeader
+        title="Route"
+        description="An illustrative route between the two ports. Close a port or lane below to see how it would change."
+      />
       <p className="rounded-lg bg-warn-soft p-2 text-sm text-warn">{ILLUSTRATIVE_NOTICE}</p>
 
       <div role="radiogroup" aria-label="Optimize for" className="flex flex-col gap-1 text-sm">
@@ -84,7 +101,24 @@ export default function ShipmentRoute() {
       {error && <ErrorState message={error} />}
       {busy && <Skeleton className="h-40" />}
 
-      {view && !busy && (
+      {simulating && (
+        <SimulationSummary simulation={scenario.simulation} stale={scenario.simulating} />
+      )}
+
+      {simulating && (
+        <MaritimeMapLazy
+          ports={overlay.ports}
+          routes={overlay.routes}
+          disruptedCodes={overlay.disruptedCodes}
+          highlightCodes={overlay.endpoints}
+          animateRoute
+          height={380}
+          fit="route"
+          ariaLabel={`Map of the original route and, if it changed, the rerouted route. ${scenario.simulation.explanation}`}
+        />
+      )}
+
+      {view && !busy && !simulating && (
         <section className="flex flex-col gap-4">
           {!view.found && <p className="text-muted">{view.message}</p>}
           {view.found && (
@@ -133,6 +167,16 @@ export default function ShipmentRoute() {
           )}
           {view.notice && <p className="text-xs text-muted">{view.notice}</p>}
         </section>
+      )}
+
+      {network && shipment && result?.status === 'found' && (
+        <ScenarioPanel
+          shipmentId={id}
+          objective={objective}
+          network={network}
+          pathCodes={pathCodes}
+          onResult={setScenario}
+        />
       )}
     </div>
   );
