@@ -172,11 +172,10 @@ export default function Dashboard() {
               <Card className="p-4">
                 <div className="flex items-center justify-between gap-2">
                   <h2 className="text-base font-bold">Crisis simulation</h2>
-                  <Badge tone="info">Coming soon</Badge>
+                  <Badge tone="success">Available</Badge>
                 </div>
                 <p className="mt-2 text-sm text-muted">
-                  The rerouting logic exists in the core library. The screen to run a port strike
-                  scenario is not built yet.
+                  Open a shipment's route page to close a port or lane and see the rerouted path.
                 </p>
               </Card>
             </aside>

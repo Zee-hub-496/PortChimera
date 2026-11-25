@@ -222,11 +222,11 @@ function RouteIntelligenceBand() {
           </h2>
           <p className="mt-3 text-muted">
             A* pathfinding searches a graph of seeded ports and shipping lanes. It returns the
-            fastest, cheapest and lowest-risk options so you can compare the trade-offs. Rerouting
-            around a port strike is built in the routing core. Its screen is coming soon.
+            fastest, cheapest and lowest-risk options so you can compare the trade-offs. Close a
+            port or lane on a shipment's route page to see how the route changes.
           </p>
           <div className="mt-4">
-            <Badge tone="warn">Crisis rerouting UI coming soon</Badge>
+            <Badge tone="success">Crisis rerouting available</Badge>
           </div>
         </Reveal>
         <Reveal delay={0.1} className="lg:order-1">

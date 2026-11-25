@@ -9,9 +9,9 @@ describe('siteContent', () => {
   it('uses only known statuses', () => {
     for (const c of content.CAPABILITIES) assert.ok(content.STATUSES.includes(c.status), c.id);
   });
-  it('marks crisis rerouting as coming soon', () => {
-    assert.equal(content.CAPABILITIES.find((c) => c.id === 'crisis').status, 'coming soon');
-    assert.equal(content.HOW_IT_WORKS[2].note, 'UI coming soon');
+  it('marks crisis rerouting as available, with no coming-soon wording', () => {
+    assert.equal(content.CAPABILITIES.find((c) => c.id === 'crisis').status, 'available');
+    assert.equal(content.HOW_IT_WORKS[2].note, null);
   });
   it('has three ordered steps and the four nav links', () => {
     assert.deepEqual(
