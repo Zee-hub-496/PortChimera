@@ -64,6 +64,12 @@ Tracked here so they are not lost. Do not treat the sprint as finished until eac
 - Feature freeze: from the moment the checklist passes, only bug fixes. Remaining open items are listed under "Pending".
 - Open bug: Leaflet `Cannot read properties of undefined (reading 'save')` in the console (not reproduced; no visible effect).
 
+### Day 8 close-out (2026-11-25)
+
+- Owner reported "all passed" for `docs/E2E_CHECKLIST.md`. The individual results were not written into the checklist, and it was not stated whether the two-user security steps (S1 to S6) were included. Until the Day 6 steps are done, treat S1 to S6 as not verified.
+- Release candidate tagged: `v0.1.0-rc1` on `main` at `7daa36e`, CI green on that commit. Environment: local only, not deployed.
+- Feature freeze is now in effect: bug fixes only.
+
 ### Next session's starting point
 
 Owner runs `docs/E2E_CHECKLIST.md` locally and reports failures. Fix P0 and P1 failures only. Then do the pending Day 6 steps and the host for the API, tag the release candidate, and start the Dec 1 packaging plan.
