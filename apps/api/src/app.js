@@ -9,6 +9,7 @@ import { authRouter } from './modules/auth/routes.js';
 import { shipmentsRouter } from './modules/shipments/routes.js';
 import { portsRouter } from './modules/ports/routes.js';
 import { routesRouter } from './modules/routes/routes.js';
+import { scenariosRouter } from './modules/scenarios/routes.js';
 import { documentsRouter, shipmentDocumentsRouter } from './modules/documents/routes.js';
 import { discrepanciesRouter, shipmentCrossCheckRouter } from './modules/crosscheck/routes.js';
 
@@ -63,6 +64,7 @@ export function createApp(env, { logger = console, auth = null, rateLimitMax = 1
       shipments: shipmentsRouter,
       ports: portsRouter,
       routes: routesRouter,
+      scenarios: () => scenariosRouter({ logger }),
       shipmentDocuments: () => shipmentDocumentsRouter({ env, logger }),
       documents: () => documentsRouter({ env, logger }),
       shipmentCrossCheck: () => shipmentCrossCheckRouter({ logger }),
