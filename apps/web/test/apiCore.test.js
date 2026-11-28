@@ -40,3 +40,13 @@ describe('parseEnvelope', () => {
     );
   });
 });
+
+describe('healthUrl', () => {
+  it('builds the health URL and tolerates a trailing slash or an empty base', async () => {
+    const { healthUrl } = await import('../src/lib/apiCore.js');
+    assert.equal(healthUrl('https://api.example.test'), 'https://api.example.test/api/health');
+    assert.equal(healthUrl('https://api.example.test/'), 'https://api.example.test/api/health');
+    assert.equal(healthUrl(''), '/api/health');
+    assert.equal(healthUrl(undefined), '/api/health');
+  });
+});

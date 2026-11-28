@@ -23,6 +23,11 @@ export function buildUploadHeaders(accessToken, mimeType, filename) {
   return headers;
 }
 
+/** URL of the API health check, from the API base URL (which may be empty, meaning same origin). */
+export function healthUrl(baseUrl) {
+  return `${String(baseUrl ?? '').replace(/\/+$/, '')}/api/health`;
+}
+
 /** Error thrown for any non-2xx response. `status` and `code` come from the API envelope. */
 export class ApiError extends Error {
   constructor(status, code, message) {
