@@ -63,9 +63,7 @@ function SidebarNav({ collapsed, onNavigate }) {
           aria-label={collapsed ? label : undefined}
           className={({ isActive }) =>
             `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-              isActive
-                ? 'bg-accent-soft text-accent'
-                : 'text-muted hover:bg-surface-2 hover:text-fg'
+              isActive ? 'bg-surface-2 text-fg' : 'text-muted hover:bg-surface-2 hover:text-fg'
             } ${collapsed ? 'justify-center' : ''}`
           }
         >

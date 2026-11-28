@@ -3,57 +3,58 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* Semantic tokens. Light is the default; .dark on <html> switches them. */
-/* Neutral greys with one blue accent. Contrast of every text pair is checked by test/themeContrast.test.js. */
+/* Monochrome, in the style of Vercel's Geist: near-white and near-black, grey lines, one blue accent.
+   Contrast of every text pair is checked by test/themeContrast.test.js. */
 :root {
   color-scheme: light;
-  --canvas: #f7f8fa;
+  --canvas: #fafafa;
   --surface: #ffffff;
-  --surface-2: #f1f3f6;
-  --fg: #101828;
-  --muted: #536073;
-  --line: #e4e7ec;
-  --brand: #0f172a;
+  --surface-2: #f4f4f5;
+  --fg: #171717;
+  --muted: #666666;
+  --line: #e5e5e5;
+  --brand: #171717;
   --brand-fg: #ffffff;
-  --accent: #1d4ed8;
+  --accent: #0060df;
   --accent-fg: #ffffff;
-  --accent-soft: #e8efff;
-  --success: #166534;
-  --success-soft: #e3f6e9;
-  --warn: #9a5b06;
-  --warn-soft: #fdf1d8;
-  --danger: #b42318;
-  --danger-soft: #fde8e6;
-  --info: #1d5fb4;
-  --info-soft: #e6effa;
-  --shadow-card: 0 1px 2px rgb(16 24 40 / 0.05);
-  --shadow-pop: 0 12px 32px rgb(16 24 40 / 0.14), 0 2px 6px rgb(16 24 40 / 0.06);
-  --grid-line: rgb(16 24 40 / 0.04);
+  --accent-soft: #ebf3ff;
+  --success: #12703a;
+  --success-soft: #e6f6ec;
+  --warn: #8a5300;
+  --warn-soft: #fff3d6;
+  --danger: #c4281c;
+  --danger-soft: #ffe9e7;
+  --info: #0060df;
+  --info-soft: #ebf3ff;
+  --shadow-card: 0 0 0 1px rgb(0 0 0 / 0.02), 0 1px 2px rgb(0 0 0 / 0.04);
+  --shadow-pop: 0 8px 30px rgb(0 0 0 / 0.12), 0 0 0 1px rgb(0 0 0 / 0.04);
+  --grid-line: rgb(0 0 0 / 0.04);
 }
 
 .dark {
   color-scheme: dark;
-  --canvas: #0c0f14;
-  --surface: #12161d;
-  --surface-2: #1a1f28;
-  --fg: #e7eaf0;
-  --muted: #98a2b3;
-  --line: #262c37;
-  --brand: #e7eaf0;
-  --brand-fg: #0c0f14;
-  --accent: #6c9bff;
-  --accent-fg: #0b1220;
-  --accent-soft: #172444;
+  --canvas: #000000;
+  --surface: #0a0a0a;
+  --surface-2: #141414;
+  --fg: #ededed;
+  --muted: #a1a1a1;
+  --line: #2e2e2e;
+  --brand: #ededed;
+  --brand-fg: #000000;
+  --accent: #52a8ff;
+  --accent-fg: #000000;
+  --accent-soft: #0b2545;
   --success: #4ade80;
-  --success-soft: #10291b;
-  --warn: #f5b942;
-  --warn-soft: #33260b;
-  --danger: #f87171;
-  --danger-soft: #3a1717;
-  --info: #7db1ff;
-  --info-soft: #14284a;
-  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.35);
-  --shadow-pop: 0 12px 32px rgb(0 0 0 / 0.55), 0 2px 6px rgb(0 0 0 / 0.4);
-  --grid-line: rgb(231 234 240 / 0.04);
+  --success-soft: #0a2415;
+  --warn: #f5a524;
+  --warn-soft: #2b1d03;
+  --danger: #ff6369;
+  --danger-soft: #3a1214;
+  --info: #52a8ff;
+  --info-soft: #0b2545;
+  --shadow-card: 0 0 0 1px rgb(255 255 255 / 0.03);
+  --shadow-pop: 0 8px 30px rgb(0 0 0 / 0.7), 0 0 0 1px rgb(255 255 255 / 0.08);
+  --grid-line: rgb(255 255 255 / 0.05);
 }
 
 @theme inline {
@@ -127,7 +128,7 @@ h3 {
 .bg-glow {
   background-image: radial-gradient(
     ellipse 60% 50% at 50% 0%,
-    color-mix(in srgb, var(--accent) 9%, transparent),
+    color-mix(in srgb, var(--accent) 6%, transparent),
     transparent 70%
   );
 }
@@ -162,10 +163,10 @@ h3 {
 
 /* Map. The basemap is drawn on a canvas from bundled land polygons. The sea is the background. */
 :root {
-  --map-sea: linear-gradient(180deg, #e8eef5 0%, #d9e4ef 100%);
+  --map-sea: linear-gradient(180deg, #eef2f6 0%, #e2e8ef 100%);
 }
 .dark {
-  --map-sea: linear-gradient(180deg, #0f1620 0%, #0b111a 100%);
+  --map-sea: linear-gradient(180deg, #0d1218 0%, #080b0f 100%);
 }
 .leaflet-container {
   font-family: var(--font-sans);

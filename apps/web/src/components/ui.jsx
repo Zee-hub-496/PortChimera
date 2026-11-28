@@ -7,7 +7,7 @@ const BUTTON_BASE =
 
 export const BUTTON_VARIANTS = {
   primary:
-    'bg-accent text-accent-fg shadow-sm hover:bg-[color-mix(in_srgb,var(--accent)_88%,black)]',
+    'bg-brand text-brand-fg shadow-sm hover:bg-[color-mix(in_srgb,var(--brand)_82%,var(--canvas))]',
   secondary: 'border border-line bg-surface text-fg shadow-sm hover:bg-surface-2',
   ghost: 'text-muted hover:bg-surface-2 hover:text-fg',
   danger: 'bg-danger text-brand-fg shadow-sm hover:brightness-110',
