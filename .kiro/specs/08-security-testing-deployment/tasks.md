@@ -7,10 +7,15 @@
 - [ ] 4. Upload hardening tests (R2.2)
 - [ ] 5. Stricter rate limits on upload and AI routes + tests (R4.1)
 - [ ] 6. Bundle secret check after `vite build` (R3.3)
-- [ ] 7. Two-user RLS verification on a real Supabase project; record result in `docs/DATABASE.md` (R1.2)
-- [ ] 8. Deploy API and web; set env vars; record cold-start behaviour (R6)
-- [ ] 9. README with honest limitations (R7.1, R8)
-- [ ] 10. `docs/KIRO_USAGE.md`, kept up to date from day one (R7.2)
-- [ ] 11. `docs/DEMO.md` script and demo accounts with synthetic data (R7.3)
+- [-] 7. Two-user RLS verification on a real Supabase project; record result in `docs/DATABASE.md` (R1.2)
+  - Database-level two-user checks PASS (2026-11-28). HTTP-level REST and Storage checks not run. Result not yet written into `docs/DATABASE.md`.
+- [-] 8. Deploy API and web; set env vars; record cold-start behaviour (R6)
+  - Deployed and smoke-tested. Cold-start behaviour was not measured; keep-alive monitor not confirmed.
+- [x] 9. README with honest limitations (R7.1, R8)
+  - README rewritten with limits and evidence (2026-11-28).
+- [x] 10. `docs/KIRO_USAGE.md`, kept up to date from day one (R7.2)
+  - `docs/KIRO_USAGE.md` kept up to date, with a summary at the top.
+- [-] 11. `docs/DEMO.md` script and demo accounts with synthetic data (R7.3)
+  - `docs/DEMO.md` has the 2:45 script. Demo accounts with seeded data were not created.
 - [ ] 12. Re-read official Devpost rules; settle repository visibility and license (R7.4)
 - [ ] 13. Record demo video and submit one day early

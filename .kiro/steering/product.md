@@ -36,7 +36,7 @@ Out of scope for this sprint: the customs / HS-code and duty module
 jurisdictions, real freight quotes, and a separate crisis analytics page.
 
 Pages today: Landing, Login, Register, Dashboard, Shipments, Shipment detail (Overview, Documents,
-Cross-check, Route tabs), Global Map, Documents, Alerts, Settings. Do not add pages without the
+Cross-check, Route tabs), Global Map, Documents, Alerts, Crisis monitor (all saved crises against all shipments), Settings. Do not add pages without the
 owner's approval.
 
 ## Working agreement
