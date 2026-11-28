@@ -47,6 +47,14 @@ Tracked here so they are not lost. Do not treat the sprint as finished until eac
 2. ~~Render (API deployment).~~ **Done 2026-11-28.** The API runs on Render's free tier at https://portchimera.onrender.com (deployed by hand as a Web Service, no card needed; commit `0c9ad7f`). Vercel `VITE_API_URL` points to it (set as Config, redeployed), Supabase Site URL and Redirect URL are `https://port-chimera.vercel.app`. The owner confirmed the deployed app works (a DEMO-001 shipment with documents reviewed and AI pre-cleared). `SUPABASE_SERVICE_ROLE_KEY` is deliberately NOT set on Render (it is optional until migration 0004 is applied; the API logs a warning at startup). Still to do on the deployed app: the smoke test (`scripts/smoke-test.mjs`) output, the full `docs/E2E_CHECKLIST.md` run, and the rate-limit proxy-hop check in `docs/DEPLOYMENT.md`.
 3. Day 6 leftovers: document replace (optional), a delete button in the web app.
 
+## Crisis monitor page: 2026-11-28
+
+- Owner asked to remove the dashboard "Crisis simulation: Available" card and add a menu item that shows which shipments a crisis affects, the new route, and the extra time and cost, or that no crisis affects any shipment.
+- Built: `GET /api/scenarios/impact` (read-only, reuses `simulateDisruption`, no new algorithm, no schema change, capped at 20 scenarios by 100 shipments), page `/crisis` ("Crisis" in the sidebar below Alerts), search and breadcrumb entries, and removal of the dashboard card. A "crisis" is a scenario the user created on a route page, not live news; the page says so.
+- Tests: 7 API tests with fakes (affected vs unaffected shipment, closed origin, counted once, no other user's data, writes nothing, route order), 5 web helper tests. All tests that load in the sandbox pass. Not run: eslint, build, browser.
+
+---
+
 ## Final audit and packaging: 2026-11-28
 
 - `docs/AUDIT_2026-11-28.md`: feature-by-feature evidence table, contradictions found and fixed (README said migration 0004 was not applied; README claimed an uptime monitor that is not confirmed to exist; "60 lanes" vs 30 two-way lanes), security review (no cross-user hole found; P1 integrity gap S-1 kept and disclosed; HTTP-level checks still to run), owner-only verification list, readiness checklist.

@@ -8,6 +8,7 @@ import PublicLayout from './layouts/PublicLayout.jsx';
 import ShipmentLayout from './layouts/ShipmentLayout.jsx';
 import AlertsHub from './pages/AlertsHub.jsx';
 import CrossCheck from './pages/CrossCheck.jsx';
+import Crisis from './pages/Crisis.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import DocumentsHub from './pages/DocumentsHub.jsx';
 import GlobalMap from './pages/GlobalMap.jsx';
@@ -29,6 +30,7 @@ const TITLES = [
   ['/map', 'Global Map'],
   ['/documents', 'Documents'],
   ['/alerts', 'Alerts'],
+  ['/crisis', 'Crisis monitor'],
   ['/settings', 'Settings'],
 ];
 
@@ -89,6 +91,7 @@ export default function App() {
               <Route path="/map" element={<GlobalMap />} />
               <Route path="/documents" element={<DocumentsHub />} />
               <Route path="/alerts" element={<AlertsHub />} />
+              <Route path="/crisis" element={<Crisis />} />
               <Route path="/settings" element={<Settings />} />
             </Route>
           </Route>

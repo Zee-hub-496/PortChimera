@@ -96,6 +96,12 @@ export function PAGE_ITEMS(isSignedIn) {
       to: '/alerts',
       keywords: ['discrepancies', 'cross-check'],
     },
+    {
+      id: 'page:crisis',
+      label: 'Crisis monitor',
+      to: '/crisis',
+      keywords: ['simulation', 'disruption', 'port strike', 'reroute'],
+    },
     { id: 'page:settings', label: 'Settings', to: '/settings', keywords: ['theme', 'account'] },
   ];
   return (isSignedIn ? app.concat(pub.slice(0, 1)) : pub).map((p) => ({ ...p, group: 'Pages' }));

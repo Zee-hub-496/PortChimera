@@ -1,5 +1,6 @@
 import {
   addEffect,
+  crisisOverview,
   createScenario,
   deleteScenario,
   getScenario,
@@ -23,6 +24,9 @@ export function scenarioHandlers({ parsers, engine, logger = console }) {
       res.status(201).json({
         data: await createScenario(req.db, req.auth.userId, input, engine, logger),
       });
+    },
+    async impact(req, res) {
+      res.json({ data: await crisisOverview(req.db, req.auth.userId, engine, logger) });
     },
     async list(req, res) {
       res.json({ data: await listScenarios(req.db, req.auth.userId) });

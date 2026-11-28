@@ -14,6 +14,7 @@ import {
   Search,
   Settings,
   Ship,
+  ShieldAlert,
   X,
 } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext.jsx';
@@ -32,6 +33,7 @@ const NAV_ITEMS = [
   { to: '/map', label: 'Global Map', Icon: Globe },
   { to: '/documents', label: 'Documents', Icon: FileText },
   { to: '/alerts', label: 'Alerts', Icon: AlertTriangle },
+  { to: '/crisis', label: 'Crisis', Icon: ShieldAlert },
   { to: '/settings', label: 'Settings', Icon: Settings },
 ];
 

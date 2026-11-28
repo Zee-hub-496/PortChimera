@@ -119,6 +119,7 @@ describe('scenario schemas', () => {
       'delete /:id/effects/:effectId',
       'get /',
       'get /:id',
+      'get /impact',
       'patch /:id',
       'post /',
       'post /:id/effects',

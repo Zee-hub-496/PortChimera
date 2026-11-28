@@ -18,5 +18,5 @@ Mutation checks: an overlay that leaves a closed port's lanes in the graph, and 
   - Day 4: `ScenarioPanel.jsx` on the route page (close or reopen a port or lane, switch, delete, reset). Not yet clicked through in a browser by the author.
 - [x] 8. Web: before/after map and table, failure states (R5)
   - Day 4: `SimulationSummary.jsx` and map overlay with all failure states. The Playwright run at 1280px and 390px is NOT done.
-- [-] 9. Dashboard impact cards (R5.3)
-  - Not built. The dashboard has a card that points to the route page, with no impact numbers.
+- [x] 9. Dashboard impact cards (R5.3)
+  - Built as a separate page instead of dashboard cards: `/crisis` (Crisis monitor, `GET /api/scenarios/impact`), listed in the sidebar below Alerts. It shows, per crisis, the affected shipments, the new route and the extra time, cost and risk, or says that no shipment is affected. Not seen in a browser by the author.

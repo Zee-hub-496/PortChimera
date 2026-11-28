@@ -6,6 +6,7 @@ describe('buildBreadcrumbs', () => {
   it('labels top-level pages', () => {
     assert.deepEqual(buildBreadcrumbs('/dashboard'), [{ label: 'Dashboard' }]);
     assert.deepEqual(buildBreadcrumbs('/map'), [{ label: 'Global Map' }]);
+    assert.deepEqual(buildBreadcrumbs('/crisis'), [{ label: 'Crisis monitor' }]);
   });
 
   it('links the parents of a shipment page and resolves the number', () => {

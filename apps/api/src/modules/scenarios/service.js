@@ -423,3 +423,118 @@ export async function simulateScenario(db, userId, scenarioId, input, engine, lo
   );
   return toSimulationView({ scenarioId, shipmentId, result, resultId });
 }
+
+// ---------------------------------------------------------------------------------------------
+// Crisis overview: which of the caller's shipments does any saved scenario disturb?
+// ---------------------------------------------------------------------------------------------
+
+/** Limits keep one account from making the server run thousands of simulations per request. */
+export const OVERVIEW_MAX_SCENARIOS = 20;
+export const OVERVIEW_MAX_SHIPMENTS = 100;
+const OVERVIEW_OBJECTIVE = 'fastest';
+// Outcomes that mean "this crisis changes or blocks the shipment's route".
+const AFFECTED = ['rerouted', 'no_route', 'origin_closed', 'destination_closed'];
+
+/**
+ * Read-only. Applies every saved scenario of the caller to every shipment of the caller (fastest
+ * route) and reports the shipments a scenario affects. Nothing is saved and nothing is audited:
+ * it only runs core's simulateDisruption, the same function the route page uses. A "crisis" here
+ * is a scenario the user defined (a closed port or lane), not live news.
+ */
+export async function crisisOverview(db, userId, engine, logger = console) {
+  const scenarios = (await listScenarios(db, userId)).filter((s) => s.effects.length > 0);
+  const { data: shipmentRows, error } = await db
+    .from('shipments')
+    .select('id, shipment_number, status, origin_port_id, destination_port_id')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+  if (error) throw new AppError(500, 'SHIPMENT_LIST_FAILED', 'Could not load shipments');
+  const shipments = (shipmentRows ?? []).filter((s) => s.origin_port_id && s.destination_port_id);
+
+  const usedScenarios = scenarios.slice(0, OVERVIEW_MAX_SCENARIOS);
+  const usedShipments = shipments.slice(0, OVERVIEW_MAX_SHIPMENTS);
+  const base = {
+    objective: OVERVIEW_OBJECTIVE,
+    dataLabel: 'illustrative',
+    checked: { scenarios: usedScenarios.length, shipments: usedShipments.length },
+    limited: scenarios.length > usedScenarios.length || shipments.length > usedShipments.length,
+    crises: [],
+    affectedShipments: 0,
+  };
+  if (usedScenarios.length === 0) return base;
+
+  const network = await loadNetwork(db);
+  const portById = new Map(network.portRows.map((p) => [p.id, p]));
+  const edgeById = new Map(network.edgeRows.map((e) => [e.id, e]));
+  const codeById = new Map(network.portRows.map((p) => [p.id, p.code]));
+  const graph = buildNetworkGraph(network, engine);
+
+  const targetLabel = (effect) => {
+    if (effect.portId) return portById.get(effect.portId)?.name ?? 'Unknown port';
+    const edge = edgeById.get(effect.edgeId);
+    const name = (id) => portById.get(id)?.name ?? '?';
+    return edge
+      ? `${name(edge.source_port_id)} to ${name(edge.destination_port_id)}`
+      : 'Unknown lane';
+  };
+  const portView = (id) => {
+    const p = portById.get(id);
+    return p ? { code: p.code, name: p.name } : null;
+  };
+
+  const affectedIds = new Set();
+  for (const scenario of usedScenarios) {
+    const crisis = {
+      scenarioId: scenario.id,
+      name: scenario.name,
+      effects: scenario.effects.map((e) => ({
+        type: e.type,
+        kind: e.portId ? 'port' : 'lane',
+        target: targetLabel(e),
+      })),
+      affected: [],
+    };
+    let core;
+    try {
+      core = toCoreEffects(scenario.effects, network, graph, engine);
+    } catch (err) {
+      // A scenario that no longer fits the network is skipped, not fatal.
+      logger.error('crisis_overview_scenario_invalid', {
+        scenarioId: scenario.id,
+        reason: err?.code,
+      });
+      continue;
+    }
+    for (const shipment of usedShipments) {
+      const from = codeById.get(shipment.origin_port_id);
+      const to = codeById.get(shipment.destination_port_id);
+      if (!from || !to) continue;
+      let result;
+      try {
+        result = engine.simulateDisruption(graph, core, from, to, OVERVIEW_OBJECTIVE);
+      } catch (err) {
+        if (err instanceof engine.RoutingInputError) continue;
+        throw err;
+      }
+      if (!AFFECTED.includes(result.status)) continue;
+      affectedIds.add(shipment.id);
+      crisis.affected.push({
+        ...toSimulationView({
+          scenarioId: scenario.id,
+          shipmentId: shipment.id,
+          result,
+          resultId: null,
+        }),
+        shipmentNumber: shipment.shipment_number,
+        shipmentStatus: shipment.status,
+        origin: portView(shipment.origin_port_id),
+        destination: portView(shipment.destination_port_id),
+      });
+    }
+    base.crises.push(crisis);
+  }
+  // Crises that hit something first, then the rest, each group newest first (as listed).
+  base.crises.sort((a, b) => b.affected.length - a.affected.length);
+  base.affectedShipments = affectedIds.size;
+  return base;
+}

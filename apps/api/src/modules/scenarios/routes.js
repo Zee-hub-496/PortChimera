@@ -27,6 +27,8 @@ export function scenariosRouter({ logger = console } = {}) {
   const router = Router();
   router.post('/', h.create);
   router.get('/', h.list);
+  // Must stay above '/:id', or "impact" would be read as a scenario id.
+  router.get('/impact', h.impact);
   router.get('/:id', h.get);
   router.patch('/:id', h.update);
   router.delete('/:id', h.remove);
