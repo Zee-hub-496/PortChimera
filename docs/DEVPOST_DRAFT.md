@@ -41,10 +41,10 @@ A shipment travels with an invoice, a packing list and a certificate of origin. 
 
 - I wrote eight specs (requirements, design, tasks) in `.kiro/specs` before the code they describe, and nine steering files in `.kiro/steering` that fixed the rules: AI output is a suggestion, wording never accuses anyone, illustrative data is labelled, and the core package stays free of frameworks.
 - A day-by-day plan and a progress log carried context from one Kiro session to the next. Each session started by reading the log and ended by writing down what was and was not verified.
-- Kiro's sandbox could not install packages or reach Gemini and Supabase, so Kiro wrote code and tests that run with fakes, and I ran the real checks on my machine and in GitHub Actions. The log records which is which.
+- Kiro Web's sandbox could not install packages or reach Gemini and Supabase, so Kiro wrote code and tests that run with fakes, and I ran the real checks on my machine and in GitHub Actions. The log records which is which.
 - Engines were broken on purpose to prove the tests can fail: a heuristic that overestimates made 5 tests fail, and an overlay that left a closed port's lanes in the graph was caught by the tests.
 - Kiro found problems in its own specs before building (for example a percentage that contradicted its own formula), and the real run found a bug the sandbox could not see (line endings on Windows). Hooks, custom agents and MCP were not used.
-  [Add one sentence about any Kiro IDE use only if it is true.]
+  I used Kiro in two places: Kiro Web for the sandbox sessions, and the Kiro IDE on my own machine.
 
 ## Challenges
 
