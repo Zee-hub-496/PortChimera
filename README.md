@@ -12,8 +12,8 @@ The "chimera" is three kinds of technology joined into one system:
 
 ## Try it
 
-- **Deployed web app:** https://port-chimera.vercel.app. **Only the web app is hosted.** The API is not deployed yet (no host chosen), so on the deployed site you can see the landing page but upload, AI reading, the cross-check and routing do not work.
-- **Everything works locally.** See "Run it". The demo documents are in `fixtures/documents/` (`demo-invoice.pdf`, `demo-packing-list.pdf`, `demo-certificate-of-origin.pdf`). They agree on everything except gross weight: 500 kg on the invoice, 650 kg on the packing list. The cross-check reports that one difference.
+- **Deployed app:** https://port-chimera.vercel.app (web, on Vercel) with the API at https://portchimera.onrender.com (Render free tier). The API sleeps when idle, so the first request after a pause can take about a minute: open https://portchimera.onrender.com/api/health first to wake it.
+- **Run it yourself:** see "Run it". The demo documents are in `fixtures/documents/` (`demo-invoice.pdf`, `demo-packing-list.pdf`, `demo-certificate-of-origin.pdf`). They agree on everything except gross weight: 500 kg on the invoice, 650 kg on the packing list. The cross-check reports that one difference.
 
 ## What works
 
@@ -34,7 +34,6 @@ Verified by the author with a real Supabase project, real Gemini and a browser o
 Read these before trusting the project with anything real.
 
 - **Database hardening is not applied yet.** Migration `0004_protect_shipment_status.sql` and the service-role key setup are written and merged but have not been run on the author's Supabase project. Until then a signed-in user can change their own shipment's `status` by calling the Supabase REST API directly. Even after it, the same user can still edit their own document and finding status through REST, because the API writes those as the signed-in user. Steps and a decision: `docs/DAY6_SECURITY_TEST.md`, `docs/DAILY_PROGRESS.md`.
-- **No hosted API.** See "Try it".
 - **No customs, HS-code or duty module.** It is specified in `.kiro/specs/03-customs-classification` and was left out of scope.
 - **AI reads can be wrong.** For example Gemini misread net weights on the demo invoice once; the review step exists for this. A unit change by the AI (0.45 tonnes written as 450 kg) is flagged as unsupported on purpose.
 - Document delete exists in the API only (`DELETE /api/documents/:id`), with no button in the web app. Replacing a document is not built.
