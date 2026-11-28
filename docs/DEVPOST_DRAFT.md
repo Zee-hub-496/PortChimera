@@ -44,7 +44,7 @@ A shipment travels with an invoice, a packing list and a certificate of origin. 
 - Kiro Web's sandbox could not install packages or reach Gemini and Supabase, so Kiro wrote code and tests that run with fakes, and I ran the real checks on my machine and in GitHub Actions. The log records which is which.
 - Engines were broken on purpose to prove the tests can fail: a heuristic that overestimates made 5 tests fail, and an overlay that left a closed port's lanes in the graph was caught by the tests.
 - Kiro found problems in its own specs before building (for example a percentage that contradicted its own formula), and the real run found a bug the sandbox could not see (line endings on Windows). Hooks, custom agents and MCP were not used.
-  I used Kiro in two places: Kiro Web for the sandbox sessions, and the Kiro IDE on my own machine.
+  I used Kiro in two places, linked through GitHub: Kiro Web for the sandbox sessions that wrote the code, and the Kiro IDE on my own machine, where I cloned the repository, ran the app and the tests locally with real Supabase and Gemini, and pushed and pulled changes.
 
 ## Challenges
 
