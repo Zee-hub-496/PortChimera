@@ -12,7 +12,7 @@ The "chimera" is three kinds of technology joined into one system:
 
 ## Try it
 
-- **Deployed app:** https://port-chimera.vercel.app (web, on Vercel) with the API at https://portchimera.onrender.com (Render free tier). The API sleeps when idle, so the first request after a pause can take about a minute: open https://portchimera.onrender.com/api/health first to wake it.
+- **Deployed app:** https://port-chimera.vercel.app (web, on Vercel) with the API at https://portchimera.onrender.com (Render free tier). The API sleeps when idle, so the first request after a pause can take about a minute. The web app starts waking it when a page opens, and an uptime monitor pings it every 5 minutes during judging. If something looks slow, wait a minute or open https://portchimera.onrender.com/api/health.
 - **Run it yourself:** see "Run it". The demo documents are in `fixtures/documents/` (`demo-invoice.pdf`, `demo-packing-list.pdf`, `demo-certificate-of-origin.pdf`). They agree on everything except gross weight: 500 kg on the invoice, 650 kg on the packing list. The cross-check reports that one difference.
 
 ## What works

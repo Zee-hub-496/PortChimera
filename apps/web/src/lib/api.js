@@ -1,9 +1,22 @@
 // Single place that talks to the backend. Components call these functions and never use
 // fetch directly, so auth headers and error handling live here.
-import { buildHeaders, buildUploadHeaders, parseEnvelope } from './apiCore.js';
+import { buildHeaders, buildUploadHeaders, healthUrl, parseEnvelope } from './apiCore.js';
 import { supabase } from './supabase.js';
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? '';
+
+/**
+ * Wakes a sleeping API. A free host stops the server after a while without traffic and the first
+ * request then takes about a minute. Calling this when the page opens starts that wake-up while
+ * the visitor is still reading the landing page or typing their password. The answer is ignored.
+ */
+export function warmUpApi() {
+  try {
+    fetch(healthUrl(BASE_URL), { cache: 'no-store' }).catch(() => {});
+  } catch {
+    // Nothing to do: this is only a courtesy request.
+  }
+}
 
 async function request(method, path, body) {
   const { data } = await supabase.auth.getSession();
