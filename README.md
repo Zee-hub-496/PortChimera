@@ -130,7 +130,7 @@ docs/            Setup, deployment, API notes, security test, audit, E2E checkli
 - **Steering** in `.kiro/steering/`: product rules (no accusations, AI is a suggestion, illustrative data is labelled), security, API, database and testing conventions.
 - **A day-by-day plan and a progress log** (`docs/PORTCHIMERA_EXECUTION_PLAYBOOK.md`, `docs/DAILY_PROGRESS.md`) that carried context between sessions and record what was not verified.
 - **Tests that must be able to fail:** engines were broken on purpose to confirm the tests notice (for example a heuristic that overestimates made 5 tests fail).
-- Kiro was used both as Kiro Web (sandbox sessions) and as the Kiro IDE on the author's machine.
+- Kiro was used both as Kiro Web (sandbox sessions that wrote the code) and as the Kiro IDE on the author's machine (cloned from the same GitHub repository, used to run the app and the tests locally and to push and pull).
 - Kiro Web's sandbox could not install packages or reach Gemini and Supabase, so real runs were done on the author's machine and in CI. Details, including what was not used (hooks, custom agents, MCP): `docs/KIRO_USAGE.md`.
 
 ## License
