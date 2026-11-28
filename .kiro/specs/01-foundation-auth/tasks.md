@@ -14,9 +14,11 @@ Legend: `[x]` built and verified, `[-]` files written but not yet run, `[ ]` not
 - [-] 6. `GET /api/auth/me` route + test (R3.5)
   - Handler verified with fakes. Route wiring in `app.js` and `authRoutes.test.js` written, not run (needs Express installed).
 - [x] 7. Audit helper + test (R6). Verified with fakes.
-- [ ] 8. Run migration `0001` on a real Supabase project; two-user RLS check; update `docs/DATABASE.md` (R4)
-  - Follow `docs/SETUP_SUPABASE.md`. Only the author can mark this done.
+- [x] 8. Run migration `0001` on a real Supabase project; two-user RLS check; update `docs/DATABASE.md` (R4)
+  - Migrations 0001 to 0004 run on the real Supabase project; two-user isolation checked by `supabase/checks/day6_security_checks.sql` (all PASS, owner, 2026-11-28).
 - [-] 9. Web: Supabase client, auth context, Login page, protected route, API client attaches token (R3.1, R7)
   - Written. The pure parts (`apiCore.js` headers and envelope) have node:test tests that pass. The React pages, Supabase sign in and the Vite build have not been run. See `docs/MILESTONE_LOGIN_SHIPMENTS.md`.
-- [ ] 10. Deploy API to Render and web to Vercel; set env vars; confirm health on the deployed site (R8)
-- [ ] 11. Update README and `docs/KIRO_USAGE.md`
+- [x] 10. Deploy API to Render and web to Vercel; set env vars; confirm health on the deployed site (R8)
+  - Web on Vercel and API on Render; smoke test 5 of 5 PASS (owner, 2026-11-28). See `docs/DEPLOYMENT.md`.
+- [x] 11. Update README and `docs/KIRO_USAGE.md`
+  - README rewritten and `docs/KIRO_USAGE.md` updated (2026-11-28).

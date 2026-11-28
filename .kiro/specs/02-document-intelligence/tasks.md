@@ -12,7 +12,8 @@ Nothing involving the real Gemini API, real Supabase, a browser, zod or Express 
 - [x] 6. `AiProvider` interface, `fakeProvider`, Gemini provider with timeout/retry (R5.2) (sandbox, fake fetch only; real Gemini not called)
 - [-] 7. Upload endpoint + storage + `documents` row + audit (R1, R7) (service and handler tests with fakes ran in sandbox; Express routes and real Supabase Storage not run)
 - [-] 8. Process endpoint (202), background job, status updates, hash cache (R2.1, R5.1) (job, cache and 202 behavior tested with fakes in sandbox; not run against real Supabase or Gemini)
-- [ ] 9. Prompt: data-not-instructions, no invention; run once on one synthetic invoice with the real API and record the result (R2.3, R4)
+- [x] 9. Prompt: data-not-instructions, no invention; run once on one synthetic invoice with the real API and record the result (R2.3, R4)
+  - Real Gemini run on the three demo PDFs by the owner (Day 1); the prompt and structured output were later extended (schema version 3).
 - [-] 10. Injection fixture test with the fake provider and one real run (R4.2) (fake provider injection test ran in sandbox; the real-API run has not been done)
 - [-] 11. Review endpoint -> `line_items` (R6.2) (tested with fakes in sandbox; zod review schema and real database not run)
 - [-] 12. Web: upload page, status polling, review screen with evidence and "not verifiable" states (R6) (pure helpers tested in sandbox with `node --test apps/web/test/documentView.test.js`; React page, Vite build and browser not run)

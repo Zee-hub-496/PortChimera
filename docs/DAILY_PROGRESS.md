@@ -4,6 +4,66 @@ Updated at the end of every session. Newest entry first. Only record what actual
 
 Plan reference: `docs/PORTCHIMERA_EXECUTION_PLAYBOOK.md`.
 
+## Current state (start here; update this block at the end of every session)
+
+**As of 2026-11-28, `main` at `c2095c8` (PR #49 merged).** Phase: **submission**. The Kiroween deadline is Dec 4, 2026, 2:00 PM PT; aim to submit by Dec 3 evening.
+
+**Scope rule.** Feature freeze since 2026-11-25. The owner approved three exceptions: the UI restyle (PRs #37, #40), the impact sentence in the crisis summary (#45) and the Crisis monitor page (#49). From here on do only bug fixes, documentation and submission work, unless the owner approves something else. Do not start the customs or HS-code module.
+
+**What is live**
+
+- Web: https://port-chimera.vercel.app (Vercel; builds from `main` on every merge, previews for branches).
+- API: https://portchimera.onrender.com (Render free tier, a Web Service made by hand, Node 22). It sleeps when idle; the first request can take about a minute. The web app sends a wake-up request when a page opens (`warmUpApi`). Whether Render's Auto-Deploy is set to "On Commit" is not confirmed.
+- Database: Supabase free project, migrations `0001` to `0004` applied (0004 on 2026-11-28). `SUPABASE_SERVICE_ROLE_KEY` is set on Render (legacy `service_role` key) and used only to write `shipments.status`. Gemini model `gemini-3.5-flash-lite`.
+- Tag `v0.1.0-rc1` (commit `7daa36e`) is older than `main`. A final tag and GitHub Release should be made on Dec 3.
+
+**Evidence on record** (details and sources: `docs/AUDIT_2026-11-28.md`)
+
+- CI (secret scan, lint, format, all tests, web build) green on `main`.
+- Deployed smoke test 5 of 5 PASS (owner, 2026-11-28).
+- Database security checks 0 to 9 all PASS on the real project (owner, 2026-11-28).
+- Owner used the live site: sign-in, shipment creation, reviewed documents with evidence, statuses (screenshots, 2026-11-28).
+
+**Not verified yet (the agent had no access to the live site, Render or Supabase)**
+
+1. The whole `docs/E2E_CHECKLIST.md` on the deployed app (per-step results). The local run was reported as passing in aggregate on 2026-11-25.
+2. The new pages in a browser: Crisis monitor (#49), impact sentence (#45), monochrome palette (#40), Alerts and Documents lists (#33).
+3. HTTP-level security checks (REST and Storage), `docs/DAY6_SECURITY_TEST.md` section 3.
+4. Rate-limit proxy check (130 requests) and the wake-up behaviour after the API has slept.
+5. UptimeRobot keep-alive monitor: not confirmed configured.
+6. Mobile layout of the newer pages, Lighthouse accessibility score, bundle size.
+
+**Owner-only tasks, in order**
+
+1. Check the Vercel site: Crisis page (create a crisis on a Route tab, then open Crisis), light and dark mode. Report anything wrong.
+2. Run the deployed checklist and write PASS or FAIL per step in `docs/E2E_CHECKLIST.md`.
+3. Set up the UptimeRobot monitor (`docs/DEPLOYMENT.md`) and test the wake-up after 20 minutes of silence.
+4. Read https://kiroween.devpost.com/rules (the agent is blocked from it): video length, required items, student prize eligibility.
+5. Record the video from `docs/DEMO.md`; fill the Devpost form from `docs/DEVPOST_DRAFT.md`; submit.
+6. Optional: HTTP security checks, delete merged branches after submission.
+
+**Known gaps (disclosed in the README)**
+
+- Only `shipments.status` is protected at the database level. A user can still edit their own documents' and findings' status and add audit entries by calling Supabase directly (audit S-1, S-2). Fixing it means moving those writes to the server; deliberately not done before submission.
+- No customs, HS-code or duty module. No delete button or replace for documents in the web app (API delete exists).
+- Leaflet console error `reading 'save'`, not reproduced.
+
+**What a new session should do first**
+
+1. Read `README.md`, this block, `docs/AUDIT_2026-11-28.md`, `docs/E2E_CHECKLIST.md`, `.kiro/steering/09-kiroween-execution.md` and `10-project-state.md`.
+2. Ask the owner for the results of the owner-only tasks above, record them here and in the checklist, and fix any failure first (a failing demo path is P0).
+3. On Dec 3: confirm CI is green on `main`, tag `v1.0.0`, publish a GitHub Release (notes: what works, known gaps, links), update the README evidence paragraph, and help the owner finish the Devpost form.
+
+**Working notes that cost time before**
+
+- The agent's sandbox cannot reach the live site, Render, Supabase or the Devpost rules page (403). Never mark anything PASS from reading code.
+- The owner merges PRs on GitHub. A commit pushed to a branch after its PR was merged does not reach `main` (this happened with #37 and #47); check `merged` first and open a new PR.
+- Use `gh api` for GitHub reads and PRs, not `gh pr`. Run the formatter (`npx prettier --check .`) and tests before pushing; a zod-based test the sandbox cannot run once failed in CI (fixed in #49), so read CI results after every push.
+- The owner uses PowerShell on Windows at `D:\KIRO\PortChimera`, Kiro Web and the Kiro IDE.
+- Never ask for keys in chat. Never paste a key into a file.
+
+---
+
 ## Kiro credits
 
 | Date       | Credits used (from Kiro dashboard) | Remaining   | Note                                                           |
@@ -39,13 +99,13 @@ Plan reference: `docs/PORTCHIMERA_EXECUTION_PLAYBOOK.md`.
 
 ---
 
-## Pending (owner decided to do these later)
+## Pending list (history)
 
-Tracked here so they are not lost. Do not treat the sprint as finished until each is done or consciously dropped.
+The live list is in "Current state" at the top. Items closed so far:
 
-1. **Day 6 database security, owner steps.** PR #31 and #32 are merged, but migration `0004_protect_shipment_status.sql` is NOT applied and `SUPABASE_SERVICE_ROLE_KEY` is not set. Until then a signed-in user can still set `shipments.status` by REST. To finish: follow `docs/DAY6_SECURITY_TEST.md` (key first, then migration, then `supabase/checks/day6_security_checks.sql`, then the REST/Storage/delete checks) and record the real results here. Also decide the open question below. If dropped, list the gap in the README limitations.
-2. ~~Render (API deployment).~~ **Done 2026-11-28.** The API runs on Render's free tier at https://portchimera.onrender.com (deployed by hand as a Web Service, no card needed; commit `0c9ad7f`). Vercel `VITE_API_URL` points to it (set as Config, redeployed), Supabase Site URL and Redirect URL are `https://port-chimera.vercel.app`. The owner confirmed the deployed app works (a DEMO-001 shipment with documents reviewed and AI pre-cleared). `SUPABASE_SERVICE_ROLE_KEY` is deliberately NOT set on Render (it is optional until migration 0004 is applied; the API logs a warning at startup). Still to do on the deployed app: the smoke test (`scripts/smoke-test.mjs`) output, the full `docs/E2E_CHECKLIST.md` run, and the rate-limit proxy-hop check in `docs/DEPLOYMENT.md`.
-3. Day 6 leftovers: document replace (optional), a delete button in the web app.
+1. ~~Day 6 database security, owner steps.~~ Key set on Render, migration `0004` applied, SQL checks 0 to 9 PASS (2026-11-28). The HTTP-level checks remain open.
+2. ~~Render (API deployment).~~ Done 2026-11-28: https://portchimera.onrender.com, deployed by hand as a Web Service, no card needed. Vercel `VITE_API_URL` points to it; Supabase Site URL and Redirect URL are `https://port-chimera.vercel.app`.
+3. Day 6 leftovers: document replace (optional), a delete button in the web app. Still open, optional.
 
 ## Crisis monitor page: 2026-11-28
 
@@ -100,7 +160,7 @@ Tracked here so they are not lost. Do not treat the sprint as finished until eac
 
 ### Next session's starting point
 
-Owner runs `docs/E2E_CHECKLIST.md` locally and reports failures. Fix P0 and P1 failures only. Then do the pending Day 6 steps and the host for the API, tag the release candidate, and start the Dec 1 packaging plan.
+(Superseded: see "Current state" at the top of this file.) Owner runs `docs/E2E_CHECKLIST.md` locally and reports failures. Fix P0 and P1 failures only. Then do the pending Day 6 steps and the host for the API, tag the release candidate, and start the Dec 1 packaging plan.
 
 ---
 

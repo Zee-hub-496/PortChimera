@@ -6,7 +6,7 @@ Single source of truth for the Kiroween 2026 sprint. Every session (Project HQ o
 - **Deadline:** December 4, 2026, 2:00 PM Pacific Time. Submit on the morning of Dec 4 at the latest. Target: submit Dec 3 evening if everything is ready.
 - **Statement:** "Read with AI. Verify with rules. Reroute with algorithms."
 - **Owner:** one student developer, working through Kiro Web. Explanations must be in plain language.
-- **Last reviewed:** 2026-11-22 (Project HQ session).
+- **Last reviewed:** 2026-11-22 (Project HQ session). **Status on 2026-11-28:** Days 1 to 8 are done and the project is in the submission phase. The day-by-day sections below are the original plan and are not updated; the current status, evidence and next steps are in `docs/DAILY_PROGRESS.md` ("Current state") and `docs/AUDIT_2026-11-28.md`.
 
 > Claims in this file marked **[audit]** come from the Nov 22 engineering audit. Rows marked **[checked]** were re-verified against the code on 2026-11-22. Anything marked **[unverified]** must be re-checked in code before work starts.
 
@@ -30,7 +30,7 @@ Modular monolith in an npm-workspaces monorepo.
 apps/web        React 19, Vite 6, Tailwind 4, React Router 7, Leaflet   -> Vercel
 apps/api        Express 5, Zod, Supabase client, Gemini REST via fetch  -> Render
 packages/core   Pure JS: A* routing, disruption overlay, cross-check
-supabase/       SQL migrations (0001, 0002 today) and seed data
+supabase/       SQL migrations (0001 to 0004) and seed data
 fixtures/       Synthetic documents only
 scripts/        Seed generation, secret scanner, demo scripts
 docs/           This playbook, progress log, setup, AI notes, Kiro usage
