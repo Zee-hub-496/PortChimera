@@ -12,6 +12,8 @@ import { routesRouter } from './modules/routes/routes.js';
 import { scenariosRouter } from './modules/scenarios/routes.js';
 import { documentsRouter, shipmentDocumentsRouter } from './modules/documents/routes.js';
 import { discrepanciesRouter, shipmentCrossCheckRouter } from './modules/crosscheck/routes.js';
+// New 2.0 modules are TypeScript and need Node 22.18 or later (native type stripping).
+import { intelligenceRouter } from './modules/intelligence/routes.ts';
 
 /**
  * Builds the Express app without starting a server. Keeping "build" separate from "listen"
@@ -69,6 +71,7 @@ export function createApp(env, { logger = console, auth = null, rateLimitMax = 1
       documents: () => documentsRouter({ env, logger }),
       shipmentCrossCheck: () => shipmentCrossCheckRouter({ logger }),
       discrepancies: () => discrepanciesRouter({ logger }),
+      intelligence: () => intelligenceRouter({ env, logger }),
     });
   }
 

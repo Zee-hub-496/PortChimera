@@ -26,3 +26,5 @@ services:
         sync: false
       - key: GEMINI_MODEL
         sync: false
+      - key: EIA_API_KEY
+        sync: false

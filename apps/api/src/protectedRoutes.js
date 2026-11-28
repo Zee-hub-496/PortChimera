@@ -12,6 +12,8 @@ export const PROTECTED_PREFIXES = Object.freeze({
   // Cross-check: run and list under a shipment, decisions on one discrepancy.
   shipmentCrossCheck: '/api/shipments/:shipmentId',
   discrepancies: '/api/discrepancies',
+  // Maritime intelligence (2.0): news, energy and shipment exposure. Reads external data.
+  intelligence: '/api/intelligence',
 });
 
 /**

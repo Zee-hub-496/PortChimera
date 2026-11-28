@@ -16,6 +16,8 @@ const schema = z.object({
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
   GEMINI_API_KEY: z.string().min(1).optional(),
   GEMINI_MODEL: z.string().min(1).optional(),
+  // EIA Open Data key for Energy Watch. Without it the Energy page says "not configured".
+  EIA_API_KEY: z.string().min(1).optional(),
 });
 
 /**
