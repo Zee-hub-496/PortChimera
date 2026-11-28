@@ -16,12 +16,19 @@ Run `supabase/migrations/0003_documents_processing_started_at.sql` in Supabase >
 
 ## 1. Render (API)
 
-1. Render dashboard > **New** > **Blueprint** > pick the `PortChimera` repo. Render reads `render.yaml` at the repo root.
-   (Manual alternative: **New** > **Web Service**, build command `npm ci`, start command `npm run start -w @portchimera/api`, health check path `/api/health`, env var `NODE_VERSION=22`.)
-2. When prompted for the variables marked `sync: false`, enter:
+Do it by hand (**New** > **Web Service**), not with a Blueprint. Render says free web services need no card. A Blueprint (`render.yaml`) may ask for payment details; this was not confirmed, so if Render asks for a card at any step, stop and use the manual way below.
+
+1. Render dashboard > **New** > **Web Service** > connect GitHub > pick `Zee-hub-496/PortChimera`.
+   - Name `portchimera-api`, Region nearest to you, Branch `main`, Root Directory empty.
+   - Runtime **Node**. Build command `npm ci`. Start command `npm run start -w @portchimera/api`.
+   - Instance type **Free**. If Render asks for a card only for the other types, that is expected.
+   - Advanced: Health Check Path `/api/health`.
+   - Environment variables: `NODE_VERSION` = `22`, `NODE_ENV` = `production`, `TRUST_PROXY_HOPS` = `1`.
+     (`render.yaml` in the repo describes the same service, in case you later want to use a Blueprint.)
+2. Add these environment variables (a Blueprint would prompt for them; by hand you type them under **Environment**):
    - `SUPABASE_URL`, `SUPABASE_ANON_KEY` (Supabase > Project Settings > API).
    - `GEMINI_API_KEY` and `GEMINI_MODEL` (use `gemini-3.5-flash-lite`).
-   - `CORS_ORIGIN`: put a placeholder such as `http://localhost:5173` now, change it in step 3.
+   - `CORS_ORIGIN`: `https://port-chimera.vercel.app` (the live web app; no trailing slash).
 3. Set `SUPABASE_SERVICE_ROLE_KEY` (Supabase, Project Settings, API, `service_role`). The API refuses to start in production without it, because shipment status is written with it (migration 0004). Server only: never in Vercel, never in a `VITE_` variable.
 4. Deploy. The API refuses to start in production if `SUPABASE_URL`, `SUPABASE_ANON_KEY` or `CORS_ORIGIN` is missing; the deploy log names the variable.
 5. Note the service URL, for example `https://portchimera-api.onrender.com`.
