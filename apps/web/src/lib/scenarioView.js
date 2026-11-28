@@ -238,6 +238,44 @@ export function compareRows(simulation) {
   ];
 }
 
+const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+
+/**
+ * One plain sentence about what the disruption does, built only from the numbers the simulation
+ * already returned (no new calculation, no AI). Empty when there is nothing useful to say.
+ * Figures are estimates from illustrative data; the summary card says so next to it.
+ */
+export function impactHeadline(simulation) {
+  switch (simulation?.status) {
+    case 'rerouted': {
+      const added = simulation.added;
+      if (!added) return 'An alternative route exists.';
+      const days =
+        Math.abs(added.days) <= NEAR_ZERO
+          ? 'no change in transit time'
+          : `${plural(trimmed(added.days, 1), 'day')} ${added.days > 0 ? 'longer' : 'shorter'}`;
+      const cost =
+        Math.round(Math.abs(added.costUsd)) === 0
+          ? 'no change in freight cost'
+          : `${formatUsd(Math.round(Math.abs(added.costUsd)))} ${added.costUsd > 0 ? 'more' : 'less'} freight cost`;
+      const risk =
+        trimmed(added.risk, 1) === 0
+          ? 'no change in the risk score'
+          : `risk score ${added.risk > 0 ? 'up' : 'down'} ${trimmed(added.risk, 1).toFixed(1)}`;
+      return `An alternative route exists. Estimated impact: ${days}, ${cost}, ${risk}.`;
+    }
+    case 'unaffected':
+      return 'Estimated impact: none. The current route does not use the closed port or lane.';
+    case 'no_route':
+      return 'No alternative route exists in this network, so the shipment cannot be re-planned around the closure.';
+    case 'origin_closed':
+    case 'destination_closed':
+      return 'A route cannot start or end at a closed port.';
+    default:
+      return '';
+  }
+}
+
 /** Everything the summary card shows, from one API simulation result. */
 export function describeSimulation(simulation) {
   if (!simulation) return null;
@@ -245,6 +283,7 @@ export function describeSimulation(simulation) {
   return {
     tone: info.tone,
     title: info.title,
+    headline: impactHeadline(simulation),
     explanation: simulation.explanation ?? '',
     rows: compareRows(simulation),
     original: simulation.baseline?.pathNames?.join(' > ') ?? '',
