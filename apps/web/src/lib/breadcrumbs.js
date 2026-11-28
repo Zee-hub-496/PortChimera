@@ -10,6 +10,11 @@ const PAGE_LABELS = Object.freeze({
   settings: 'Settings',
 });
 
+const INTELLIGENCE_LABELS = Object.freeze({
+  'world-monitor': 'World Monitor',
+  energy: 'Energy Watch',
+});
+
 const TAB_LABELS = Object.freeze({
   documents: 'Documents',
   'cross-check': 'Cross-check',
@@ -33,6 +38,9 @@ export function buildBreadcrumbs(pathname, shipmentNumbers = {}) {
     crumbs.push({ label: 'Shipments', to: '/shipments' });
     crumbs.push({ label: shipmentNumbers[id] ?? 'Shipment', to: `/shipments/${id}` });
     if (tab) crumbs.push({ label: TAB_LABELS[tab] ?? tab });
+  } else if (first === 'intelligence' && id) {
+    crumbs.push({ label: 'Maritime Intelligence' });
+    crumbs.push({ label: INTELLIGENCE_LABELS[id] ?? id });
   } else {
     crumbs.push({ label: PAGE_LABELS[first] ?? first });
   }

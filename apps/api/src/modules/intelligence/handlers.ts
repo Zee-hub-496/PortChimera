@@ -5,6 +5,7 @@ import type { NewsService } from './newsService.ts';
 import type { EnergyService } from './energyService.ts';
 import { OFFICIAL_SOURCE_LINKS } from './officialLinks.ts';
 import type { NewsQuery } from './schemas.ts';
+import type { NewsPageResponse } from '@portchimera/core/v2';
 
 // Minimal shapes so handlers can be tested without Express.
 interface Req {
@@ -39,24 +40,23 @@ export function intelligenceHandlers({ news, energy, parseNewsQuery }: Intellige
       const q = parseNewsQuery(req.query);
       const result = await news.getNews({ force: q.refresh }).catch(unavailable);
       const page = filterEvents(result.events, q);
-      res.json({
-        data: {
-          ...page,
-          meta: {
-            fetchedAt: result.fetchedAt,
-            ageSeconds: result.ageSeconds,
-            ttlSeconds: NEWS_TTL_MS / 1000,
-            stale: result.stale,
-            lastError: result.lastError,
-            refreshThrottled: result.refreshThrottled,
-            queriesOk: result.queriesOk,
-            queriesFailed: result.queriesFailed,
-            dropped: { malformed: result.malformed, irrelevant: result.irrelevant },
-            source: 'GDELT DOC 2.0 (news discovery, not real time, not official confirmation)',
-            officialLinks: OFFICIAL_SOURCE_LINKS,
-          },
+      const data: NewsPageResponse = {
+        ...page,
+        meta: {
+          fetchedAt: result.fetchedAt,
+          ageSeconds: result.ageSeconds,
+          ttlSeconds: NEWS_TTL_MS / 1000,
+          stale: result.stale,
+          lastError: result.lastError,
+          refreshThrottled: result.refreshThrottled,
+          queriesOk: result.queriesOk,
+          queriesFailed: result.queriesFailed,
+          dropped: { malformed: result.malformed, irrelevant: result.irrelevant },
+          source: 'GDELT DOC 2.0 (news discovery, not real time, not official confirmation)',
+          officialLinks: OFFICIAL_SOURCE_LINKS,
         },
-      });
+      };
+      res.json({ data });
     },
 
     /** GET /api/intelligence/energy */

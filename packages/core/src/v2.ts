@@ -56,3 +56,9 @@ export {
 } from './intelligence/gdelt.ts';
 export type { ParsedEvents } from './intelligence/gdelt.ts';
 export { EIA_SERIES, buildEiaUrl, parseEiaRows } from './energy/eia.ts';
+export type {
+  EnergyPayload,
+  NewsMeta,
+  NewsPageResponse,
+  OfficialLink,
+} from './intelligence/contracts.ts';

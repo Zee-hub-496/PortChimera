@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import { AuthProvider } from './auth/AuthContext.jsx';
 import RequireAuth from './auth/RequireAuth.jsx';
@@ -21,6 +21,21 @@ import ShipmentOverview from './pages/ShipmentOverview.jsx';
 import ShipmentDocuments from './pages/ShipmentDocuments.jsx';
 import ShipmentRoute from './pages/ShipmentRoute.jsx';
 import Shipments from './pages/Shipments.jsx';
+import { Skeleton } from './components/ui.jsx';
+
+// Maritime Intelligence pages are TypeScript and load only when opened.
+const WorldMonitor = lazy(() => import('./pages/WorldMonitor.tsx'));
+const EnergyWatch = lazy(() => import('./pages/EnergyWatch.tsx'));
+
+function PageFallback() {
+  return (
+    <div className="flex flex-col gap-3" aria-busy="true" aria-label="Loading page">
+      <Skeleton className="h-8 w-48" />
+      <Skeleton className="h-28" />
+      <Skeleton className="h-28" />
+    </div>
+  );
+}
 
 const TITLES = [
   ['/login', 'Log in'],
@@ -31,6 +46,8 @@ const TITLES = [
   ['/documents', 'Documents'],
   ['/alerts', 'Alerts'],
   ['/crisis', 'Crisis monitor'],
+  ['/intelligence/world-monitor', 'World Monitor'],
+  ['/intelligence/energy', 'Energy Watch'],
   ['/settings', 'Settings'],
 ];
 
@@ -92,6 +109,22 @@ export default function App() {
               <Route path="/documents" element={<DocumentsHub />} />
               <Route path="/alerts" element={<AlertsHub />} />
               <Route path="/crisis" element={<Crisis />} />
+              <Route
+                path="/intelligence/world-monitor"
+                element={
+                  <Suspense fallback={<PageFallback />}>
+                    <WorldMonitor />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="/intelligence/energy"
+                element={
+                  <Suspense fallback={<PageFallback />}>
+                    <EnergyWatch />
+                  </Suspense>
+                }
+              />
               <Route path="/settings" element={<Settings />} />
             </Route>
           </Route>

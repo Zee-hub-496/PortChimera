@@ -8,7 +8,9 @@ import {
   Globe,
   LayoutDashboard,
   LogOut,
+  Fuel,
   Menu,
+  Radar,
   ChevronsLeft,
   ChevronsRight,
   Search,
@@ -34,8 +36,15 @@ const NAV_ITEMS = [
   { to: '/documents', label: 'Documents', Icon: FileText },
   { to: '/alerts', label: 'Alerts', Icon: AlertTriangle },
   { to: '/crisis', label: 'Crisis', Icon: ShieldAlert },
-  { to: '/settings', label: 'Settings', Icon: Settings },
 ];
+
+// Reports from outside the app (news, market data). Always shown with their source and age.
+const INTELLIGENCE_ITEMS = [
+  { to: '/intelligence/world-monitor', label: 'World Monitor', Icon: Radar },
+  { to: '/intelligence/energy', label: 'Energy Watch', Icon: Fuel },
+];
+
+const FOOTER_ITEMS = [{ to: '/settings', label: 'Settings', Icon: Settings }];
 
 // Shipment pages report their number here so breadcrumbs can show it instead of the id.
 const ShipmentNamesContext = createContext({ names: {}, remember: () => {} });
@@ -53,26 +62,44 @@ function readCollapsed() {
   }
 }
 
+function NavItem({ to, label, Icon, collapsed, onNavigate }) {
+  return (
+    <NavLink
+      to={to}
+      onClick={onNavigate}
+      title={collapsed ? label : undefined}
+      aria-label={collapsed ? label : undefined}
+      className={({ isActive }) =>
+        `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+          isActive ? 'bg-surface-2 text-fg' : 'text-muted hover:bg-surface-2 hover:text-fg'
+        } ${collapsed ? 'justify-center' : ''}`
+      }
+    >
+      <Icon size={18} aria-hidden="true" className="shrink-0" />
+      {!collapsed && <span>{label}</span>}
+    </NavLink>
+  );
+}
+
 function SidebarNav({ collapsed, onNavigate }) {
+  const item = (i) => <NavItem key={i.to} {...i} collapsed={collapsed} onNavigate={onNavigate} />;
   return (
     <nav aria-label="Main" className="flex flex-1 flex-col gap-1 overflow-y-auto p-2">
-      {NAV_ITEMS.map(({ to, label, Icon }) => (
-        <NavLink
-          key={to}
-          to={to}
-          onClick={onNavigate}
-          title={collapsed ? label : undefined}
-          aria-label={collapsed ? label : undefined}
-          className={({ isActive }) =>
-            `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-              isActive ? 'bg-surface-2 text-fg' : 'text-muted hover:bg-surface-2 hover:text-fg'
-            } ${collapsed ? 'justify-center' : ''}`
-          }
-        >
-          <Icon size={18} aria-hidden="true" className="shrink-0" />
-          {!collapsed && <span>{label}</span>}
-        </NavLink>
-      ))}
+      {NAV_ITEMS.map(item)}
+      <div role="group" aria-labelledby="nav-intelligence" className="mt-3 flex flex-col gap-1">
+        {collapsed ? (
+          <hr aria-hidden="true" className="mx-2 border-line" />
+        ) : (
+          <p
+            id="nav-intelligence"
+            className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted"
+          >
+            Maritime Intelligence
+          </p>
+        )}
+        {INTELLIGENCE_ITEMS.map(item)}
+      </div>
+      <div className="mt-auto flex flex-col gap-1 pt-3">{FOOTER_ITEMS.map(item)}</div>
     </nav>
   );
 }

@@ -6,7 +6,7 @@ import {
   parseEiaRows,
   summarizeSeries,
 } from '@portchimera/core/v2';
-import type { EnergySummary, OilMarketRecord } from '@portchimera/core/v2';
+import type { EnergyPayload } from '@portchimera/core/v2';
 import { ProviderError, defaultSleep, fetchJson } from './providerHttp.ts';
 import type { FetchLike } from './providerHttp.ts';
 
@@ -14,25 +14,8 @@ import type { FetchLike } from './providerHttp.ts';
 export const ENERGY_TTL_MS = 6 * 60 * 60 * 1000;
 const HISTORY_POINTS = 90;
 
-export type EnergyState = 'OK' | 'NOT_CONFIGURED';
-
-export interface EnergyResult {
-  readonly state: EnergyState;
-  readonly series: 'RBRTE';
-  readonly label: string;
-  readonly unit: string;
-  readonly summary: EnergySummary | null;
-  /** Oldest first, for charts. */
-  readonly history: readonly OilMarketRecord[];
-  /** When this server last fetched from EIA. Null when never. */
-  readonly fetchedAt: string | null;
-  /** The last refresh failed and older data is shown. */
-  readonly stale: boolean;
-  /** The newest price itself is old (market data date), whatever the cache state. */
-  readonly dataStale: boolean;
-  readonly lastError: string | null;
-  readonly note: string;
-}
+export type EnergyResult = EnergyPayload;
+export type EnergyState = EnergyResult['state'];
 
 export const ENERGY_NOTE =
   'Brent is a crude oil price benchmark. It is not a freight rate, a marine insurance premium or a ship fuel price, and it does not change route risk in PortChimera.';

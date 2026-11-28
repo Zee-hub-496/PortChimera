@@ -102,6 +102,18 @@ export function PAGE_ITEMS(isSignedIn) {
       to: '/crisis',
       keywords: ['simulation', 'disruption', 'port strike', 'reroute'],
     },
+    {
+      id: 'page:world-monitor',
+      label: 'World Monitor',
+      to: '/intelligence/world-monitor',
+      keywords: ['news', 'maritime', 'incidents', 'piracy', 'red sea', 'intelligence'],
+    },
+    {
+      id: 'page:energy-watch',
+      label: 'Energy Watch',
+      to: '/intelligence/energy',
+      keywords: ['brent', 'oil', 'price', 'crude', 'intelligence'],
+    },
     { id: 'page:settings', label: 'Settings', to: '/settings', keywords: ['theme', 'account'] },
   ];
   return (isSignedIn ? app.concat(pub.slice(0, 1)) : pub).map((p) => ({ ...p, group: 'Pages' }));
