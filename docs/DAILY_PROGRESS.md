@@ -47,6 +47,15 @@ Tracked here so they are not lost. Do not treat the sprint as finished until eac
 2. ~~Render (API deployment).~~ **Done 2026-11-28.** The API runs on Render's free tier at https://portchimera.onrender.com (deployed by hand as a Web Service, no card needed; commit `0c9ad7f`). Vercel `VITE_API_URL` points to it (set as Config, redeployed), Supabase Site URL and Redirect URL are `https://port-chimera.vercel.app`. The owner confirmed the deployed app works (a DEMO-001 shipment with documents reviewed and AI pre-cleared). `SUPABASE_SERVICE_ROLE_KEY` is deliberately NOT set on Render (it is optional until migration 0004 is applied; the API logs a warning at startup). Still to do on the deployed app: the smoke test (`scripts/smoke-test.mjs`) output, the full `docs/E2E_CHECKLIST.md` run, and the rate-limit proxy-hop check in `docs/DEPLOYMENT.md`.
 3. Day 6 leftovers: document replace (optional), a delete button in the web app.
 
+## Deployment verification: 2026-11-28
+
+- Smoke test against the live API and web app (owner ran it in PowerShell): 5 of 5 PASS. Health returns ok, an unknown route returns the 404 envelope, `GET /api/shipments` without a token returns 401, security headers are present, and CORS allows `https://port-chimera.vercel.app`.
+- `SUPABASE_SERVICE_ROLE_KEY` was added on Render (legacy `service_role` key) and the API restarted without the "not set" warning. Migration `0004` was run in the Supabase SQL Editor (owner reported Run query accepted). A shipment was created after it (status Submitted).
+- Still to confirm: that a status change still works after `0004` (upload and process a document on a new shipment), `supabase/checks/day6_security_checks.sql`, the REST and Storage checks in `docs/DAY6_SECURITY_TEST.md`, and the full `docs/E2E_CHECKLIST.md` on the live site. Until those are reported, the Day 6 database protection counts as applied but not verified.
+- PR #40 (monochrome palette) merged; PR #37 only brought the first blue version.
+
+---
+
 ## Day 8: 2026-11-25 (started early), Integration and release readiness (in progress)
 
 ### Completed
