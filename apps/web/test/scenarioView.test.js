@@ -7,6 +7,7 @@ import {
   deltaTone,
   describeEffect,
   describeSimulation,
+  impactHeadline,
   effectTypesFor,
   formatDeltaCost,
   formatDeltaDays,
@@ -320,5 +321,44 @@ describe('describeSimulation', () => {
   it('shows no notice when the data is not labelled illustrative, and handles no result', () => {
     assert.equal(describeSimulation({ ...rerouted, dataLabel: 'verified' }).notice, '');
     assert.equal(describeSimulation(null), null);
+  });
+});
+
+describe('impactHeadline', () => {
+  it('summarises a rerouted result from its existing deltas', () => {
+    const h = impactHeadline({
+      status: 'rerouted',
+      added: { days: 2.34, costUsd: 410.4, risk: 1.26 },
+    });
+    assert.match(h, /^An alternative route exists\./);
+    assert.match(h, /2\.3 days longer/);
+    assert.match(h, /\$410 more freight cost/);
+    assert.match(h, /risk score up 1\.3/);
+  });
+
+  it('says shorter, less and down for improvements, and no change for zero', () => {
+    const h = impactHeadline({ status: 'rerouted', added: { days: -1, costUsd: -50, risk: -0.5 } });
+    assert.match(h, /1 day shorter/);
+    assert.match(h, /\$50 less freight cost/);
+    assert.match(h, /risk score down 0\.5/);
+    const same = impactHeadline({ status: 'rerouted', added: { days: 0, costUsd: 0, risk: 0 } });
+    assert.match(
+      same,
+      /no change in transit time, no change in freight cost, no change in the risk score/,
+    );
+  });
+
+  it('handles every other status without inventing numbers', () => {
+    assert.match(impactHeadline({ status: 'unaffected' }), /none/);
+    assert.match(impactHeadline({ status: 'no_route' }), /cannot be re-planned/);
+    assert.match(impactHeadline({ status: 'origin_closed' }), /closed port/);
+    assert.match(impactHeadline({ status: 'destination_closed' }), /closed port/);
+    assert.equal(impactHeadline({ status: 'baseline_unavailable' }), '');
+    assert.equal(impactHeadline(null), '');
+    assert.equal(impactHeadline({ status: 'rerouted' }), 'An alternative route exists.');
+  });
+
+  it('is part of the summary view', () => {
+    assert.equal(describeSimulation(rerouted).headline, impactHeadline(rerouted));
   });
 });

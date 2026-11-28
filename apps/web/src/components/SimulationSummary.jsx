@@ -21,6 +21,7 @@ export default function SimulationSummary({ simulation, stale = false }) {
     <section aria-label="Simulation result" className="flex flex-col gap-4">
       <div role="status" className={`rounded-xl p-4 ${BANNER_TONES[view.tone]}`}>
         <h2 className="text-base font-bold">{view.title}</h2>
+        {view.headline && <p className="mt-1 text-sm font-semibold text-fg">{view.headline}</p>}
         <p className="mt-1 text-sm text-fg">{view.explanation}</p>
         {stale && <p className="mt-1 text-xs text-muted">Updating for the new choice...</p>}
       </div>
