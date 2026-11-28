@@ -6,7 +6,9 @@ Plan reference: `docs/PORTCHIMERA_EXECUTION_PLAYBOOK.md`.
 
 ## Current state (start here; update this block at the end of every session)
 
-**As of 2026-11-28, `main` at `c2095c8` (PR #49 merged).** Phase: **submission**. The Kiroween deadline is Dec 4, 2026, 2:00 PM PT; aim to submit by Dec 3 evening.
+**PortChimera 2.0 is in progress (started 2026-11-28). Read `docs/V2_PLAN.md` first; it has the phases, the owner decisions D1 to D8 and the next steps.** Work is on branch `feat/portchimera-2.0`. The original app is saved as branch `backup/portchimera-pre-v2` and tag `pre-v2-2026-11-28` (commit `b38f37c`, see `docs/BASELINE_BEFORE_V2.md`). Phase 0 (backup) is DONE; no application code has changed yet. The 2.0 directive supersedes the feature freeze below for the work listed in `V2_PLAN.md` only. If 2.0 is not reliable by the 2.0 freeze (proposed Dec 2 evening), submit the original app. The agent sandbox has no npm access, so installs, lint, build and browser checks must be run by the owner until a session has open internet.
+
+**As of 2026-11-28, `main` at `b38f37c` (PR #50 merged).** Phase: **submission**. The Kiroween deadline is Dec 4, 2026, 2:00 PM PT; aim to submit by Dec 3 evening.
 
 **Scope rule.** Feature freeze since 2026-11-25. The owner approved three exceptions: the UI restyle (PRs #37, #40), the impact sentence in the crisis summary (#45) and the Crisis monitor page (#49). From here on do only bug fixes, documentation and submission work, unless the owner approves something else. Do not start the customs or HS-code module.
 

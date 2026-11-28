@@ -6,6 +6,10 @@ inclusion: always
 
 Facts a new session needs. They change; the dated "Current state" block in `docs/DAILY_PROGRESS.md` is the source of truth, and this file must be updated with it. No secrets belong here.
 
+## PortChimera 2.0 (started 2026-11-28)
+
+The owner approved a 2.0 upgrade (TypeScript for new code, Maritime Intelligence pages, Shipment Exposure, Energy Watch, Chimera Copilot). Plan, phases, decisions and progress: `docs/V2_PLAN.md`. Work lives on `feat/portchimera-2.0`; `main` stays untouched until the owner merges after release tests. Backup of the original app: branch `backup/portchimera-pre-v2`, tag `pre-v2-2026-11-28`, commit `b38f37c`; never delete or move them. This supersedes the feature freeze in `09-kiroween-execution.md` for the 2.0 scope only. Fallback: if 2.0 is unreliable at the 2.0 freeze, submit the original app.
+
 ## Where things run
 
 | Part                    | Where                                                                             | How it updates                                                                                                                        |

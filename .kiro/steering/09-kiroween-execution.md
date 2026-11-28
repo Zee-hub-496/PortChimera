@@ -65,4 +65,5 @@ A feature is complete only when all are true: acceptance criteria written and me
 
 - Priorities: P0 security/data/deploy, P1 core workflows, P2 reliability and UX, P3 polish. Optional work never delays P0 or P1.
 - Feature freeze since 2026-11-25: only bug fixes, documentation and submission work. The owner approved three exceptions (UI restyle, impact sentence, Crisis monitor page). Ask before adding anything else.
+- 2026-11-28: the owner approved the PortChimera 2.0 scope in `docs/V2_PLAN.md` (branch `feat/portchimera-2.0`). Only that scope is exempt from the freeze. Each new dependency still needs the owner's approval (see the decisions table there).
 - Dec 4 submission deadline is 2:00 PM Pacific. Aim to submit by Dec 3 evening.
