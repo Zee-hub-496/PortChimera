@@ -135,7 +135,9 @@ describe('route order', () => {
       new URL('../src/modules/scenarios/routes.js', import.meta.url),
       'utf8',
     );
-    assert.ok(src.indexOf("'/impact'") > -1);
-    assert.ok(src.indexOf("'/impact'") < src.indexOf("'/:id'"));
+    const impact = src.indexOf("router.get('/impact'");
+    const byId = src.indexOf("router.get('/:id'");
+    assert.ok(impact > -1 && byId > -1);
+    assert.ok(impact < byId);
   });
 });
