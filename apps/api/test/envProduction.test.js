@@ -28,12 +28,9 @@ describe('loadEnv in production', () => {
     );
   });
 
-  it('requires the service-role key, and does not print it', () => {
+  it('does not require the service-role key', () => {
     const { SUPABASE_SERVICE_ROLE_KEY: _omitted, ...without } = complete;
-    assert.throws(
-      () => loadEnv(without),
-      (err) => /SUPABASE_SERVICE_ROLE_KEY/.test(err.message),
-    );
+    assert.doesNotThrow(() => loadEnv(without));
   });
 
   it('does not accept the localhost default for CORS in production', () => {

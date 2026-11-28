@@ -29,15 +29,13 @@ export function loadEnv(source = process.env) {
     throw new Error(`Invalid environment configuration:\n  ${problems.join('\n  ')}`);
   }
   // In production these have no safe default: a missing CORS_ORIGIN would fall back to
-  // localhost, missing Supabase settings would leave the API unable to check sign-ins, and without the
-  // service-role key no shipment status can be written (migration 0004).
+  // localhost, and missing Supabase settings would leave the API unable to check sign-ins.
+  // SUPABASE_SERVICE_ROLE_KEY is optional: without it status is written as the signed-in user
+  // (fine until migration 0004 is applied; server.js warns at startup).
   if (result.data.NODE_ENV === 'production') {
-    const missing = [
-      'SUPABASE_URL',
-      'SUPABASE_ANON_KEY',
-      'SUPABASE_SERVICE_ROLE_KEY',
-      'CORS_ORIGIN',
-    ].filter((name) => !source[name]);
+    const missing = ['SUPABASE_URL', 'SUPABASE_ANON_KEY', 'CORS_ORIGIN'].filter(
+      (name) => !source[name],
+    );
     if (missing.length > 0) {
       throw new Error(
         `Invalid environment configuration:\n  required in production: ${missing.join(', ')}`,

@@ -29,8 +29,8 @@ Do it by hand (**New** > **Web Service**), not with a Blueprint. Render says fre
    - `SUPABASE_URL`, `SUPABASE_ANON_KEY` (Supabase > Project Settings > API).
    - `GEMINI_API_KEY` and `GEMINI_MODEL` (use `gemini-3.5-flash-lite`).
    - `CORS_ORIGIN`: `https://port-chimera.vercel.app` (the live web app; no trailing slash).
-3. Set `SUPABASE_SERVICE_ROLE_KEY` (Supabase, Project Settings, API, `service_role`). The API refuses to start in production without it, because shipment status is written with it (migration 0004). Server only: never in Vercel, never in a `VITE_` variable.
-4. Deploy. The API refuses to start in production if `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` or `CORS_ORIGIN` is missing; the deploy log names the variable.
+3. `SUPABASE_SERVICE_ROLE_KEY` is optional for now. Leave it out until you apply migration `0004` (see `docs/DAY6_SECURITY_TEST.md`); then add it (Supabase, Project Settings, API Keys, the `service_role` or secret key) BEFORE running the migration. Server only: never in Vercel, never in a `VITE_` variable.
+4. Deploy. The API refuses to start in production if `SUPABASE_URL`, `SUPABASE_ANON_KEY` or `CORS_ORIGIN` is missing; the deploy log names the variable.
 5. Note the service URL, for example `https://portchimera-api.onrender.com`.
 
 Free instances sleep after inactivity, and the first request can take about a minute.
