@@ -2,7 +2,7 @@
 
 ## Summary (read this first)
 
-- **Tool:** Kiro Web sessions in a Linux sandbox (Nov 17 to Nov 28, 2026). [Owner to confirm: whether the Kiro IDE was also used for any session. Nothing in this repository records IDE use, so none is claimed.]
+- **Tools:** Kiro Web sessions in a Linux sandbox (Nov 17 to Nov 28, 2026), and the Kiro IDE, which the owner also used on their own Windows machine. The entries below were written by the Kiro Web sessions and record that tool's work. This repository does not log which IDE actions produced which commits, so the IDE's part is not itemised here.
 - **Spec-driven:** eight specs in `.kiro/specs/` (requirements, design, tasks) written before the code they describe. Spec 03 (customs and HS codes) was deliberately left unbuilt.
 - **Steering:** nine files in `.kiro/steering/` set product wording rules, the architecture and dependency rule for `packages/core`, security, API, database, AI and testing conventions. The sprint file `09-kiroween-execution.md` holds the execution rules.
 - **Context between sessions:** `docs/PORTCHIMERA_EXECUTION_PLAYBOOK.md` (the plan) and `docs/DAILY_PROGRESS.md` (what actually happened and what was not verified). Each session started by reading the log and ended by updating it.
