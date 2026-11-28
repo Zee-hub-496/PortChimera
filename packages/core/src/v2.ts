@@ -45,3 +45,14 @@ export type {
   RouteSegment,
   SuggestedEffect,
 } from './exposure/assess.ts';
+
+export {
+  GDELT_MAX_RECORDS,
+  GDELT_TOPIC_QUERIES,
+  buildGdeltUrl,
+  cleanText,
+  parseGdeltArticles,
+  parseSeenDate,
+} from './intelligence/gdelt.ts';
+export type { ParsedEvents } from './intelligence/gdelt.ts';
+export { EIA_SERIES, buildEiaUrl, parseEiaRows } from './energy/eia.ts';
