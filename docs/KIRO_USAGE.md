@@ -1,5 +1,15 @@
 # How Kiro was used to build PortChimera
 
+## Summary (read this first)
+
+- **Tool:** Kiro Web sessions in a Linux sandbox (Nov 17 to Nov 28, 2026). [Owner to confirm: whether the Kiro IDE was also used for any session. Nothing in this repository records IDE use, so none is claimed.]
+- **Spec-driven:** eight specs in `.kiro/specs/` (requirements, design, tasks) written before the code they describe. Spec 03 (customs and HS codes) was deliberately left unbuilt.
+- **Steering:** nine files in `.kiro/steering/` set product wording rules, the architecture and dependency rule for `packages/core`, security, API, database, AI and testing conventions. The sprint file `09-kiroween-execution.md` holds the execution rules.
+- **Context between sessions:** `docs/PORTCHIMERA_EXECUTION_PLAYBOOK.md` (the plan) and `docs/DAILY_PROGRESS.md` (what actually happened and what was not verified). Each session started by reading the log and ended by updating it.
+- **Verification:** engines were broken on purpose to prove the tests can fail (mutation checks). Kiro's sandbox could not install packages or reach Gemini, Supabase or the live site, so everything real was run on the owner's Windows machine, in GitHub Actions, or in the Supabase SQL Editor, and the log says which.
+- **Not used:** hooks (no `.kiro/hooks`), custom agents (no `.kiro/agents`), and MCP servers in the project. The "Hooks, agents, MCP" section below is kept for that reason.
+- **Status of older entries:** many entries below end with "Not verified". Those lines describe the state at the time. Later results (real Supabase and Gemini runs, the deployed smoke test, the database security checks) are recorded in `docs/DAILY_PROGRESS.md` and `docs/AUDIT_2026-11-28.md`.
+
 A running log for the hackathon write-up. Add an entry whenever Kiro changes how something is built.
 Keep entries concrete: what was asked, what Kiro produced, what was verified, what was fixed.
 
@@ -29,7 +39,7 @@ database, security, AI integration, testing. Some load always; others only when 
 
 ## Hooks, agents, MCP
 
-To be recorded here when added.
+None were used in this project: there are no Kiro hooks, custom agents or project MCP server settings in the repository. The work relied on specs, steering files and the plan and progress documents described above.
 
 ## 2026-11-17: Routing engine and disruption overlay
 

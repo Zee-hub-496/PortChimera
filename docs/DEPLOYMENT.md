@@ -40,7 +40,7 @@ Free instances sleep after inactivity, and the first request can take about a mi
 Render stops a free service after about 15 minutes without requests, and the next request takes about a minute. Two things reduce this:
 
 1. **The web app wakes the API when any page opens** (`warmUpApi` in `apps/web/src/lib/api.js`). By the time a visitor has read the landing page or typed their password, the API is usually up. A first action in the first seconds can still be slow.
-2. **A free uptime monitor keeps it awake.** Create a free account at uptimerobot.com (no card), add a monitor of type HTTP(s), URL `https://portchimera.onrender.com/api/health`, interval 5 minutes. One always-on free service uses about 744 of the 750 free instance hours in a month, so this fits one service. Keep it running from Dec 1 until judging ends, then delete the monitor.
+2. **A free uptime monitor keeps it awake. Status: NOT CONFIRMED CONFIGURED (owner setup step).** Create a free account at uptimerobot.com (no card), add a monitor of type HTTP(s), URL `https://portchimera.onrender.com/api/health`, interval 5 minutes. One always-on free service uses about 744 of the 750 free instance hours in a month, so this fits one service. Keep it running from Dec 1 until judging ends, then delete the monitor.
 
 Supabase free projects can also pause after a period without activity (check Supabase's current rule on your project's home page). Sign in and use the app every few days until judging ends, and check the project is not paused before you submit.
 

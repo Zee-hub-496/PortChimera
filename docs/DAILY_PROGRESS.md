@@ -47,6 +47,15 @@ Tracked here so they are not lost. Do not treat the sprint as finished until eac
 2. ~~Render (API deployment).~~ **Done 2026-11-28.** The API runs on Render's free tier at https://portchimera.onrender.com (deployed by hand as a Web Service, no card needed; commit `0c9ad7f`). Vercel `VITE_API_URL` points to it (set as Config, redeployed), Supabase Site URL and Redirect URL are `https://port-chimera.vercel.app`. The owner confirmed the deployed app works (a DEMO-001 shipment with documents reviewed and AI pre-cleared). `SUPABASE_SERVICE_ROLE_KEY` is deliberately NOT set on Render (it is optional until migration 0004 is applied; the API logs a warning at startup). Still to do on the deployed app: the smoke test (`scripts/smoke-test.mjs`) output, the full `docs/E2E_CHECKLIST.md` run, and the rate-limit proxy-hop check in `docs/DEPLOYMENT.md`.
 3. Day 6 leftovers: document replace (optional), a delete button in the web app.
 
+## Final audit and packaging: 2026-11-28
+
+- `docs/AUDIT_2026-11-28.md`: feature-by-feature evidence table, contradictions found and fixed (README said migration 0004 was not applied; README claimed an uptime monitor that is not confirmed to exist; "60 lanes" vs 30 two-way lanes), security review (no cross-user hole found; P1 integrity gap S-1 kept and disclosed; HTTP-level checks still to run), owner-only verification list, readiness checklist.
+- README rewritten (problem, users, concept, workflow, architecture, security, gaps, Kiro use). `docs/KIRO_USAGE.md` got a summary and an honest "hooks, agents, MCP: none used". `docs/E2E_CHECKLIST.md` now has local and deployed columns; nothing is PASS without a record. `docs/DEVPOST_DRAFT.md` and a 2:45 `docs/DEMO.md` added.
+- PR #45: one-sentence estimated impact in the crisis summary (frontend only).
+- Not done by the agent (no access): deployed checklist run, HTTP security checks, rate-limit proxy check, wake-up test, UptimeRobot, rules page.
+
+---
+
 ## Deployment verification: 2026-11-28
 
 - Smoke test against the live API and web app (owner ran it in PowerShell): 5 of 5 PASS. Health returns ok, an unknown route returns the 404 envelope, `GET /api/shipments` without a token returns 401, security headers are present, and CORS allows `https://port-chimera.vercel.app`.
