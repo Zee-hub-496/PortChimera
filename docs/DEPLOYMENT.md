@@ -30,7 +30,7 @@ Do it by hand (**New** > **Web Service**), not with a Blueprint. Render says fre
    - `GEMINI_API_KEY` and `GEMINI_MODEL` (use `gemini-3.5-flash-lite`).
    - `CORS_ORIGIN`: `https://port-chimera.vercel.app` (the live web app; no trailing slash).
 3. Set `SUPABASE_SERVICE_ROLE_KEY` (Supabase, Project Settings, API, `service_role`). The API refuses to start in production without it, because shipment status is written with it (migration 0004). Server only: never in Vercel, never in a `VITE_` variable.
-4. Deploy. The API refuses to start in production if `SUPABASE_URL`, `SUPABASE_ANON_KEY` or `CORS_ORIGIN` is missing; the deploy log names the variable.
+4. Deploy. The API refuses to start in production if `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` or `CORS_ORIGIN` is missing; the deploy log names the variable.
 5. Note the service URL, for example `https://portchimera-api.onrender.com`.
 
 Free instances sleep after inactivity, and the first request can take about a minute.
