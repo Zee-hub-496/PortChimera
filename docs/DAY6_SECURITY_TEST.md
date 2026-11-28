@@ -10,7 +10,7 @@ Needs two accounts you control (call them Alice and Bob) and an Alice shipment w
 
 ## 2. Database checks
 
-Open `supabase/checks/day6_security_checks.sql`, replace `ALICE_EMAIL` and `BOB_EMAIL`, run it in the SQL Editor. Expect lines `PASS 0` to `PASS 8`, and a policy list for check 9. Copy the Messages output to the session (it holds no secrets).
+Needs two accounts and one shipment (register a second account on the app first). Open `supabase/checks/day6_security_checks.sql`, paste all of it into the SQL Editor and Run. Nothing to edit. Supabase will warn about a destructive query because the script drops its own temporary results table; that is expected. Expect one result table with rows 0 to 9, each `PASS`. Send the table to the session (it holds no secrets). Every write the script tries is rolled back.
 
 ## 3. REST checks with two real sessions
 
