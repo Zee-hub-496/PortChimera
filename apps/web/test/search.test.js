@@ -65,6 +65,8 @@ describe('builders', () => {
     const out = PAGE_ITEMS(false).map((p) => p.to);
     assert.ok(out.includes('/login') && !out.includes('/dashboard'));
     assert.ok(PAGE_ITEMS(true).some((p) => p.to === '/dashboard'));
+    assert.ok(PAGE_ITEMS(true).some((p) => p.to === '/crisis'));
+    assert.ok(!out.includes('/crisis'));
   });
   it('filters shipments', () => {
     assert.deepEqual(

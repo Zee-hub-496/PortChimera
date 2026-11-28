@@ -30,3 +30,21 @@ Audit actions: `scenario.created`, `scenario.updated`, `scenario.deleted`, `scen
 ## Choosing what to close: `GET /api/ports/network`
 
 Read only. Returns `{ ports, lanes }` with database ids, which the scenario routes need. `ports` is `[{ id, code, name, country, lat, lon }]`. `lanes` is `[{ id, from, to, distanceKm, transitDays, freightCostUsd, riskScore }]`, where `from` and `to` are port codes. Lanes are directed, so a two-way connection appears twice.
+
+## Crisis overview: `GET /api/scenarios/impact`
+
+Read-only. Runs every saved scenario of the caller (up to 20, each with at least one effect) against every shipment of the caller that has both ports (up to 100), for the fastest route, and returns which shipments each scenario affects. It saves nothing and writes no audit entry. A "crisis" here is a scenario the user defined, not live news. The page `/crisis` shows it.
+
+```
+{ data: {
+    objective: "fastest", dataLabel: "illustrative",
+    checked: { scenarios, shipments }, limited: false, affectedShipments: 1,
+    crises: [ {
+      scenarioId, name,
+      effects: [ { type, kind: "port" | "lane", target: "Singapore" } ],
+      affected: [ { ...simulation result fields (see above), shipmentId, shipmentNumber,
+                    shipmentStatus, origin: {code,name}, destination: {code,name} } ]
+    } ] } }
+```
+
+Only statuses that change or block the route are listed: `rerouted`, `no_route`, `origin_closed`, `destination_closed`. Crises that hit nothing are still returned with an empty `affected` list. Crises that hit the most shipments come first.

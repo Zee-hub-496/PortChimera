@@ -169,15 +169,6 @@ export default function Dashboard() {
                   ))}
                 </ul>
               </Card>
-              <Card className="p-4">
-                <div className="flex items-center justify-between gap-2">
-                  <h2 className="text-base font-bold">Crisis simulation</h2>
-                  <Badge tone="success">Available</Badge>
-                </div>
-                <p className="mt-2 text-sm text-muted">
-                  Open a shipment's route page to close a port or lane and see the rerouted path.
-                </p>
-              </Card>
             </aside>
           </div>
         </>

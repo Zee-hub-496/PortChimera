@@ -6,6 +6,7 @@ const PAGE_LABELS = Object.freeze({
   map: 'Global Map',
   documents: 'Documents',
   alerts: 'Alerts',
+  crisis: 'Crisis monitor',
   settings: 'Settings',
 });
 
