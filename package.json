@@ -5,7 +5,7 @@
   "description": "Customs intelligence and crisis-aware logistics: AI reads documents, deterministic code validates them, A* optimizes routes.",
   "type": "module",
   "engines": {
-    "node": ">=22"
+    "node": ">=22.18"
   },
   "workspaces": [
     "apps/*",
@@ -14,14 +14,15 @@
   "scripts": {
     "dev:api": "npm run dev -w @portchimera/api",
     "dev:web": "npm run dev -w @portchimera/web",
-    "test": "node --test \"packages/*/test/**/*.test.js\" \"apps/api/test/**/*.test.js\" \"scripts/test/**/*.test.js\" \"apps/web/test/**/*.test.js\"",
-    "test:core": "node --test \"packages/core/test/**/*.test.js\"",
+    "test": "node --test \"packages/*/test/**/*.test.js\" \"packages/*/test/**/*.test.ts\" \"apps/api/test/**/*.test.js\" \"scripts/test/**/*.test.js\" \"apps/web/test/**/*.test.js\"",
+    "test:core": "node --test \"packages/core/test/**/*.test.js\" \"packages/core/test/**/*.test.ts\"",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "scan:secrets": "node scripts/scan-secrets.mjs",
     "seed:generate": "node scripts/generate-routing-seed.mjs",
-    "demo:routes": "node scripts/demo-routes.mjs"
+    "demo:routes": "node scripts/demo-routes.mjs",
+    "typecheck": "node scripts/typecheck.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",

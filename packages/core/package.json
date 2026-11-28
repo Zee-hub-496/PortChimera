@@ -6,6 +6,7 @@
   "type": "module",
   "main": "src/index.js",
   "exports": {
-    ".": "./src/index.js"
+    ".": "./src/index.js",
+    "./v2": "./src/v2.ts"
   }
 }
